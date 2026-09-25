@@ -90,6 +90,11 @@ export default function OrderDetailsPage() {
     };
     shippingCost?: string | number;
     total?: string | number;
+    storeVertical?: {
+      id?: string;
+      name: string;
+      slug?: string;
+    };
   }
 
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
