@@ -2,21 +2,21 @@ module.exports = {
   apps: [
     // {
     //   name: 'shop-genuine-client',
-    //   cwd: '/root/genuine-cosmetics/client',
+    //   cwd: '/root/shop-genuine-2/client',
     //   script: 'npm',
     //   args: 'start',
     //   env: {
     //     PORT: 3002,
     //     NODE_ENV: 'production'
     //   },
-    //   error_file: "/root/.pm2/logs/genuine-cosmetics-client-error.log",
-    //   out_file: "/root/.pm2/logs/genuine-cosmetics-client-out.log",
+    //   error_file: "/root/.pm2/logs/shop-genuine-2-client-error.log",
+    //   out_file: "/root/.pm2/logs/shop-genuine-2-client-out.log",
     //   log_date_format: "YYYY-MM-DD HH:mm:ss",
     //   max_memory_restart: "500M"
     // },
     {
       name: 'shop-genuine-admin',
-      cwd: '/root/genuine-cosmetics/front',
+      cwd: '/root/shop-genuine-2/front',
       script: 'npm',
       args: 'run preview',
       env: {
@@ -24,8 +24,8 @@ module.exports = {
         NODE_ENV: 'production',
         HOST: '0.0.0.0'
       },
-      error_file: "/root/.pm2/logs/genuine-cosmetics-admin-error.log",
-      out_file: "/root/.pm2/logs/genuine-cosmetics-admin-out.log",
+      error_file: "/root/.pm2/logs/shop-genuine-2-admin-error.log",
+      out_file: "/root/.pm2/logs/shop-genuine-2-admin-out.log",
       log_date_format: "YYYY-MM-DD HH:mm:ss",
       max_memory_restart: "500M"
     },
@@ -33,7 +33,7 @@ module.exports = {
     //   // The partner portal had no PM2 entry, so partner.shopgenuine.online had
     //   // nothing to serve. Mirrors the admin entry above.
     //   name: 'shop-genuine-partner',
-    //   cwd: '/root/genuine-cosmetics/partner',
+    //   cwd: '/root/shop-genuine-2/partner',
     //   script: 'npm',
     //   args: 'run preview',
     //   env: {
@@ -43,22 +43,22 @@ module.exports = {
     //     NODE_ENV: 'production',
     //     HOST: '0.0.0.0'
     //   },
-    //   error_file: "/root/.pm2/logs/genuine-cosmetics-partner-error.log",
-    //   out_file: "/root/.pm2/logs/genuine-cosmetics-partner-out.log",
+    //   error_file: "/root/.pm2/logs/shop-genuine-2-partner-error.log",
+    //   out_file: "/root/.pm2/logs/shop-genuine-2-partner-out.log",
     //   log_date_format: "YYYY-MM-DD HH:mm:ss",
     //   max_memory_restart: "500M"
     // },
     {
       name: 'shop-genuine-server',
-      cwd: '/root/genuine-cosmetics/server',
+      cwd: '/root/shop-genuine-2/server',
       script: 'npm',
       args: 'start',
       env: {
         PORT: 4002,
         NODE_ENV: 'production'
       },
-      error_file: "/root/.pm2/logs/genuine-cosmetics-server-error.log",
-      out_file: "/root/.pm2/logs/genuine-cosmetics-server-out.log",
+      error_file: "/root/.pm2/logs/shop-genuine-2-server-error.log",
+      out_file: "/root/.pm2/logs/shop-genuine-2-server-out.log",
       log_date_format: "YYYY-MM-DD HH:mm:ss",
       max_memory_restart: "500M"
     },
