@@ -6,7 +6,7 @@ module.exports = {
       script: 'npm',
       args: 'start',
       env: {
-        PORT: 3011,
+        PORT: 3002,
         NODE_ENV: 'production'
       },
       error_file: "/root/.pm2/logs/genuine-cosmetics-client-error.log",
@@ -20,7 +20,7 @@ module.exports = {
       script: 'npm',
       args: 'run preview',
       env: {
-        PORT: 4184,
+        PORT: 4174,
         NODE_ENV: 'production',
         HOST: '0.0.0.0'
       },
@@ -54,7 +54,7 @@ module.exports = {
       script: 'npm',
       args: 'start',
       env: {
-        PORT: 4011,
+        PORT: 4002,
         NODE_ENV: 'production'
       },
       error_file: "/root/.pm2/logs/genuine-cosmetics-server-error.log",
