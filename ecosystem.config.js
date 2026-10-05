@@ -1,19 +1,19 @@
 module.exports = {
   apps: [
-    // {
-    //   name: 'shop-genuine-client',
-    //   cwd: '/root/shop-genuine-2/client',
-    //   script: 'npm',
-    //   args: 'start',
-    //   env: {
-    //     PORT: 3002,
-    //     NODE_ENV: 'production'
-    //   },
-    //   error_file: "/root/.pm2/logs/shop-genuine-2-client-error.log",
-    //   out_file: "/root/.pm2/logs/shop-genuine-2-client-out.log",
-    //   log_date_format: "YYYY-MM-DD HH:mm:ss",
-    //   max_memory_restart: "500M"
-    // },
+    {
+      name: 'shop-genuine-client',
+      cwd: '/root/shop-genuine-2/client',
+      script: 'npm',
+      args: 'start',
+      env: {
+        PORT: 3002,
+        NODE_ENV: 'production'
+      },
+      error_file: "/root/.pm2/logs/shop-genuine-2-client-error.log",
+      out_file: "/root/.pm2/logs/shop-genuine-2-client-out.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss",
+      max_memory_restart: "500M"
+    },
     {
       name: 'shop-genuine-admin',
       cwd: '/root/shop-genuine-2/front',
