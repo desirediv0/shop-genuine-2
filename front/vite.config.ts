@@ -18,6 +18,8 @@ export default defineConfig({
     allowedHosts: [
       "admin.shopgenuine.online",
       "www.admin.shopgenuine.online",
+      "shopgenuine.online",
+      "www.shopgenuine.online",
     ],
   },
   // Add server configuration for development
@@ -27,6 +29,8 @@ export default defineConfig({
     allowedHosts: [
       "admin.shopgenuine.online",
       "www.admin.shopgenuine.online",
+      "shopgenuine.online",
+      "www.shopgenuine.online",
     ],
   },
 });
