@@ -101,17 +101,23 @@ async function ensureAndroidChannel(N: NotificationsModule): Promise<void> {
 }
 
 /**
- * Asks for permission and returns the Expo push token, or null when push is
- * unavailable or the user declined. Never throws.
+ * The uncaught implementation. `getExpoPushToken` wraps this and swallows the
+ * error for normal use; the dev diagnostics panel calls `diagnosePushToken`
+ * instead so a failure reports *why* rather than appearing as a silent null.
  */
-export async function getExpoPushToken(): Promise<string | null> {
-  try {
+async function mintExpoPushToken(): Promise<string | null> {
+  {
     const N = loadNotifications();
     if (!N) return null;
 
+    // An iOS *simulator* genuinely cannot receive remote push. An Android
+    // emulator with Google Play Services can, and Device.isDevice is false for
+    // both — so gating on isDevice alone silently kills push on the emulator we
+    // actually test with.
     const D = loadDevice();
-    // Simulators and emulators cannot receive push.
-    if (D && !D.isDevice) return null;
+    if (Platform.OS === 'ios' && D && !D.isDevice) {
+      throw new Error('Push is not supported on the iOS simulator — use a real device.');
+    }
 
     ensureHandler(N);
     await ensureAndroidChannel(N);
@@ -124,7 +130,9 @@ export async function getExpoPushToken(): Promise<string | null> {
       status = asked.status;
     }
 
-    if (status !== 'granted') return null;
+    if (status !== 'granted') {
+      throw new Error(`Notification permission was ${status}.`);
+    }
 
     // EAS projectId is required to mint a token outside the classic workflow.
     const projectId =
@@ -133,9 +141,35 @@ export async function getExpoPushToken(): Promise<string | null> {
 
     const res = await N.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
     return res.data ?? null;
+  }
+}
+
+/**
+ * Asks for permission and returns the Expo push token, or null when push is
+ * unavailable or the user declined. Never throws.
+ */
+export async function getExpoPushToken(): Promise<string | null> {
+  try {
+    return await mintExpoPushToken();
   } catch {
     // Missing native module, no network, revoked permission — all non-fatal.
     return null;
+  }
+}
+
+/** Same work, but reports why it failed. Development diagnostics only. */
+export async function diagnosePushToken(): Promise<{
+  token: string | null;
+  error: string | null;
+}> {
+  try {
+    const token = await mintExpoPushToken();
+    return {
+      token,
+      error: token ? null : 'No token returned and no error raised.',
+    };
+  } catch (e) {
+    return { token: null, error: (e as Error)?.message ?? String(e) };
   }
 }
 

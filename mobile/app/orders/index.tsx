@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { payments } from '../../src/api/services';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/States';
 import { StatusPill } from '../../src/components/StatusPill';
-import { colors, radius, spacing, typography } from '../../src/theme';
-import { formatDate, formatPrice } from '../../src/utils/format';
+import { colors, radius, shadow, spacing, typography } from '../../src/theme';
+import { formatDate, formatPrice, orderPaymentLabel } from '../../src/utils/format';
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -64,7 +64,7 @@ export default function OrdersScreen() {
             </Text>
 
             <View style={styles.cardFoot}>
-              <Text style={styles.payment}>{item.paymentMethod}</Text>
+              <Text style={styles.payment}>{orderPaymentLabel(item)}</Text>
               <Text style={styles.total}>{formatPrice(item.total)}</Text>
             </View>
           </Pressable>
@@ -79,14 +79,13 @@ const styles = StyleSheet.create({
   card: {
     padding: spacing.lg,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
     gap: spacing.sm,
+    ...shadow.card,
   },
   pressed: { opacity: 0.9 },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderNumber: { ...typography.small, color: colors.text, fontWeight: '700' },
+  orderNumber: { ...typography.smallStrong, color: colors.text },
   meta: { ...typography.small, color: colors.textMuted },
   cardFoot: {
     flexDirection: 'row',
@@ -94,6 +93,6 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginTop: spacing.xs,
   },
-  payment: { ...typography.tiny, color: colors.textMuted, textTransform: 'uppercase' },
-  total: { ...typography.h3, color: colors.text },
+  payment: { ...typography.overline, color: colors.textMuted },
+  total: { ...typography.price, color: colors.text },
 });

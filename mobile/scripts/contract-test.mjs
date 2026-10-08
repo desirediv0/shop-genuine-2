@@ -129,6 +129,21 @@ const od = await call('GET', `/users/orders/${orderId}`, { token });
 check('order detail wraps in {order}', !!od.json?.data?.order);
 check('order detail has shippingAddress', !!od.json?.data?.order?.shippingAddress);
 
+// The detail endpoint does NOT flatten items to name/image the way the list
+// endpoint does, which is how blank thumbnails and empty names reached the
+// order screen. Assert the fields the app actually resolves through.
+const detailItem = od.json?.data?.order?.items?.[0];
+check('order detail item carries productName',
+  typeof detailItem?.productName === 'string' && detailItem.productName.length > 0,
+  `got ${JSON.stringify(detailItem?.productName)}`);
+check('order detail item snapshot carries an image',
+  typeof detailItem?.productImage === 'string' && /^https?:\/\//.test(detailItem.productImage),
+  `got ${JSON.stringify(detailItem?.productImage)}`);
+check('order detail item image not doubled',
+  !String(detailItem?.productImage ?? '').match(/https?:\/\/[^/]+\/https?:\/\//));
+check('order detail item exposes live product as fallback',
+  typeof detailItem?.product?.name === 'string');
+
 // 7. Misc app surface
 const wl = await call('GET', '/users/wishlist', { token });
 check('wishlist shape', Array.isArray(wl.json?.data?.wishlistItems));

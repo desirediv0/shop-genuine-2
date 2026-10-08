@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radius, shadow, spacing, typography } from '../theme';
+import { colors, fonts, radius, shadow, spacing, typography } from '../theme';
 
 type ToastKind = 'success' | 'error' | 'info';
 
@@ -87,5 +87,5 @@ const styles = StyleSheet.create({
   },
   success: { backgroundColor: colors.success },
   error: { backgroundColor: colors.error },
-  text: { ...typography.small, color: colors.textInverse, fontWeight: '600' },
+  text: { ...typography.small, color: colors.textInverse, fontFamily: fonts.semibold },
 });

@@ -42,5 +42,6 @@ export const STORAGE_KEYS = {
   accessToken: 'sg.accessToken',
   refreshToken: 'sg.refreshToken',
   guestCart: 'sg.guestCart',
+  storeVertical: 'sg.storeVertical',
   recentSearches: 'sg.recentSearches',
 } as const;

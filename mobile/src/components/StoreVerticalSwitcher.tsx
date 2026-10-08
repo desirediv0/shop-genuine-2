@@ -3,7 +3,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStoreVertical } from '../context/StoreVerticalContext';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, radius, shadow, spacing, typography } from '../theme';
+import { Icon } from './Icon';
 import type { StoreVertical } from '../types';
 
 /**
@@ -35,7 +36,7 @@ export function StoreVerticalSwitcher() {
           {vertical?.image ? (
             <Image source={vertical.image} style={styles.badgeImage} contentFit="cover" />
           ) : (
-            <Text style={styles.badgeGlyph}>{vertical ? '🏷️' : '🛍️'}</Text>
+            <Icon name="store" size={17} color={colors.primary} />
           )}
         </View>
 
@@ -46,7 +47,7 @@ export function StoreVerticalSwitcher() {
           </Text>
         </View>
 
-        <Text style={styles.chevron}>▾</Text>
+        <Icon name="down" size={17} color={colors.textMuted} />
       </Pressable>
 
       <Modal
@@ -118,11 +119,15 @@ function Option({
         pressed && styles.pressed,
       ]}
     >
-      <View style={styles.optionBadge}>
+      <View style={[styles.optionBadge, selected && styles.optionBadgeSelected]}>
         {image ? (
           <Image source={image} style={styles.badgeImage} contentFit="cover" />
         ) : (
-          <Text style={styles.badgeGlyph}>{caption ? '🛍️' : '🏷️'}</Text>
+          <Icon
+            name="store"
+            size={19}
+            color={selected ? colors.primary : colors.textSecondary}
+          />
         )}
       </View>
 
@@ -133,7 +138,7 @@ function Option({
         {caption ? <Text style={styles.optionCaption}>{caption}</Text> : null}
       </View>
 
-      {selected ? <Text style={styles.tick}>✓</Text> : null}
+      {selected ? <Icon name="check" size={19} color={colors.primary} /> : null}
     </Pressable>
   );
 }
@@ -145,28 +150,25 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     marginHorizontal: spacing.lg,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    ...shadow.card,
   },
   pressed: { opacity: 0.85 },
   badge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeImage: { width: '100%', height: '100%' },
-  badgeGlyph: { fontSize: 15 },
   barText: { flex: 1 },
-  barCaption: { ...typography.tiny, color: colors.textMuted },
-  barLabel: { ...typography.bodyStrong, color: colors.text },
-  chevron: { ...typography.body, color: colors.textMuted, paddingHorizontal: spacing.xs },
+  barCaption: { ...typography.overline, color: colors.textMuted },
+  barLabel: { ...typography.h3, color: colors.text, marginTop: 1 },
 
   backdrop: { flex: 1, backgroundColor: colors.overlay },
   sheet: {
@@ -191,26 +193,27 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.lg,
     padding: spacing.md,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    backgroundColor: colors.surfaceAlt,
     marginBottom: spacing.sm,
   },
-  optionSelected: { borderColor: colors.primary, backgroundColor: colors.backgroundAlt },
+  optionSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   optionBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  optionBadgeSelected: { backgroundColor: colors.primarySoft },
   optionText: { flex: 1 },
-  optionLabel: { ...typography.bodyStrong, color: colors.text },
+  optionLabel: { ...typography.h3, color: colors.text },
   optionLabelSelected: { color: colors.primary },
-  optionCaption: { ...typography.tiny, color: colors.textMuted },
-  tick: { ...typography.h3, color: colors.primary },
+  optionCaption: { ...typography.small, color: colors.textMuted, marginTop: 1 },
 });

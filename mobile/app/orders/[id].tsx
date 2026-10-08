@@ -8,9 +8,16 @@ import { Button } from '../../src/components/Button';
 import { ErrorState, LoadingState } from '../../src/components/States';
 import { StatusPill } from '../../src/components/StatusPill';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors, radius, shadow, spacing, typography } from '../../src/theme';
 import type { Order } from '../../src/types';
-import { formatDate, formatPrice, toNumber } from '../../src/utils/format';
+import {
+  formatDate,
+  formatPrice,
+  orderItemImage,
+  orderItemName,
+  orderPaymentLabel,
+  toNumber,
+} from '../../src/utils/format';
 
 /** Statuses the customer is still allowed to cancel from. */
 const CANCELLABLE = new Set(['PENDING', 'PROCESSING', 'PAID']);
@@ -68,7 +75,7 @@ export default function OrderDetailScreen() {
             <StatusPill status={order.status} />
           </View>
           <Text style={styles.meta}>Placed {formatDate(order.date ?? order.createdAt)}</Text>
-          <Text style={styles.meta}>Payment: {order.paymentMethod}</Text>
+          <Text style={styles.meta}>Payment: {orderPaymentLabel(order)}</Text>
         </View>
 
         {/* Tracking */}
@@ -90,10 +97,10 @@ export default function OrderDetailScreen() {
           <Text style={styles.cardTitle}>Items</Text>
           {order.items?.map((item) => (
             <View key={item.id} style={styles.item}>
-              <Image source={item.image ?? undefined} style={styles.thumb} contentFit="cover" />
+              <Image source={orderItemImage(item)} style={styles.thumb} contentFit="cover" />
               <View style={styles.itemBody}>
                 <Text style={styles.itemName} numberOfLines={2}>
-                  {item.name}
+                  {orderItemName(item)}
                 </Text>
                 <Text style={styles.meta}>
                   {formatPrice(item.price)} × {item.quantity}
@@ -171,31 +178,29 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
   headerCard: {
-    padding: spacing.lg,
+    padding: spacing.xl,
     borderRadius: radius.lg,
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.xs,
+    backgroundColor: colors.surface,
+    gap: spacing.sm,
+    ...shadow.card,
   },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderNumber: { ...typography.h3, color: colors.text },
+  orderNumber: { ...typography.h2, color: colors.text },
   card: {
     padding: spacing.lg,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
     gap: spacing.sm,
+    ...shadow.card,
   },
-  cardTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.xs },
+  cardTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.sm },
   meta: { ...typography.small, color: colors.textMuted },
-  strong: { color: colors.text, fontWeight: '700', fontSize: 15 },
+  strong: { ...typography.price, color: colors.text },
   item: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  thumb: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.backgroundAlt },
+  thumb: { width: 56, height: 56, borderRadius: radius.md, backgroundColor: colors.surfaceAlt },
   itemBody: { flex: 1, gap: 2 },
-  itemName: { ...typography.small, color: colors.text, fontWeight: '600' },
-  itemTotal: { ...typography.small, color: colors.text, fontWeight: '700' },
+  itemName: { ...typography.smallStrong, color: colors.text },
+  itemTotal: { ...typography.smallStrong, color: colors.text },
   row: { flexDirection: 'row', justifyContent: 'space-between' },
   divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.xs },
 });

@@ -16,9 +16,10 @@ import { useLocalSearchParams } from 'expo-router';
 import { catalogue } from '../../src/api/services';
 import { StoreVerticalSwitcher } from '../../src/components/StoreVerticalSwitcher';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
+import { Icon } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
 import { EmptyState, ErrorState } from '../../src/components/States';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { Category } from '../../src/types';
 
 const SORTS = [
@@ -83,7 +84,11 @@ export default function SearchScreen() {
   );
 
   const total = query.data?.pages[0]?.pagination.total ?? 0;
-  const categories: Category[] = categoriesQ.data?.categories ?? [];
+  // Same reasoning as Home: a filter chip that always yields zero results is a
+  // dead end, so drop categories with nothing in them.
+  const categories: Category[] = (categoriesQ.data?.categories ?? []).filter(
+    (c) => (c._count?.products ?? c.productCount ?? 1) > 0,
+  );
 
   const loadMore = useCallback(() => {
     if (query.hasNextPage && !query.isFetchingNextPage) {
@@ -99,7 +104,7 @@ export default function SearchScreen() {
 
       {/* Search field */}
       <View style={styles.searchWrap}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <Icon name="search" size={18} color={colors.textMuted} />
         <TextInput
           value={term}
           onChangeText={setTerm}
@@ -113,7 +118,7 @@ export default function SearchScreen() {
         />
         {term.length > 0 ? (
           <Pressable onPress={() => setTerm('')} hitSlop={10} accessibilityRole="button">
-            <Text style={styles.clear}>✕</Text>
+            <Icon name="close" size={17} color={colors.textMuted} />
           </Pressable>
         ) : null}
       </View>
@@ -234,18 +239,15 @@ const styles = StyleSheet.create({
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
     marginHorizontal: spacing.lg,
     marginTop: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    ...shadow.card,
   },
-  searchIcon: { fontSize: 15 },
-  searchInput: { flex: 1, ...typography.body, color: colors.text, paddingVertical: spacing.md },
-  clear: { ...typography.small, color: colors.textMuted, paddingHorizontal: spacing.xs },
+  searchInput: { flex: 1, ...typography.body, color: colors.text, paddingVertical: spacing.md + 2 },
   // flexGrow/Shrink 0 stops the row being squeezed by the list below it, which
   // otherwise clips the chip labels top and bottom.
   chipScroll: { flexGrow: 0, flexShrink: 0 },
@@ -263,20 +265,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filter: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
     borderRadius: radius.pill,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    maxWidth: 190,
+    maxWidth: 200,
   },
-  filterActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  filterText: { ...typography.small, color: colors.text },
-  filterTextActive: { color: colors.textInverse, fontWeight: '600' },
-  list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  column: { gap: spacing.md },
-  count: { ...typography.small, color: colors.textMuted, marginBottom: spacing.md },
+  filterActive: { backgroundColor: colors.text, borderColor: colors.text },
+  filterText: { ...typography.small, color: colors.textSecondary },
+  filterTextActive: { color: colors.textInverse, fontFamily: fonts.medium },
+  list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
+  column: { gap: spacing.lg },
+  count: { ...typography.small, color: colors.textMuted, marginBottom: spacing.lg },
   center: { paddingVertical: spacing.xxxl, alignItems: 'center' },
   footer: { paddingVertical: spacing.lg, alignItems: 'center' },
 });

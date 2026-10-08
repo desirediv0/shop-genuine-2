@@ -13,10 +13,11 @@ import { AddressForm, type AddressDraft } from '../src/components/AddressForm';
 import { Button } from '../src/components/Button';
 import { Input } from '../src/components/Input';
 import { ErrorState, LoadingState } from '../src/components/States';
+import { useAuth } from '../src/context/AuthContext';
 import { useCart } from '../src/context/CartContext';
 import { useStoreVertical } from '../src/context/StoreVerticalContext';
 import { useToast } from '../src/context/ToastContext';
-import { colors, radius, spacing, typography } from '../src/theme';
+import { colors, fonts, radius, spacing, typography } from '../src/theme';
 import type { Address } from '../src/types';
 import { formatPrice } from '../src/utils/format';
 import { payWithRazorpay, isRazorpayAvailable } from '../src/utils/razorpay';
@@ -28,6 +29,7 @@ export default function CheckoutScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { cart, refresh } = useCart();
+  const { user } = useAuth();
   // Orders record which sub-brand the shopper was in, matching the website.
   const { verticalId } = useStoreVertical();
   const { toast } = useToast();
@@ -185,6 +187,10 @@ export default function CheckoutScreen() {
         return;
       }
 
+      // Without a prefill the sheet opens on its own contact-details step and
+      // then asks for name and email again on the card form — three screens the
+      // shopper has already filled in elsewhere.
+      const shipping = addressList.find((a) => a.id === addressId);
       const result = await payWithRazorpay({
         key: keyRes.key,
         orderId: rzpOrder.id,
@@ -192,6 +198,15 @@ export default function CheckoutScreen() {
         currency: rzpOrder.currency,
         name: 'Shop Genuine',
         description: `${cart.totalQuantity} item(s)`,
+        prefill: {
+          ...(user?.email ? { email: user.email } : {}),
+          ...(user?.phone || shipping?.phone
+            ? { contact: user?.phone ?? shipping?.phone }
+            : {}),
+          ...(user?.name || shipping?.name
+            ? { name: user?.name ?? shipping?.name }
+            : {}),
+        },
       });
 
       const verified = await payments.verify({
@@ -328,7 +343,12 @@ export default function CheckoutScreen() {
 
         {/* Summary */}
         <Section title="Order summary">
-          <Row label={`Subtotal (${cart.totalQuantity} items)`} value={formatPrice(cart.subtotal)} />
+          <Row
+            label={`Subtotal (${cart.totalQuantity} ${
+              cart.totalQuantity === 1 ? 'item' : 'items'
+            })`}
+            value={formatPrice(cart.subtotal)}
+          />
           {codCharge > 0 ? <Row label="COD fee" value={formatPrice(codCharge)} /> : null}
           {discount > 0 ? (
             <Row label={`Discount (${appliedCoupon?.code})`} value={`−${formatPrice(discount)}`} />
@@ -448,7 +468,7 @@ const styles = StyleSheet.create({
   },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
   optionBody: { flex: 1, gap: 2 },
-  optionTitle: { ...typography.small, color: colors.text, fontWeight: '600' },
+  optionTitle: { ...typography.small, color: colors.text, fontFamily: fonts.semibold },
   optionText: { ...typography.small, color: colors.textMuted },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
   footer: {
@@ -473,7 +493,7 @@ const styles = StyleSheet.create({
     borderColor: colors.success,
     backgroundColor: colors.backgroundAlt,
   },
-  removeCoupon: { ...typography.tiny, color: colors.error, fontWeight: '600' },
+  removeCoupon: { ...typography.tiny, color: colors.error, fontFamily: fonts.semibold },
   modal: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
   modalTitle: { ...typography.h2, color: colors.text, marginBottom: spacing.lg },
 });

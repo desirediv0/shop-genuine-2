@@ -39,3 +39,15 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Firebase / FCM service-account keys. These can send push as us to every user,
+# so they must never be committed. The key is uploaded to Expo with
+# `eas credentials` and does not belong in the repo at all.
+*-firebase-adminsdk-*.json
+*service-account*.json
+*serviceaccount*.json
+google-service-account*.json
+
+# Locally built test APKs — large, and signed with the debug keystore
+*.apk
+*.aab

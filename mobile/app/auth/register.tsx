@@ -11,9 +11,10 @@ import {
 import { useRouter } from 'expo-router';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
+import { Logo } from '../../src/components/Logo';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, spacing, typography } from '../../src/theme';
+import { colors, fonts, spacing, typography } from '../../src/theme';
 
 /**
  * Mirrors server/helper/validatePassword.js exactly, so the user sees the
@@ -79,6 +80,7 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Logo height={64} style={styles.logo} />
         <Text style={styles.title}>Create your account</Text>
         <Text style={styles.subtitle}>
           We&apos;ll email you a 6-digit code to confirm it&apos;s you.
@@ -143,10 +145,11 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   container: { padding: spacing.lg, gap: spacing.sm, flexGrow: 1 },
-  title: { ...typography.h1, color: colors.text, marginTop: spacing.lg },
+  logo: { marginTop: spacing.xl, marginBottom: spacing.lg },
+  title: { ...typography.h1, color: colors.text },
   subtitle: { ...typography.small, color: colors.textMuted },
   form: { gap: spacing.lg, marginTop: spacing.xl },
-  link: { ...typography.small, color: colors.primary, fontWeight: '600' },
+  link: { ...typography.small, color: colors.primary, fontFamily: fonts.semibold },
   muted: { ...typography.small, color: colors.textMuted },
   footer: {
     flexDirection: 'row',

@@ -5,10 +5,12 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { auth as authApi, referrals } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
 import { DeleteAccountSheet } from '../../src/components/DeleteAccountSheet';
+import { Icon, type IconName } from '../../src/components/Icon';
+import { PushDebugPanel } from '../../src/components/PushDebugPanel';
 import { EmptyState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -40,12 +42,21 @@ export default function AccountScreen() {
 
   if (!isAuthenticated) {
     return (
-      <EmptyState
-        title="You're not signed in"
-        message="Sign in to track orders, save addresses and keep a wishlist."
-        actionLabel="Sign in"
-        onAction={() => router.push('/auth/login')}
-      />
+      <View style={styles.signedOut}>
+        <EmptyState
+          title="You're not signed in"
+          message="Sign in to track orders, save addresses and keep a wishlist."
+          actionLabel="Sign in"
+          onAction={() => router.push('/auth/login')}
+        />
+        {/* Minting a push token needs no account, so keep diagnostics reachable
+            while signed out — only the test send requires auth. */}
+        {__DEV__ ? (
+          <View style={styles.signedOutPanel}>
+            <PushDebugPanel />
+          </View>
+        ) : null}
+      </View>
     );
   }
 
@@ -87,9 +98,24 @@ export default function AccountScreen() {
 
       {/* Navigation */}
       <View style={styles.group}>
-        <MenuRow label="My orders" glyph="📦" onPress={() => router.push('/orders')} />
-        <MenuRow label="Saved addresses" glyph="📍" onPress={() => router.push('/addresses')} />
-        <MenuRow label="Wishlist" glyph="♡" onPress={() => router.push('/wishlist')} />
+        <MenuRow
+          label="My orders"
+          caption="Track and manage your orders"
+          icon="orders"
+          onPress={() => router.push('/orders')}
+        />
+        <MenuRow
+          label="Saved addresses"
+          caption="Where we deliver"
+          icon="address"
+          onPress={() => router.push('/addresses')}
+        />
+        <MenuRow
+          label="Saved items"
+          caption="Your wishlist"
+          icon="wishlist"
+          onPress={() => router.push('/wishlist')}
+        />
       </View>
 
       {/* Referral */}
@@ -102,6 +128,8 @@ export default function AccountScreen() {
           </Text>
         </View>
       ) : null}
+
+      {__DEV__ ? <PushDebugPanel /> : null}
 
       {/* Danger zone */}
       <View style={styles.group}>
@@ -140,68 +168,83 @@ export default function AccountScreen() {
 
 function MenuRow({
   label,
-  glyph,
+  caption,
+  icon,
   onPress,
 }: {
   label: string;
-  glyph: string;
+  caption?: string;
+  icon: IconName;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
+      accessibilityLabel={label}
       style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
     >
-      <Text style={styles.menuGlyph}>{glyph}</Text>
-      <Text style={styles.menuLabel}>{label}</Text>
-      <Text style={styles.chevron}>›</Text>
+      <View style={styles.menuIcon}>
+        <Icon name={icon} size={19} color={colors.primary} />
+      </View>
+      <View style={styles.menuText}>
+        <Text style={styles.menuLabel}>{label}</Text>
+        {caption ? <Text style={styles.menuCaption}>{caption}</Text> : null}
+      </View>
+      <Icon name="forward" size={17} color={colors.textMuted} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.xl },
+  content: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
+  signedOut: { flex: 1 },
+  signedOutPanel: { padding: spacing.lg },
   profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: radius.lg,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { ...typography.h2, color: colors.textInverse },
+  avatarText: { ...typography.h1, color: colors.textInverse },
   profileBody: { flex: 1, gap: 2 },
-  name: { ...typography.h3, color: colors.text },
+  name: { ...typography.h2, color: colors.text },
   email: { ...typography.small, color: colors.textMuted },
-  group: { gap: spacing.sm },
+  group: { gap: spacing.md },
   menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.lg,
     padding: spacing.lg,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...shadow.card,
   },
   pressed: { opacity: 0.85 },
-  menuGlyph: { fontSize: 17 },
-  menuLabel: { ...typography.body, color: colors.text, flex: 1 },
-  chevron: { ...typography.h3, color: colors.textMuted },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuText: { flex: 1, gap: 1 },
+  menuLabel: { ...typography.bodyStrong, color: colors.text },
+  menuCaption: { ...typography.small, color: colors.textMuted },
   referral: {
-    padding: spacing.lg,
+    padding: spacing.xl,
     borderRadius: radius.lg,
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.primarySoft,
     gap: spacing.xs,
   },
-  referralLabel: { ...typography.tiny, color: colors.textMuted, textTransform: 'uppercase' },
-  referralCode: { ...typography.h2, color: colors.primary, letterSpacing: 1 },
-  referralHint: { ...typography.small, color: colors.textMuted },
+  referralLabel: { ...typography.overline, color: colors.primary },
+  referralCode: { ...typography.h1, color: colors.text, letterSpacing: 1.5, marginVertical: 2 },
+  referralHint: { ...typography.small, color: colors.textSecondary },
   deleteWrap: { alignItems: 'center', paddingVertical: spacing.md },
-  delete: { ...typography.small, color: colors.error, fontWeight: '600' },
+  delete: { ...typography.small, color: colors.error, fontFamily: fonts.semibold },
 });

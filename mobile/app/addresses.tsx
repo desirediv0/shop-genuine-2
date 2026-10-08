@@ -7,7 +7,7 @@ import { AddressForm, type AddressDraft } from '../src/components/AddressForm';
 import { Button } from '../src/components/Button';
 import { EmptyState, ErrorState, LoadingState } from '../src/components/States';
 import { useToast } from '../src/context/ToastContext';
-import { colors, radius, spacing, typography } from '../src/theme';
+import { colors, radius, shadow, spacing, typography } from '../src/theme';
 import type { Address } from '../src/types';
 
 export default function AddressesScreen() {
@@ -166,24 +166,25 @@ const styles = StyleSheet.create({
   card: {
     padding: spacing.lg,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     backgroundColor: colors.surface,
     gap: spacing.xs,
+    ...shadow.card,
   },
   cardDefault: { borderColor: colors.primary },
   cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  name: { ...typography.small, color: colors.text, fontWeight: '700' },
+  name: { ...typography.bodyStrong, color: colors.text },
   defaultPill: {
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.primarySoft,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.pill,
   },
-  defaultText: { ...typography.tiny, color: colors.primary, fontWeight: '700' },
+  defaultText: { ...typography.tiny, color: colors.primary },
   meta: { ...typography.small, color: colors.textMuted },
   actions: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.sm },
-  action: { ...typography.small, color: colors.primary, fontWeight: '600' },
+  action: { ...typography.smallStrong, color: colors.primary },
   danger: { color: colors.error },
   modal: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
   modalTitle: { ...typography.h2, color: colors.text, marginBottom: spacing.lg },

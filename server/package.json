@@ -13,7 +13,7 @@
     "migrate:deploy": "prisma migrate deploy",
     "studio": "prisma studio",
     "push": "prisma db push",
-    "seed": "node -r dotenv/config --experimental-json-modules prisma/seed.js",
+    "seed": "node -r dotenv/config --experimental-json-modules scripts/seedStoreVerticals.js",
     "seed:bulk-check": "node -r dotenv/config scripts/seedBulkProductCheck.js",
     "seed:bulk-demo": "node -r dotenv/config scripts/seedBulkDemoProducts.js",
     "update-permissions": "node -r dotenv/config --experimental-json-modules scripts/updateAdminPermissions.js",
@@ -21,7 +21,8 @@
     "fix-super-admin": "node -r dotenv/config --experimental-json-modules scripts/fixSuperAdminPermissions.js",
     "setup-s3": "node scripts/setup-s3.js",
     "test-s3": "node utils/s3test.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:reset": "node -r dotenv/config scripts/reset-flow-test.mjs"
   },
   "keywords": [
     "ecommerce",

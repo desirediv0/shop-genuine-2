@@ -4,10 +4,11 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { wishlist as wishlistApi } from '../../src/api/services';
+import { Icon } from '../../src/components/Icon';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors, radius, shadow, spacing, typography } from '../../src/theme';
 import { formatPrice } from '../../src/utils/format';
 
 export default function WishlistScreen() {
@@ -34,7 +35,8 @@ export default function WishlistScreen() {
   if (!isAuthenticated) {
     return (
       <EmptyState
-        title="Sign in to see your wishlist"
+        icon="wishlist"
+        title="Sign in to see your saved items"
         message="Saved items sync across your devices."
         actionLabel="Sign in"
         onAction={() => router.push('/auth/login')}
@@ -54,6 +56,7 @@ export default function WishlistScreen() {
   if (!items.length) {
     return (
       <EmptyState
+        icon="wishlist"
         title="Nothing saved yet"
         message="Tap Save on any product to keep it here."
         actionLabel="Browse products"
@@ -86,9 +89,10 @@ export default function WishlistScreen() {
             onPress={() => remove.mutate(item.id)}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel={`Remove ${item.name} from wishlist`}
+            accessibilityLabel={`Remove ${item.name} from saved items`}
+            style={styles.removeBtn}
           >
-            <Text style={styles.remove}>✕</Text>
+            <Icon name="trash" size={16} color={colors.textMuted} />
           </Pressable>
         </Pressable>
       )}
@@ -101,16 +105,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.lg,
     padding: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...shadow.card,
   },
-  thumb: { width: 60, height: 60, borderRadius: radius.md, backgroundColor: colors.backgroundAlt },
+  thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.surfaceAlt },
   body: { flex: 1, gap: 3 },
-  name: { ...typography.small, color: colors.text, fontWeight: '600' },
-  price: { ...typography.small, color: colors.textMuted },
-  remove: { ...typography.body, color: colors.textMuted, paddingHorizontal: spacing.xs },
+  name: { ...typography.smallStrong, color: colors.text },
+  price: { ...typography.price, color: colors.text },
+  removeBtn: { padding: spacing.sm },
 });

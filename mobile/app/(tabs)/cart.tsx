@@ -4,12 +4,13 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../src/components/Button';
+import { Icon } from '../../src/components/Icon';
 import { QuantityStepper } from '../../src/components/QuantityStepper';
 import { EmptyState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors, radius, shadow, spacing, typography } from '../../src/theme';
 import type { CartItem } from '../../src/types';
 import { formatPrice, variantLabel } from '../../src/utils/format';
 
@@ -28,6 +29,7 @@ export default function CartScreen() {
         title="Your cart is empty"
         message="Browse the catalogue and add something you like."
         actionLabel="Start shopping"
+        icon="cart"
         onAction={() => router.push('/')}
       />
     );
@@ -117,8 +119,15 @@ function CartRow({
             disabled={disabled}
             onChange={onChange}
           />
-          <Pressable onPress={onRemove} disabled={disabled} hitSlop={8} accessibilityRole="button">
-            <Text style={styles.remove}>Remove</Text>
+          <Pressable
+            onPress={onRemove}
+            disabled={disabled}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel={`Remove ${item.product.name} from cart`}
+            style={styles.removeBtn}
+          >
+            <Icon name="trash" size={15} color={colors.textMuted} />
           </Pressable>
         </View>
       </View>
@@ -130,44 +139,41 @@ function CartRow({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  list: { padding: spacing.lg, gap: spacing.md },
+  list: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
   notice: {
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.primarySoft,
     borderRadius: radius.md,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    padding: spacing.lg,
   },
-  noticeText: { ...typography.small, color: colors.textMuted },
+  noticeText: { ...typography.small, color: colors.textSecondary },
   row: {
     flexDirection: 'row',
-    gap: spacing.md,
+    gap: spacing.lg,
     padding: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+    ...shadow.card,
   },
   thumb: {
-    width: 72,
-    height: 72,
+    width: 76,
+    height: 76,
     borderRadius: radius.md,
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.surfaceAlt,
   },
   rowBody: { flex: 1, gap: 3 },
-  rowName: { ...typography.small, color: colors.text, fontWeight: '600' },
+  rowName: { ...typography.smallStrong, color: colors.text },
   rowVariant: { ...typography.tiny, color: colors.textMuted },
-  rowPrice: { ...typography.small, color: colors.textMuted },
+  rowPrice: { ...typography.smallStrong, color: colors.textSecondary },
   rowActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
     marginTop: spacing.sm,
   },
-  remove: { ...typography.tiny, color: colors.error, fontWeight: '600' },
-  rowSubtotal: { ...typography.bodyStrong, color: colors.text },
+  removeBtn: { padding: spacing.xs },
+  rowSubtotal: { ...typography.price, color: colors.text },
   summary: {
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.lg,
@@ -176,6 +182,6 @@ const styles = StyleSheet.create({
   },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   summaryLabel: { ...typography.body, color: colors.textMuted },
-  summaryValue: { ...typography.h2, color: colors.text },
+  summaryValue: { ...typography.priceLarge, color: colors.text },
   summaryNote: { ...typography.tiny, color: colors.textMuted, marginBottom: spacing.sm },
 });

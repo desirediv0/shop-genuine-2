@@ -9,6 +9,7 @@ import type {
   Order,
   PaymentSettings,
   ProductListResponse,
+  ProductSection,
   ProductSummary,
   StoreVertical,
   User,
@@ -49,6 +50,23 @@ export const catalogue = {
 
   maxPrice: () => api.get<{ maxPrice: number }>('/public/products/max-price'),
 
+  /** The merchandising rows the admin configures (Featured, Trending, …). */
+  productSections: () =>
+    api.get<{ sections: ProductSection[] }>('/public/product-sections'),
+
+  /**
+   * Products inside one merchandising section, by its slug.
+   *
+   * This is what the admin's section picker populates. `products?featured=true`
+   * filters the separate `Product.featured` boolean instead, which the admin UI
+   * does not set — using it makes admin-curated rows look empty.
+   */
+  productsByType: (slug: string, q: ProductQuery = {}) =>
+    api.get<ProductListResponse>(
+      `/public/products/type/${slug}`,
+      q as Record<string, unknown>,
+    ),
+
   /**
    * Pass storeVerticalId to scope the list to one sub-brand. The server derives
    * a vertical's categories from the products assigned to it, so this returns
@@ -85,8 +103,6 @@ export const catalogue = {
   banners: () => api.get<{ banners: Banner[] }>('/public/banners'),
 
   flashSales: () => api.get<unknown>('/public/flash-sales'),
-
-  productSections: () => api.get<unknown>('/public/product-sections'),
 
   filterAttributes: () => api.get<unknown>('/public/filter-attributes'),
 

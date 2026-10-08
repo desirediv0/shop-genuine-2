@@ -5,12 +5,19 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SplashScreen from 'expo-splash-screen';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  useFonts,
+} from '@expo-google-fonts/inter';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { useNotificationRouting } from '../src/hooks/useNotificationRouting';
 import { CartProvider } from '../src/context/CartContext';
 import { StoreVerticalProvider } from '../src/context/StoreVerticalContext';
 import { ToastProvider } from '../src/context/ToastContext';
-import { colors } from '../src/theme';
+import { colors, fonts } from '../src/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Already hidden — safe to ignore.
@@ -32,13 +39,24 @@ function SplashGate({ children }: { children: React.ReactNode }) {
   const { initialising } = useAuth();
   useNotificationRouting();
 
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+  });
+
+  // If the font fails to load we still show the app in the system face rather
+  // than holding the splash forever.
+  const ready = !initialising && (fontsLoaded || !!fontError);
+
   useEffect(() => {
-    if (!initialising) {
+    if (ready) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, [initialising]);
+  }, [ready]);
 
-  if (initialising) return null;
+  if (!ready) return null;
   return <>{children}</>;
 }
 
@@ -57,7 +75,7 @@ export default function RootLayout() {
                     screenOptions={{
                       headerStyle: { backgroundColor: colors.background },
                       headerTintColor: colors.text,
-                      headerTitleStyle: { fontWeight: '600', fontSize: 17 },
+                      headerTitleStyle: { fontFamily: fonts.semibold, fontSize: 17 },
                       headerShadowVisible: false,
                       contentStyle: { backgroundColor: colors.background },
                     }}

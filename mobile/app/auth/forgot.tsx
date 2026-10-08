@@ -3,6 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 import { useRouter } from 'expo-router';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
+import { Logo } from '../../src/components/Logo';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, spacing, typography } from '../../src/theme';
@@ -53,6 +54,7 @@ export default function ForgotPasswordScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Logo height={64} style={styles.logo} />
         <Text style={styles.title}>Reset your password</Text>
         <Text style={styles.subtitle}>
           Enter the email on your account and we&apos;ll send you a reset link.
@@ -86,7 +88,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.background,
   },
-  title: { ...typography.h1, color: colors.text, marginTop: spacing.lg },
+  logo: { marginTop: spacing.xl, marginBottom: spacing.lg },
+  title: { ...typography.h1, color: colors.text },
   subtitle: { ...typography.small, color: colors.textMuted, lineHeight: 20 },
   form: { gap: spacing.lg, marginTop: spacing.xl },
 });

@@ -11,16 +11,17 @@ import {
 import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { catalogue, wishlist as wishlistApi } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
 import { QuantityStepper } from '../../src/components/QuantityStepper';
+import { Icon } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ErrorState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { ProductVariant } from '../../src/types';
 import {
   discountPercent,
@@ -75,9 +76,34 @@ export default function ProductScreen() {
     return Array.from(new Set(all));
   }, [product, variant]);
 
-  const wishlistMutation = useMutation({
-    mutationFn: (productId: string) => wishlistApi.add(productId),
-    onSuccess: () => toast('Saved to wishlist', 'success'),
+  const queryClient = useQueryClient();
+
+  const wishlistQ = useQuery({
+    queryKey: ['wishlist'],
+    queryFn: () => wishlistApi.list(),
+    enabled: isAuthenticated,
+  });
+
+  // The API rejects a duplicate add with 409, so the button has to know the
+  // current state rather than always offering "Save".
+  const savedEntry = wishlistQ.data?.wishlistItems.find(
+    (w) => w.productId === data?.product?.id,
+  );
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!product) return;
+      if (savedEntry) {
+        await wishlistApi.remove(savedEntry.id);
+        return 'removed' as const;
+      }
+      await wishlistApi.add(product.id);
+      return 'added' as const;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+      toast(result === 'removed' ? 'Removed from saved' : 'Saved', 'success');
+    },
     onError: (e: Error) => toast(e.message, 'error'),
   });
 
@@ -108,7 +134,7 @@ export default function ProductScreen() {
       router.push('/auth/login');
       return;
     }
-    wishlistMutation.mutate(product.id);
+    saveMutation.mutate();
   };
 
   return (
@@ -117,7 +143,7 @@ export default function ProductScreen() {
 
       <ScrollView
         style={styles.screen}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={{ paddingBottom: 190 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Gallery */}
@@ -136,13 +162,13 @@ export default function ProductScreen() {
                   key={uri}
                   source={uri}
                   style={{ width, height: width }}
-                  contentFit="cover"
-                  transition={200}
+                  contentFit="contain"
+                  transition={220}
                 />
               ))
             ) : (
               <View style={[styles.noImage, { width, height: width }]}>
-                <Text style={styles.muted}>No image</Text>
+                <Icon name="image" size={30} color={colors.textMuted} />
               </View>
             )}
           </ScrollView>
@@ -251,7 +277,8 @@ export default function ProductScreen() {
               style={styles.categoryLink}
               onPress={() => router.push(`/category/${product.category?.slug}`)}
             >
-              <Text style={styles.more}>More in {product.category.name} →</Text>
+              <Text style={styles.more}>More in {product.category.name}</Text>
+              <Icon name="forward" size={15} color={colors.primary} />
             </Pressable>
           ) : null}
         </View>
@@ -275,10 +302,12 @@ export default function ProductScreen() {
       {/* Sticky action bar */}
       <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.md }]}>
         <Button
-          label="Save"
+          label={savedEntry ? 'Saved' : 'Save'}
+          icon="wishlist"
+          iconFilled={!!savedEntry}
           variant="outline"
           onPress={onSave}
-          loading={wishlistMutation.isPending}
+          loading={saveMutation.isPending}
           style={styles.saveBtn}
         />
         <Button
@@ -295,7 +324,7 @@ export default function ProductScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  noImage: { backgroundColor: colors.backgroundAlt, alignItems: 'center', justifyContent: 'center' },
+  noImage: { backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
   muted: { ...typography.small, color: colors.textMuted },
   dots: {
     flexDirection: 'row',
@@ -312,48 +341,49 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: colors.border,
   },
-  dotActive: { backgroundColor: colors.primary, width: 18 },
-  body: { padding: spacing.lg, gap: spacing.sm },
-  brand: { ...typography.tiny, color: colors.textMuted, textTransform: 'uppercase' },
-  name: { ...typography.h2, color: colors.text },
+  dotActive: { backgroundColor: colors.primary, width: 20 },
+  body: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.sm },
+  brand: { ...typography.overline, color: colors.textMuted },
+  name: { ...typography.h1, color: colors.text, marginTop: 2 },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: spacing.md,
     marginTop: spacing.xs,
   },
-  price: { ...typography.h1, color: colors.text },
-  strike: { ...typography.small, color: colors.textMuted, textDecorationLine: 'line-through' },
+  price: { ...typography.priceLarge, color: colors.text },
+  strike: { ...typography.body, color: colors.textMuted, textDecorationLine: 'line-through' },
   offBadge: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.sm,
   },
-  offText: { ...typography.tiny, color: colors.textInverse, fontWeight: '700' },
-  stock: { ...typography.small, fontWeight: '600' },
+  offText: { ...typography.tiny, color: colors.textInverse },
+  stock: { ...typography.smallStrong },
   inStock: { color: colors.success },
   outStock: { color: colors.error },
   block: { marginTop: spacing.lg, gap: spacing.sm },
-  blockTitle: { ...typography.h3, color: colors.text },
+  blockTitle: { ...typography.h2, color: colors.text },
   variantWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   variant: {
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    minWidth: 92,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    minWidth: 96,
     gap: 2,
+    backgroundColor: colors.surface,
   },
-  variantSelected: { borderColor: colors.primary, backgroundColor: colors.backgroundAlt },
+  variantSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   variantDisabled: { opacity: 0.4 },
-  variantText: { ...typography.small, color: colors.text },
-  variantTextSelected: { color: colors.primary, fontWeight: '600' },
+  variantText: { ...typography.smallStrong, color: colors.textSecondary },
+  variantTextSelected: { color: colors.text, fontFamily: fonts.semibold },
   variantPrice: { ...typography.tiny, color: colors.textMuted },
-  description: { ...typography.body, color: colors.textMuted, lineHeight: 22 },
-  more: { ...typography.small, color: colors.primary, fontWeight: '600' },
-  categoryLink: { marginTop: spacing.lg },
+  description: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
+  more: { ...typography.smallStrong, color: colors.primary },
+  categoryLink: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   related: { paddingBottom: spacing.xl, gap: spacing.md },
   relatedTitle: { paddingHorizontal: spacing.lg },
   relatedRow: { paddingHorizontal: spacing.lg, gap: spacing.md },
@@ -365,10 +395,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
     backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    ...shadow.bar,
   },
   saveBtn: { flex: 1 },
   cartBtn: { flex: 2 },

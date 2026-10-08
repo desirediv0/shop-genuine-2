@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -12,14 +12,26 @@ import {
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { catalogue } from '../../src/api/services';
+import { Icon } from '../../src/components/Icon';
+import { Logo } from '../../src/components/Logo';
 import { StoreVerticalSwitcher } from '../../src/components/StoreVerticalSwitcher';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { ProductCard } from '../../src/components/ProductCard';
-import { EmptyState, ErrorState, Skeleton } from '../../src/components/States';
-import { colors, radius, spacing, typography } from '../../src/theme';
-import type { Banner, Category, ProductSummary } from '../../src/types';
+import { ErrorState, Skeleton } from '../../src/components/States';
+import { colors, radius, shadow, spacing, typography } from '../../src/theme';
+import type { Banner, Category, ProductSection, ProductSummary } from '../../src/types';
+
+/** Banner links are stored as website paths, so translate them to app routes. */
+function bannerRouteFor(link?: string | null): string | null {
+  if (!link) return null;
+  const path = link.replace(/^https?:\/\/[^/]+/, '');
+  if (path.startsWith('/category/') || path.startsWith('/product/')) return path;
+  // /products, /products?x=y and anything unrecognised land on search.
+  if (path.startsWith('/products')) return '/search';
+  return null;
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -43,16 +55,58 @@ export default function HomeScreen() {
     queryFn: () => catalogue.categories(verticalParam),
   });
 
-  const featuredQ = useQuery({
-    queryKey: ['products', 'featured', verticalId],
-    queryFn: () => catalogue.products({ limit: 6, featured: true, ...verticalParam }),
+  // Home rows come from the admin's Product Sections, so merchandising is
+  // controlled there rather than hardcoded here.
+  const sectionsQ = useQuery({
+    queryKey: ['productSections'],
+    queryFn: () => catalogue.productSections(),
   });
+
+  const sections = useMemo(
+    () => [...(sectionsQ.data?.sections ?? [])].sort((a, b) => a.displayOrder - b.displayOrder),
+    [sectionsQ.data],
+  );
+
+  const sectionQueries = useQueries({
+    queries: sections.map((section: ProductSection) => ({
+      queryKey: ['section', section.slug, verticalId],
+      queryFn: () =>
+        catalogue.productsByType(section.slug, {
+          limit: section.maxProducts || 12,
+          ...verticalParam,
+        }),
+    })),
+  });
+
+  const sectionRows = sections
+    .map((section: ProductSection, i: number) => ({
+      section,
+      products: sectionQueries[i]?.data?.products ?? [],
+      loading: sectionQueries[i]?.isLoading ?? false,
+    }))
+    .filter((row: { products: ProductSummary[]; loading: boolean }) => row.loading || row.products.length > 0);
+
+  // If the admin has not populated any section yet, the store would look empty
+  // even with products in the catalogue — fall back to newest first.
+  const anySectionHasProducts = sectionRows.some(
+    (r: { products: ProductSummary[] }) => r.products.length > 0,
+  );
+  const sectionsSettled = sectionQueries.every((q) => !q.isLoading);
 
   const newestQ = useQuery({
     queryKey: ['products', 'newest', verticalId],
     queryFn: () =>
-      catalogue.products({ limit: 8, sort: 'createdAt', order: 'desc', ...verticalParam }),
+      catalogue.products({ limit: 12, sort: 'createdAt', order: 'desc', ...verticalParam }),
+    enabled: sectionsSettled && !anySectionHasProducts,
   });
+
+  const openBannerLink = useCallback(
+    (link?: string | null) => {
+      const route = bannerRouteFor(link);
+      if (route) router.push(route as never);
+    },
+    [router],
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -61,25 +115,37 @@ export default function HomeScreen() {
   }, [queryClient]);
 
   const banners: Banner[] = bannersQ.data?.banners ?? [];
-  const categories: Category[] = categoriesQ.data?.categories ?? [];
+
+  // A banner row can exist with no artwork uploaded yet; rendering it would
+  // leave a large blank block on the home screen.
+  const bannersWithArt = banners
+    .map((banner) => ({ banner, art: banner.mobileImage ?? banner.desktopImage }))
+    .filter((b): b is { banner: Banner; art: string } => !!b.art);
+  // `/public/categories` returns every category, including ones with nothing in
+  // them, so tapping those led to an empty list. Show only categories a shopper
+  // can actually buy from. The count is vertical-scoped when a sub-brand is
+  // selected, so this also hides categories empty *for that store*.
+  const categories: Category[] = (categoriesQ.data?.categories ?? []).filter(
+    (c) => (c._count?.products ?? c.productCount ?? 1) > 0,
+  );
 
   // A selected sub-brand with nothing in it should say so once, rather than
   // repeating "Nothing here yet" under every rail and looking broken.
   const storeIsEmpty =
     !!verticalId &&
-    !featuredQ.isLoading &&
+    sectionsSettled &&
     !newestQ.isLoading &&
-    (featuredQ.data?.products.length ?? 0) === 0 &&
+    !anySectionHasProducts &&
     (newestQ.data?.products.length ?? 0) === 0 &&
     categories.length === 0;
 
-  if (featuredQ.isError && newestQ.isError) {
+  if (sectionsQ.isError && newestQ.isError) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
         <ErrorState
-          message={(featuredQ.error as Error)?.message}
+          message={(sectionsQ.error as Error)?.message}
           onRetry={() => {
-            featuredQ.refetch();
+            sectionsQ.refetch();
             newestQ.refetch();
           }}
         />
@@ -98,10 +164,8 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.wordmark}>Shop Genuine</Text>
-            <Text style={styles.tagline}>100% authentic. Delivered across India.</Text>
-          </View>
+          <Logo height={68} />
+          <Text style={styles.tagline}>100% authentic. Delivered across India.</Text>
         </View>
 
         {/* Search entry point */}
@@ -111,7 +175,7 @@ export default function HomeScreen() {
           accessibilityRole="search"
           accessibilityLabel="Search products"
         >
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Icon name="search" size={18} color={colors.textMuted} />
           <Text style={styles.searchPlaceholder}>Search for products, brands…</Text>
         </Pressable>
 
@@ -120,22 +184,28 @@ export default function HomeScreen() {
           <StoreVerticalSwitcher />
         </View>
 
-        {/* Banners */}
-        {banners.length > 0 ? (
+        {/* Banners — phone artwork first, and never render an empty frame */}
+        {bannersWithArt.length > 0 ? (
           <ScrollView
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             style={styles.bannerScroll}
           >
-            {banners.map((b) => (
-              <Image
-                key={b.id}
-                source={b.image}
-                style={[styles.banner, { width: width - spacing.lg * 2 }]}
-                contentFit="cover"
-                transition={200}
-              />
+            {bannersWithArt.map(({ banner, art }) => (
+              <Pressable
+                key={banner.id}
+                onPress={() => openBannerLink(banner.link)}
+                accessibilityRole="button"
+                accessibilityLabel={banner.title ?? 'Promotion'}
+              >
+                <Image
+                  source={art}
+                  style={[styles.banner, { width: width - spacing.lg * 2 }]}
+                  contentFit="cover"
+                  transition={200}
+                />
+              </Pressable>
             ))}
           </ScrollView>
         ) : null}
@@ -157,11 +227,19 @@ export default function HomeScreen() {
                   accessibilityLabel={c.name}
                 >
                   <View style={styles.categoryThumb}>
-                    <Image
-                      source={c.image ?? undefined}
-                      style={styles.categoryImage}
-                      contentFit="cover"
-                    />
+                    {c.image ? (
+                      <Image
+                        source={c.image}
+                        style={styles.categoryImage}
+                        contentFit="cover"
+                      />
+                    ) : (
+                      // Categories frequently have no artwork; an initial reads
+                      // better than an empty circle.
+                      <Text style={styles.categoryInitial}>
+                        {c.name.charAt(0).toUpperCase()}
+                      </Text>
+                    )}
                   </View>
                   <Text style={styles.categoryLabel} numberOfLines={2}>
                     {c.name}
@@ -191,22 +269,26 @@ export default function HomeScreen() {
           </View>
         ) : (
           <>
-            {/* Featured */}
-            <ProductRail
-              title="Featured"
-              loading={featuredQ.isLoading}
-              products={featuredQ.data?.products ?? []}
-              cardWidth={cardWidth}
-            />
+            {sectionRows.map(({ section, products, loading }) => (
+              <ProductRail
+                key={section.id}
+                title={section.name}
+                loading={loading}
+                products={products}
+                cardWidth={cardWidth}
+              />
+            ))}
 
-            {/* New arrivals */}
-            <ProductRail
-              title="New arrivals"
-              loading={newestQ.isLoading}
-              products={newestQ.data?.products ?? []}
-              cardWidth={cardWidth}
-              onSeeAll={() => router.push('/search')}
-            />
+            {/* Only rendered when no section has been populated yet. */}
+            {sectionsSettled && !anySectionHasProducts ? (
+              <ProductRail
+                title="New arrivals"
+                loading={newestQ.isLoading}
+                products={newestQ.data?.products ?? []}
+                cardWidth={cardWidth}
+                onSeeAll={() => router.push('/search')}
+              />
+            ) : null}
           </>
         )}
       </ScrollView>
@@ -248,14 +330,9 @@ function ProductRail({
     );
   }
 
-  if (!products.length) {
-    return (
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, styles.sectionTitleStandalone]}>{title}</Text>
-        <EmptyState title="Nothing here yet" message="Check back soon." />
-      </View>
-    );
-  }
+  // An empty rail is worth nothing to a shopper and pushes real content off
+  // screen, so drop the whole section rather than announcing the gap.
+  if (!products.length) return null;
 
   return (
     <View style={styles.section}>
@@ -288,33 +365,29 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
   },
-  wordmark: { ...typography.h1, color: colors.text },
-  tagline: { ...typography.small, color: colors.textMuted, marginTop: 2 },
+  tagline: { ...typography.small, color: colors.textMuted, marginTop: spacing.sm },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
     marginHorizontal: spacing.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md + 2,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    ...shadow.card,
   },
-  searchIcon: { fontSize: 15 },
-  searchPlaceholder: { ...typography.small, color: colors.textMuted },
+  searchPlaceholder: { ...typography.body, color: colors.textMuted },
   switcherWrap: { paddingTop: spacing.lg },
   emptyStore: {
     marginTop: spacing.xxl,
     marginHorizontal: spacing.lg,
     padding: spacing.xl,
     borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     gap: spacing.sm,
+    ...shadow.card,
   },
   emptyStoreTitle: { ...typography.h3, color: colors.text, textAlign: 'center' },
   emptyStoreText: {
@@ -333,34 +406,38 @@ const styles = StyleSheet.create({
   emptyStoreBtnText: { ...typography.bodyStrong, color: colors.textInverse },
   bannerScroll: { marginTop: spacing.sm },
   banner: {
-    height: 160,
+    height: 168,
     borderRadius: radius.lg,
     marginHorizontal: spacing.lg,
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.surfaceAlt,
   },
-  section: { marginTop: spacing.xl },
+  section: { marginTop: spacing.xxl },
   sectionHead: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
   },
-  sectionTitle: { ...typography.h2, color: colors.text, marginBottom: spacing.md },
+  sectionTitle: { ...typography.h2, color: colors.text, marginBottom: spacing.lg },
   sectionTitleStandalone: { paddingHorizontal: spacing.lg },
-  seeAll: { ...typography.small, color: colors.primary, fontWeight: '600', marginBottom: spacing.md },
+  seeAll: { ...typography.smallStrong, color: colors.primary, marginBottom: spacing.lg },
   categoryRow: { paddingHorizontal: spacing.lg, gap: spacing.lg },
-  categoryItem: { width: 76, alignItems: 'center', gap: spacing.sm },
+  categoryItem: { width: 72, alignItems: 'center', gap: spacing.sm },
   categoryThumb: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
+    width: 64,
+    height: 64,
+    borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+    // Centres the fallback initial; the image fills the box so it was never
+    // needed until categories without artwork appeared.
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   categoryImage: { width: '100%', height: '100%' },
-  categoryLabel: { ...typography.tiny, color: colors.text, textAlign: 'center' },
-  railContent: { paddingHorizontal: spacing.lg, gap: spacing.md },
+  categoryInitial: { ...typography.h2, color: colors.primary },
+  categoryLabel: { ...typography.tiny, color: colors.textSecondary, textAlign: 'center' },
+  railContent: { paddingHorizontal: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xs },
   railSkeleton: { flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.lg },
 });
