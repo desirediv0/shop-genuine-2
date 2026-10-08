@@ -13,20 +13,24 @@ export default defineConfig({
   },
   // Add the preview configuration for production builds
   preview: {
-    port: 4184,
+    port: 4174,
     host: "0.0.0.0",
     allowedHosts: [
       "admin.shopgenuine.online",
       "www.admin.shopgenuine.online",
+      "shopgenuine.online",
+      "www.shopgenuine.online",
     ],
   },
   // Add server configuration for development
   server: {
-    port: 4184,
+    port: 4174,
     host: "0.0.0.0",
     allowedHosts: [
       "admin.shopgenuine.online",
       "www.admin.shopgenuine.online",
+      "shopgenuine.online",
+      "www.shopgenuine.online",
     ],
   },
 });
