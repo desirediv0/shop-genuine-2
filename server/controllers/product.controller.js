@@ -190,9 +190,55 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     where: whereConditions,
   });
 
+  // Price lives on variants, not on Product, and Prisma cannot order by the
+  // minimum of a relation. This used to fall back to createdAt, so "Price: low
+  // to high" quietly returned products in date order — on the website and in
+  // the app alike. For a price sort, rank every matching product by its
+  // cheapest active selling price first, then fetch only the requested page.
+  let priceOrderIds = null;
+  if (isPriceSort) {
+    const candidates = await prisma.product.findMany({
+      where: whereConditions,
+      select: {
+        id: true,
+        createdAt: true,
+        variants: {
+          where: { isActive: true },
+          select: { price: true, salePrice: true, quantity: true },
+        },
+      },
+    });
+
+    // Rank on the price a card actually shows: the cheapest in-stock option,
+    // or the cheapest active one when nothing is in stock (as the app's
+    // pickDefaultVariant does). A cheaper sold-out size must not pull a
+    // product ahead of where its displayed price says it belongs.
+    const sellingPrice = new Map(
+      candidates.map((c) => {
+        const inStock = c.variants.filter((v) => v.quantity > 0);
+        const pool = inStock.length ? inStock : c.variants;
+        const prices = pool.map((v) => parseFloat(v.salePrice ?? v.price));
+        return [c.id, prices.length ? Math.min(...prices) : null];
+      })
+    );
+    const direction = order === "desc" ? -1 : 1;
+
+    candidates.sort((a, b) => {
+      const pa = sellingPrice.get(a.id);
+      const pb = sellingPrice.get(b.id);
+      // Products with nothing to buy go last in either direction.
+      if (pa === null || pb === null) return pa === null ? (pb === null ? 0 : 1) : -1;
+      if (pa !== pb) return (pa - pb) * direction;
+      return b.createdAt - a.createdAt;
+    });
+
+    const start = (parseInt(page) - 1) * parseInt(limit);
+    priceOrderIds = candidates.slice(start, start + parseInt(limit)).map((c) => c.id);
+  }
+
   // Get products with pagination, sorting
   const products = await prisma.product.findMany({
-    where: whereConditions,
+    where: priceOrderIds ? { id: { in: priceOrderIds } } : whereConditions,
     include: {
       categories: {
         include: {
@@ -232,10 +278,20 @@ export const getAllProducts = asyncHandler(async (req, res) => {
         },
       },
     },
-    orderBy: [{ ourProduct: "desc" }, { [effectiveSort]: order }],
-    skip: (parseInt(page) - 1) * parseInt(limit),
-    take: parseInt(limit),
+    // A price sort has already chosen and ordered this page.
+    ...(priceOrderIds
+      ? {}
+      : {
+        orderBy: [{ ourProduct: "desc" }, { [effectiveSort]: order }],
+        skip: (parseInt(page) - 1) * parseInt(limit),
+        take: parseInt(limit),
+      }),
   });
+
+  if (priceOrderIds) {
+    const rank = new Map(priceOrderIds.map((id, i) => [id, i]));
+    products.sort((a, b) => rank.get(a.id) - rank.get(b.id));
+  }
 
   // Batch fetch active flash sales for all products in this result
   const now = new Date();

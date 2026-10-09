@@ -22,7 +22,8 @@
     "setup-s3": "node scripts/setup-s3.js",
     "test-s3": "node utils/s3test.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "test:reset": "node -r dotenv/config scripts/reset-flow-test.mjs"
+    "test:reset": "node -r dotenv/config scripts/reset-flow-test.mjs",
+    "test:sort": "node scripts/price-sort-test.mjs"
   },
   "keywords": [
     "ecommerce",

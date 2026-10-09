@@ -21,6 +21,7 @@ import { ProductCard } from '../../src/components/ProductCard';
 import { EmptyState, ErrorState } from '../../src/components/States';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { Category } from '../../src/types';
+import { pickDefaultVariant, toNumber } from '../../src/utils/format';
 
 const SORTS = [
   { label: 'Newest', sort: 'createdAt', order: 'desc' as const },
@@ -79,10 +80,26 @@ export default function SearchScreen() {
       last.pagination.page < last.pagination.pages ? last.pagination.page + 1 : undefined,
   });
 
-  const products = useMemo(
-    () => query.data?.pages.flatMap((p) => p.products) ?? [],
-    [query.data],
-  );
+  const products = useMemo(() => {
+    const all = query.data?.pages.flatMap((p) => p.products) ?? [];
+    if (sort.sort !== 'price') return all;
+    // The server used to ignore a price sort and return date order. That is
+    // fixed server-side, but until the fix is deployed this keeps whatever has
+    // loaded in the order the shopper asked for, by the price each card shows.
+    // Against a fixed server it changes nothing.
+    const priceOf = (item: (typeof all)[number]) => {
+      const v = pickDefaultVariant(item.variants);
+      return v ? toNumber(v.salePrice ?? v.price) : null;
+    };
+    const dir = sort.order === 'desc' ? -1 : 1;
+    return [...all].sort((a, b) => {
+      const pa = priceOf(a);
+      const pb = priceOf(b);
+      // Nothing to price goes last in either direction.
+      if (pa === null || pb === null) return pa === null ? (pb === null ? 0 : 1) : -1;
+      return (pa - pb) * dir;
+    });
+  }, [query.data, sort.sort, sort.order]);
 
   const total = query.data?.pages[0]?.pagination.total ?? 0;
   // Same reasoning as Home: a filter chip that always yields zero results is a

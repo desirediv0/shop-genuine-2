@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import {
   payments,
 } from '../src/api/services';
 import { AddressForm, type AddressDraft } from '../src/components/AddressForm';
+import { AddressSheet } from '../src/components/AddressSheet';
 import { Button } from '../src/components/Button';
 import { Input } from '../src/components/Input';
 import { ErrorState, LoadingState } from '../src/components/States';
@@ -375,21 +376,17 @@ export default function CheckoutScreen() {
       </View>
 
       {/* New address sheet */}
-      <Modal
+      <AddressSheet
         visible={showAddressForm}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowAddressForm(false)}
+        title="New address"
+        onClose={() => setShowAddressForm(false)}
       >
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>New address</Text>
-          <AddressForm
-            submitting={createAddress.isPending}
-            onSubmit={(draft) => createAddress.mutate(draft)}
-            onCancel={() => setShowAddressForm(false)}
-          />
-        </View>
-      </Modal>
+        <AddressForm
+          submitting={createAddress.isPending}
+          onSubmit={(draft) => createAddress.mutate(draft)}
+          onCancel={() => setShowAddressForm(false)}
+        />
+      </AddressSheet>
     </View>
   );
 }
@@ -494,6 +491,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundAlt,
   },
   removeCoupon: { ...typography.tiny, color: colors.error, fontFamily: fonts.semibold },
-  modal: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
-  modalTitle: { ...typography.h2, color: colors.text, marginBottom: spacing.lg },
 });

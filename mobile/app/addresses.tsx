@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addresses as addressApi } from '../src/api/services';
 import { AddressForm, type AddressDraft } from '../src/components/AddressForm';
+import { AddressSheet } from '../src/components/AddressSheet';
 import { Button } from '../src/components/Button';
 import { EmptyState, ErrorState, LoadingState } from '../src/components/States';
 import { useToast } from '../src/context/ToastContext';
@@ -11,6 +13,7 @@ import { colors, radius, shadow, spacing, typography } from '../src/theme';
 import type { Address } from '../src/types';
 
 export default function AddressesScreen() {
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [editing, setEditing] = useState<Address | null>(null);
@@ -83,7 +86,8 @@ export default function AddressesScreen() {
       <FlatList
         data={list}
         keyExtractor={(a) => a.id}
-        contentContainerStyle={styles.list}
+        // Edge-to-edge draws under the gesture bar; keep the button above it.
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing.lg }]}
         ListEmptyComponent={
           <EmptyState title="No addresses saved" message="Add one to speed up checkout." />
         }
@@ -128,18 +132,15 @@ export default function AddressesScreen() {
         )}
       />
 
-      <Modal
+      <AddressSheet
         visible={creating || !!editing}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => {
+        title={editing ? 'Edit address' : 'New address'}
+        onClose={() => {
           setCreating(false);
           setEditing(null);
         }}
       >
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>{editing ? 'Edit address' : 'New address'}</Text>
-          <AddressForm
+        <AddressForm
             initial={editing ?? undefined}
             submitting={create.isPending || update.isPending}
             onSubmit={(draft) =>
@@ -150,8 +151,7 @@ export default function AddressesScreen() {
               setEditing(null);
             }}
           />
-        </View>
-      </Modal>
+      </AddressSheet>
     </>
   );
 }
@@ -186,6 +186,4 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.sm },
   action: { ...typography.smallStrong, color: colors.primary },
   danger: { color: colors.error },
-  modal: { flex: 1, padding: spacing.lg, backgroundColor: colors.background },
-  modalTitle: { ...typography.h2, color: colors.text, marginBottom: spacing.lg },
 });
