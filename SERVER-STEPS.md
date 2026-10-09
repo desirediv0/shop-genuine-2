@@ -1,9 +1,7 @@
 # Server steps — run these on the VPS
 
-Two jobs, in order. Together they take about ten minutes.
-
-1. Fix the password-reset email, which currently sends people to `localhost`.
-2. Load the 89 products, so the app and website stop looking empty.
+One job: fix the password-reset email, which currently sends people to
+`localhost`. About five minutes.
 
 Everything here is reversible, and each step tells you what you should see. If
 anything looks different from what is written, **stop and send me the output**
@@ -47,8 +45,8 @@ cd /root/shop-genuine-2
 git pull
 ```
 
-**Expect:** a list of changed files ending with something like
-`16 files changed`.
+**Expect:** a list of changed files and a summary line such as
+`N files changed`.
 
 If it says **"Your local changes would be overwritten"**, stop and send me the
 message.
@@ -139,64 +137,6 @@ Ignore older emails — they still carry the old link.
 
 ---
 
-## Step 9 — Preview the product import
-
-This writes nothing. It only reports what it would do.
-
-```bash
-cd /root/shop-genuine-2/server
-node -r dotenv/config scripts/importCatalogue.js catalogue-export.json --dry-run
-```
-
-**Expect it to end with:**
-
-```
-Products that would be added: 89
-Products skipped (already present or SKU clash): 0
-Products in this database now: 1
-```
-
-You will also see `vertical kept`, `category kept` and `category NEW` lines.
-"kept" means it found something already there and will leave it alone — that is
-correct, not a problem.
-
-**If the last number is not 1**, stop and send me the output.
-
----
-
-## Step 10 — Run the import
-
-```bash
-node -r dotenv/config scripts/importCatalogue.js catalogue-export.json
-```
-
-**Expect:**
-
-```
-Products added: 89
-Products skipped (already present or SKU clash): 0
-Products in this database now: 90
-```
-
-This only ever adds. It does not delete or overwrite your existing product.
-
-Safe to run twice — the second run adds 0.
-
----
-
-## Step 11 — Check it worked
-
-```bash
-curl -s "https://api.shopgenuine.online/api/v2/public/products?limit=1" | head -c 200
-```
-
-**Expect** to see `"total":90` somewhere in the output.
-
-Then open the app on your phone and pull down to refresh. You should see the
-full catalogue and all four stores in the switcher.
-
----
-
 ## If something goes wrong
 
 Put the settings file back and restart:
@@ -207,13 +147,9 @@ cp .env.backup-before-fix .env
 pm2 restart shop-genuine-server
 ```
 
-The import cannot be undone by a command, but it never deletes anything — it
-only adds products. If you want them gone, tell me and I will write a script
-that removes exactly what was added.
-
 ---
 
 ## When you are done
 
-Send me the output of Step 7, Step 10 and Step 11 and I will confirm everything
-landed properly, then retake the store screenshots against your live data.
+Send me the output of Step 6 and Step 7, and tell me where the reset button
+took you in Step 8.
