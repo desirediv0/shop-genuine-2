@@ -35,6 +35,18 @@ export default function CategoryScreen() {
     [query.data],
   );
 
+  /**
+   * The endpoint returns the category itself, so use its real name. Falling
+   * back to the slug renders "biscuits  cookies" — lower case, and a double
+   * space where the "&" was stripped — so it is only a placeholder while the
+   * first page is in flight.
+   */
+  const title = useMemo(() => {
+    const name = query.data?.pages[0]?.category?.name;
+    if (name) return name;
+    return slug ? slug.replace(/-+/g, ' ').trim() : 'Category';
+  }, [query.data, slug]);
+
   const loadMore = useCallback(() => {
     if (query.hasNextPage && !query.isFetchingNextPage) query.fetchNextPage();
   }, [query]);
@@ -47,7 +59,7 @@ export default function CategoryScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: slug?.replace(/-/g, ' ') ?? 'Category' }} />
+      <Stack.Screen options={{ title: title }} />
       <FlatList
         data={products}
         keyExtractor={(p) => p.id}

@@ -84,6 +84,12 @@ export interface Pagination {
 export interface ProductListResponse {
   products: ProductSummary[];
   pagination: Pagination;
+  /**
+   * Only `/public/categories/:slug/products` returns this. It carries the
+   * category's real name — without it the screen can only de-slug the URL,
+   * which turned "Biscuits & Cookies" into "biscuits  cookies".
+   */
+  category?: Category;
 }
 
 export interface Category {

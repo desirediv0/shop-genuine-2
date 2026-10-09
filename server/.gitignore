@@ -36,5 +36,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Generated catalogue export — regenerate with scripts/exportCatalogue.js
-catalogue-export.json
+# catalogue-export.json is deliberately COMMITTED so the server can get it with
+# a git pull — it holds public product data, no secrets. Regenerate it with
+# scripts/exportCatalogue.js.
