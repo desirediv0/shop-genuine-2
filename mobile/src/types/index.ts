@@ -52,6 +52,18 @@ export interface ProductSummary {
   flashSale?: FlashSaleInfo | null;
 }
 
+/**
+ * The single-product endpoint returns more than the list does. These are the
+ * admin-editable fields the product page shows when they are filled in; all are
+ * optional because most products leave them empty.
+ */
+export interface ProductDetail extends ProductSummary {
+  shippingReturn?: string | null;
+  legalInfo?: string | null;
+  lifestyleImage?: string | null;
+  lifestyleDescription?: string | null;
+}
+
 export interface FlashSaleInfo {
   id: string;
   name: string;

@@ -23,11 +23,18 @@ export function ProductCard({ product, width }: Props) {
     const r = variant ? toNumber(variant.price) : product.regularPrice;
     const stock = product.variants?.some((v) => v.isActive && v.quantity > 0) ?? false;
     // The list endpoint sends a flat `image`; the detail endpoint only sends
-    // `images[]`, and a card can be rendered from either.
+    // `images[]`, and a card can be rendered from either. The last resort is a
+    // variant's photo — the same order the list endpoint uses server-side. The
+    // related-products list skips that step, so a product whose only photo sits
+    // on its variant came back as `image: null` and rendered a blank card.
+    const variantWithArt = product.variants?.find((v) => v.images?.length);
+    const variantArt =
+      variantWithArt?.images?.find((i) => i.isPrimary)?.url ?? variantWithArt?.images?.[0]?.url;
     const art =
       product.image ??
       product.images?.find((i) => i.isPrimary)?.url ??
       product.images?.[0]?.url ??
+      variantArt ??
       null;
     return { price: p, regular: r, off: discountPercent(r, p), outOfStock: !stock, image: art };
   }, [product]);

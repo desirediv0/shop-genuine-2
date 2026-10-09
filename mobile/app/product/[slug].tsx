@@ -16,21 +16,29 @@ import { catalogue, wishlist as wishlistApi } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
 import { QuantityStepper } from '../../src/components/QuantityStepper';
 import { HeaderActions } from '../../src/components/HeaderActions';
+import { DietMark } from '../../src/components/product/DietMark';
+import {
+  CollapsibleCard,
+  DetailBlocks,
+  ProductDetailsCard,
+} from '../../src/components/product/DetailBlocks';
+import { PromiseRow } from '../../src/components/product/PromiseRow';
 import { Icon } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ErrorState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
+import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { useWishlist } from '../../src/hooks/useWishlist';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { ProductVariant } from '../../src/types';
+import { dietFrom, findDetail, parseProductDetails } from '../../src/utils/productDetails';
 import {
   discountPercent,
   formatPrice,
   pickDefaultVariant,
-  stripHtml,
   toNumber,
   variantLabel,
 } from '../../src/utils/format';
@@ -48,7 +56,6 @@ export default function ProductScreen() {
   const [variantId, setVariantId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [imageIndex, setImageIndex] = useState(0);
-  const [descExpanded, setDescExpanded] = useState(false);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['product', slug],
@@ -58,6 +65,31 @@ export default function ProductScreen() {
 
   const product = data?.product;
   const related = data?.relatedProducts ?? [];
+
+  // The description is often a full spec sheet (brand, weight, ingredients,
+  // FSSAI licence, nutrition…). Read its structure rather than flattening it.
+  const details = useMemo(() => parseProductDetails(product?.description), [product?.description]);
+  const packSize = findDetail(details, 'unit', 'net quantity', 'pack size', 'quantity', 'weight');
+  const diet = dietFrom(findDetail(details, 'dietary preference', 'diet', 'food preference'));
+  const shippingBlocks = useMemo(() => parseProductDetails(product?.shippingReturn), [product?.shippingReturn]);
+  const legalBlocks = useMemo(() => parseProductDetails(product?.legalInfo), [product?.legalInfo]);
+  const lifestyleBlocks = useMemo(
+    () => parseProductDetails(product?.lifestyleDescription),
+    [product?.lifestyleDescription],
+  );
+
+  // The server's related list is "same category", which is empty whenever a
+  // category holds one product — true of every live product so far — and the
+  // page then simply stopped. Fall back to other products from the store.
+  const { verticalParam } = useStoreVertical();
+  const suggestionsQ = useQuery({
+    queryKey: ['productSuggestions', product?.id, verticalParam],
+    queryFn: () => catalogue.products({ limit: 12, ...verticalParam }),
+    enabled: !!product && related.length === 0,
+  });
+  const suggestions = related.length
+    ? related
+    : (suggestionsQ.data?.products ?? []).filter((p) => p.id !== product?.id).slice(0, 10);
 
   // Default to the cheapest in-stock variant once the product arrives.
   useEffect(() => {
@@ -117,7 +149,6 @@ export default function ProductScreen() {
   const off = discountPercent(regular, price);
   const stock = variant?.quantity ?? 0;
   const inStock = !!variant?.isActive && stock > 0;
-  const description = stripHtml(product.description);
 
   const onAddToCart = async () => {
     if (!variant) return;
@@ -185,6 +216,12 @@ export default function ProductScreen() {
         <View style={styles.body}>
           {product.brand?.name ? <Text style={styles.brand}>{product.brand.name}</Text> : null}
           <Text style={styles.name}>{product.name}</Text>
+          {packSize || diet ? (
+            <View style={styles.metaRow}>
+              {diet ? <DietMark diet={diet} /> : null}
+              {packSize ? <Text style={styles.packSize}>{packSize}</Text> : null}
+            </View>
+          ) : null}
 
           {/* Price */}
           <View style={styles.priceRow}>
@@ -257,20 +294,34 @@ export default function ProductScreen() {
             </View>
           ) : null}
 
-          {/* Description */}
-          {description ? (
-            <View style={styles.block}>
-              <Text style={styles.blockTitle}>Description</Text>
-              <Text style={styles.description} numberOfLines={descExpanded ? undefined : 6}>
-                {description}
-              </Text>
-              {description.length > 260 ? (
-                <Pressable onPress={() => setDescExpanded((v) => !v)} hitSlop={8}>
-                  <Text style={styles.more}>{descExpanded ? 'Show less' : 'Read more'}</Text>
-                </Pressable>
+          <PromiseRow />
+
+          {/* A spec sheet reads as "Product details"; free text as prose. */}
+          <ProductDetailsCard
+            title={details.some((b) => b.type === 'row') ? 'Product details' : 'About this product'}
+            blocks={details}
+          />
+
+          {lifestyleBlocks.length || product.lifestyleImage ? (
+            <View style={styles.lifestyle}>
+              {product.lifestyleImage ? (
+                <Image
+                  source={product.lifestyleImage}
+                  style={styles.lifestyleImage}
+                  contentFit="cover"
+                  transition={220}
+                />
+              ) : null}
+              {lifestyleBlocks.length ? (
+                <View style={styles.lifestyleText}>
+                  <DetailBlocks blocks={lifestyleBlocks} />
+                </View>
               ) : null}
             </View>
           ) : null}
+
+          <CollapsibleCard title="Shipping & returns" blocks={shippingBlocks} />
+          <CollapsibleCard title="Legal information" blocks={legalBlocks} />
 
           {product.category?.name ? (
             <Pressable
@@ -283,13 +334,13 @@ export default function ProductScreen() {
           ) : null}
         </View>
 
-        {/* Related products — the detail endpoint returns these already. */}
-        {related.length > 0 ? (
+        {/* Same-category products from the server, or other products from the store. */}
+        {suggestions.length > 0 ? (
           <View style={styles.related}>
             <Text style={[styles.blockTitle, styles.relatedTitle]}>You might also like</Text>
             <FlatList
               horizontal
-              data={related}
+              data={suggestions}
               keyExtractor={(p) => p.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.relatedRow}
@@ -345,6 +396,17 @@ const styles = StyleSheet.create({
   body: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.sm },
   brand: { ...typography.overline, color: colors.textMuted },
   name: { ...typography.h1, color: colors.text, marginTop: 2 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  packSize: { ...typography.smallStrong, color: colors.textMuted },
+  lifestyle: {
+    marginTop: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    ...shadow.card,
+  },
+  lifestyleImage: { width: '100%', aspectRatio: 16 / 10 },
+  lifestyleText: { padding: spacing.lg },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -381,7 +443,6 @@ const styles = StyleSheet.create({
   variantText: { ...typography.smallStrong, color: colors.textSecondary },
   variantTextSelected: { color: colors.text, fontFamily: fonts.semibold },
   variantPrice: { ...typography.tiny, color: colors.textMuted },
-  description: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
   more: { ...typography.smallStrong, color: colors.primary },
   categoryLink: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   related: { paddingBottom: spacing.xl, gap: spacing.md },

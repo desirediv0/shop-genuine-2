@@ -10,6 +10,7 @@ import type {
   PaymentSettings,
   ProductListResponse,
   ProductSection,
+  ProductDetail,
   ProductSummary,
   StoreVertical,
   User,
@@ -44,7 +45,7 @@ export const catalogue = {
 
   /** Also returns relatedProducts from the same category. */
   productBySlug: (slug: string) =>
-    api.get<{ product: ProductSummary; relatedProducts: ProductSummary[] }>(
+    api.get<{ product: ProductDetail; relatedProducts: ProductSummary[] }>(
       `/public/products/${slug}`,
     ),
 

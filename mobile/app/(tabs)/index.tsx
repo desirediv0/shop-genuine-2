@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { catalogue } from '../../src/api/services';
 import { Icon } from '../../src/components/Icon';
+import { HomeAccountButton } from '../../src/components/HomeAccountButton';
 import { Logo } from '../../src/components/Logo';
 import { StoreVerticalSwitcher } from '../../src/components/StoreVerticalSwitcher';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
@@ -166,7 +167,10 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Logo height={68} />
+          <View style={styles.headerRow}>
+            <Logo height={68} />
+            <HomeAccountButton />
+          </View>
           <Text style={styles.tagline}>100% authentic. Delivered across India.</Text>
         </View>
 
@@ -368,6 +372,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
   },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   tagline: { ...typography.small, color: colors.textMuted, marginTop: spacing.sm },
   searchBar: {
     flexDirection: 'row',

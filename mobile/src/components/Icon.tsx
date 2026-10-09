@@ -22,6 +22,7 @@ const GLYPHS = {
   back: ['chevron-back', 'chevron-back'],
   forward: ['chevron-forward', 'chevron-forward'],
   down: ['chevron-down', 'chevron-down'],
+  up: ['chevron-up', 'chevron-up'],
   close: ['close', 'close'],
   check: ['checkmark', 'checkmark'],
   plus: ['add', 'add'],
