@@ -1,10 +1,14 @@
 import React, { useCallback, useMemo } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { catalogue } from '../../src/api/services';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
+import { FloatingCartBar, FLOATING_CART_BAR_SPACE } from '../../src/components/FloatingCartBar';
+import { HeaderActions } from '../../src/components/HeaderActions';
 import { ProductCard } from '../../src/components/ProductCard';
+import { useCart } from '../../src/context/CartContext';
+import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { EmptyState, ErrorState } from '../../src/components/States';
 import { colors, spacing } from '../../src/theme';
 
@@ -12,9 +16,9 @@ const PAGE_SIZE = 12;
 
 export default function CategoryScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { width } = useWindowDimensions();
   const { verticalId, verticalParam } = useStoreVertical();
-  const cardWidth = (width - spacing.lg * 2 - spacing.md) / 2;
+  const { columns, gridCardWidth: cardWidth } = useProductLayout();
+  const { cart } = useCart();
 
   const query = useInfiniteQuery({
     queryKey: ['category', slug, verticalId],
@@ -59,13 +63,19 @@ export default function CategoryScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: title }} />
+      <Stack.Screen options={{ title, headerRight: () => <HeaderActions /> }} />
       <FlatList
+        // numColumns cannot change on a mounted list; remount if it does.
+        key={columns}
         data={products}
         keyExtractor={(p) => p.id}
-        numColumns={2}
+        numColumns={columns}
         columnWrapperStyle={styles.column}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[
+          styles.list,
+          // Keep the last row clear of the floating cart bar.
+          cart.totalQuantity > 0 && { paddingBottom: FLOATING_CART_BAR_SPACE + spacing.lg },
+        ]}
         showsVerticalScrollIndicator={false}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
@@ -87,6 +97,7 @@ export default function CategoryScreen() {
           ) : null
         }
       />
+      <FloatingCartBar />
     </>
   );
 }
@@ -99,7 +110,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     flexGrow: 1,
   },
-  column: { gap: spacing.md },
+  column: { gap: spacing.sm },
   center: { paddingVertical: spacing.xxxl, alignItems: 'center' },
   footer: { paddingVertical: spacing.lg, alignItems: 'center' },
 });

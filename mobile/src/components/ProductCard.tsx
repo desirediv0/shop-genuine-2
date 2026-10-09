@@ -5,11 +5,12 @@ import { useRouter } from 'expo-router';
 import { colors, radius, shadow, spacing, typography } from '../theme';
 import type { ProductSummary } from '../types';
 import { discountPercent, formatPrice, pickDefaultVariant, toNumber } from '../utils/format';
+import { AddToCartButton } from './AddToCartButton';
 import { Icon } from './Icon';
 
 interface Props {
   product: ProductSummary;
-  /** Card width, set by the grid so two columns line up. */
+  /** Card width, from useProductLayout so grids and rows agree. */
   width?: number;
 }
 
@@ -62,6 +63,13 @@ export function ProductCard({ product, width }: Props) {
             </View>
           </View>
         ) : null}
+
+        {/* In the image corner rather than beside the price: at three across a
+            card is ~105dp wide, and a price plus a − 1 + stepper in one row
+            overflows. Here it fits on any phone. */}
+        <View style={styles.addSlot}>
+          <AddToCartButton product={product} />
+        </View>
       </View>
 
       <View style={styles.body}>
@@ -85,35 +93,34 @@ export function ProductCard({ product, width }: Props) {
 }
 
 const styles = StyleSheet.create({
+  // Smaller cards read better with a tighter corner than the old 18dp.
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     overflow: 'hidden',
     ...shadow.card,
   },
   pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
-  // Packaging shots are shot on white, so `contain` on a warm tile keeps the
-  // product whole instead of cropping it like `cover` did.
   // Packaging shots are white-background JPEGs, so a tinted tile leaves a hard
   // white square floating inside it. Matching the card keeps the product clean
   // and lets the card shadow do the separating.
   imageWrap: {
     aspectRatio: 1,
     backgroundColor: colors.surface,
-    padding: spacing.md,
+    padding: spacing.sm,
   },
   image: { width: '100%', height: '100%' },
   noImage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',
-    top: spacing.sm,
-    left: spacing.sm,
+    top: 6,
+    left: 6,
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 3,
-    borderRadius: radius.sm,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  badgeText: { ...typography.tiny, fontSize: 10, color: colors.textInverse },
+  badgeText: { fontFamily: typography.tiny.fontFamily, fontSize: 9, lineHeight: 12, color: colors.textInverse },
   soldOut: {
     position: 'absolute',
     inset: 0,
@@ -123,19 +130,23 @@ const styles = StyleSheet.create({
   },
   soldOutPill: {
     backgroundColor: colors.text,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
     borderRadius: radius.pill,
   },
-  soldOutText: { ...typography.tiny, color: colors.textInverse },
-  body: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.lg, gap: 3 },
-  brand: { ...typography.overline, color: colors.textMuted },
-  name: { ...typography.small, color: colors.text, minHeight: 38 },
-  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, marginTop: 2 },
-  price: { ...typography.price, color: colors.text },
+  soldOutText: { ...typography.tiny, fontSize: 10, color: colors.textInverse },
+  addSlot: { position: 'absolute', right: 6, bottom: 6 },
+  body: { paddingHorizontal: spacing.sm, paddingTop: 6, paddingBottom: 10, gap: 2 },
+  brand: { ...typography.overline, fontSize: 9, color: colors.textMuted },
+  // Two lines at 12sp: product names here run long ("Tata Sampann Coriander
+  // Whole (Dhaniya)…"). The fixed height keeps prices aligned across a row.
+  name: { ...typography.smallStrong, fontSize: 12, lineHeight: 16, minHeight: 32, color: colors.text },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 5, marginTop: 2 },
+  price: { ...typography.price, fontSize: 14, lineHeight: 19, color: colors.text },
   strike: {
     ...typography.small,
-    fontSize: 12,
+    fontSize: 11,
+    lineHeight: 15,
     color: colors.textMuted,
     textDecorationLine: 'line-through',
   },

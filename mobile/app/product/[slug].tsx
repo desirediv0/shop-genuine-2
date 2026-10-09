@@ -15,11 +15,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { catalogue, wishlist as wishlistApi } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
 import { QuantityStepper } from '../../src/components/QuantityStepper';
+import { HeaderActions } from '../../src/components/HeaderActions';
 import { Icon } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ErrorState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
+import { useProductLayout } from '../../src/hooks/useProductLayout';
+import { useWishlist } from '../../src/hooks/useWishlist';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { ProductVariant } from '../../src/types';
@@ -35,6 +38,7 @@ import {
 export default function ProductScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { width } = useWindowDimensions();
+  const { railCardWidth } = useProductLayout();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { addItem, mutating } = useCart();
@@ -78,11 +82,7 @@ export default function ProductScreen() {
 
   const queryClient = useQueryClient();
 
-  const wishlistQ = useQuery({
-    queryKey: ['wishlist'],
-    queryFn: () => wishlistApi.list(),
-    enabled: isAuthenticated,
-  });
+  const wishlistQ = useWishlist();
 
   // The API rejects a duplicate add with 409, so the button has to know the
   // current state rather than always offering "Save".
@@ -139,7 +139,7 @@ export default function ProductScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: '' }} />
+      <Stack.Screen options={{ title: '', headerRight: () => <HeaderActions /> }} />
 
       <ScrollView
         style={styles.screen}
@@ -293,7 +293,7 @@ export default function ProductScreen() {
               keyExtractor={(p) => p.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.relatedRow}
-              renderItem={({ item }) => <ProductCard product={item} width={150} />}
+              renderItem={({ item }) => <ProductCard product={item} width={railCardWidth} />}
             />
           </View>
         ) : null}
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
   categoryLink: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   related: { paddingBottom: spacing.xl, gap: spacing.md },
   relatedTitle: { paddingHorizontal: spacing.lg },
-  relatedRow: { paddingHorizontal: spacing.lg, gap: spacing.md },
+  relatedRow: { paddingHorizontal: spacing.lg, gap: spacing.sm },
   bar: {
     position: 'absolute',
     left: 0,

@@ -7,7 +7,6 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +15,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { catalogue } from '../../src/api/services';
 import { StoreVerticalSwitcher } from '../../src/components/StoreVerticalSwitcher';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
+import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { Icon } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
 import { EmptyState, ErrorState } from '../../src/components/States';
@@ -33,8 +33,9 @@ const PAGE_SIZE = 12;
 
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string }>();
-  const { width } = useWindowDimensions();
-  const cardWidth = (width - spacing.lg * 2 - spacing.md) / 2;
+  // The grid used to size cards for a 12dp gap but lay them out with 16dp,
+  // so rows ran a few pixels wide; one helper now owns both numbers.
+  const { columns, gridCardWidth: cardWidth } = useProductLayout();
 
   const { verticalId, verticalParam } = useStoreVertical();
   const [term, setTerm] = useState(params.q ?? '');
@@ -164,9 +165,11 @@ export default function SearchScreen() {
         <ErrorState message={(query.error as Error)?.message} onRetry={() => query.refetch()} />
       ) : (
         <FlatList
+          // numColumns cannot change on a mounted list; remount if it does.
+          key={columns}
           data={products}
           keyExtractor={(p) => p.id}
-          numColumns={2}
+          numColumns={columns}
           columnWrapperStyle={styles.column}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
@@ -276,8 +279,8 @@ const styles = StyleSheet.create({
   filterActive: { backgroundColor: colors.text, borderColor: colors.text },
   filterText: { ...typography.small, color: colors.textSecondary },
   filterTextActive: { color: colors.textInverse, fontFamily: fonts.medium },
-  list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
-  column: { gap: spacing.lg },
+  list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+  column: { gap: spacing.sm },
   count: { ...typography.small, color: colors.textMuted, marginBottom: spacing.lg },
   center: { paddingVertical: spacing.xxxl, alignItems: 'center' },
   footer: { paddingVertical: spacing.lg, alignItems: 'center' },

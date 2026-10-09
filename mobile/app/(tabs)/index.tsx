@@ -18,6 +18,7 @@ import { Icon } from '../../src/components/Icon';
 import { Logo } from '../../src/components/Logo';
 import { StoreVerticalSwitcher } from '../../src/components/StoreVerticalSwitcher';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
+import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ErrorState, Skeleton } from '../../src/components/States';
 import { colors, radius, shadow, spacing, typography } from '../../src/theme';
@@ -40,8 +41,8 @@ export default function HomeScreen() {
   const { verticalId, verticalParam, vertical, select } = useStoreVertical();
   const [refreshing, setRefreshing] = useState(false);
 
-  // Two columns with a gutter each side and one between.
-  const cardWidth = (width - spacing.lg * 2 - spacing.md) / 2;
+  // A little over three cards per row, so the next one peeks in.
+  const { railCardWidth: cardWidth } = useProductLayout();
 
   const bannersQ = useQuery({
     queryKey: ['banners'],
@@ -144,10 +145,11 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <ErrorState
           message={(sectionsQ.error as Error)?.message}
-          onRetry={() => {
-            sectionsQ.refetch();
-            newestQ.refetch();
-          }}
+          // Retry everything, as pull-to-refresh does. Retrying only the
+          // product rows brought them back after a dropped connection but left
+          // the banner, store picker and categories missing until the shopper
+          // happened to pull down.
+          onRetry={() => queryClient.invalidateQueries()}
         />
       </SafeAreaView>
     );
@@ -323,8 +325,9 @@ function ProductRail({
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, styles.sectionTitleStandalone]}>{title}</Text>
         <View style={styles.railSkeleton}>
-          <Skeleton width={cardWidth} height={cardWidth + 80} />
-          <Skeleton width={cardWidth} height={cardWidth + 80} />
+          <Skeleton width={cardWidth} height={cardWidth + 64} />
+          <Skeleton width={cardWidth} height={cardWidth + 64} />
+          <Skeleton width={cardWidth} height={cardWidth + 64} />
         </View>
       </View>
     );
@@ -438,6 +441,6 @@ const styles = StyleSheet.create({
   categoryImage: { width: '100%', height: '100%' },
   categoryInitial: { ...typography.h2, color: colors.primary },
   categoryLabel: { ...typography.tiny, color: colors.textSecondary, textAlign: 'center' },
-  railContent: { paddingHorizontal: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xs },
-  railSkeleton: { flexDirection: 'row', gap: spacing.md, paddingHorizontal: spacing.lg },
+  railContent: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xs },
+  railSkeleton: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg },
 });

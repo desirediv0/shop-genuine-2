@@ -4,6 +4,7 @@ import { Platform, StyleSheet, Text, View, type ColorValue } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { useCart } from '../../src/context/CartContext';
+import { useWishlist } from '../../src/hooks/useWishlist';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 
 /**
@@ -23,13 +24,21 @@ function TabIcon({
   return <Icon name={name} size={23} color={String(color)} filled={focused} />;
 }
 
-function CartTabIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
-  const { cart } = useCart();
-  const count = cart.totalQuantity;
-
+/** A tab icon with a count bubble, shared by Cart and Saved so they match. */
+function CountTabIcon({
+  name,
+  count,
+  color,
+  focused,
+}: {
+  name: IconName;
+  count: number;
+  color: ColorValue;
+  focused: boolean;
+}) {
   return (
     <View>
-      <TabIcon name="cart" color={color} focused={focused} />
+      <TabIcon name={name} color={color} focused={focused} />
       {count > 0 ? (
         <View style={styles.badge}>
           <Text style={styles.badgeText} numberOfLines={1}>
@@ -39,6 +48,21 @@ function CartTabIcon({ color, focused }: { color: ColorValue; focused: boolean }
       ) : null}
     </View>
   );
+}
+
+function CartTabIcon(p: { color: ColorValue; focused: boolean }) {
+  const { cart } = useCart();
+  return <CountTabIcon name="cart" count={cart.totalQuantity} {...p} />;
+}
+
+/**
+ * Saving a product used to leave this tab unchanged, so there was no sign the
+ * tap had worked. The count comes from the same query the Save button
+ * invalidates, so it updates the moment a product is saved or removed.
+ */
+function SavedTabIcon(p: { color: ColorValue; focused: boolean }) {
+  const { count } = useWishlist();
+  return <CountTabIcon name="wishlist" count={count} {...p} />;
 }
 
 export default function TabsLayout() {
@@ -87,7 +111,7 @@ export default function TabsLayout() {
         name="wishlist"
         options={{
           title: 'Saved',
-          tabBarIcon: (p) => <TabIcon name="wishlist" {...p} />,
+          tabBarIcon: (p) => <SavedTabIcon {...p} />,
         }}
       />
       <Tabs.Screen

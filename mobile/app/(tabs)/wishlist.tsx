@@ -2,11 +2,12 @@ import React from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { wishlist as wishlistApi } from '../../src/api/services';
 import { Icon } from '../../src/components/Icon';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
+import { useWishlist } from '../../src/hooks/useWishlist';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, radius, shadow, spacing, typography } from '../../src/theme';
 import { formatPrice } from '../../src/utils/format';
@@ -17,11 +18,7 @@ export default function WishlistScreen() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const query = useQuery({
-    queryKey: ['wishlist'],
-    queryFn: () => wishlistApi.list(),
-    enabled: isAuthenticated,
-  });
+  const query = useWishlist();
 
   const remove = useMutation({
     mutationFn: (id: string) => wishlistApi.remove(id),

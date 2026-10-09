@@ -30,7 +30,10 @@ export default function CartScreen() {
         message="Browse the catalogue and add something you like."
         actionLabel="Start shopping"
         icon="cart"
-        onAction={() => router.push('/')}
+        // Opened from a product page, this goes back to it; as the Cart tab,
+        // back goes to Home. Pushing '/' instead stacked a second copy of the
+        // tab navigator on top of the first.
+        onAction={() => (router.canGoBack() ? router.back() : router.push('/'))}
       />
     );
   }
