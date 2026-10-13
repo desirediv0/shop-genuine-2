@@ -12,8 +12,9 @@ import {
 import Link from "next/link";
 
 export const metadata = {
-  title: "Why Shop Genuine | Artisanal Luxury Fragrances",
-  description: "Discover the Shop Genuine distinction. Handcrafted, high-longevity signature perfumes formulated with rare botanical absolutes and pure essential oils.",
+  title: "Why Shop Genuine | 100% Authentic Products",
+  description:
+    "Why shoppers choose Shop Genuine: every product sourced from authorised distributors, checked for authenticity and expiry, and delivered across India at honest prices.",
 };
 
 const REASONS = [

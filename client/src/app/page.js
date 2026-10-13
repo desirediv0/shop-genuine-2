@@ -12,8 +12,9 @@ import HomeFAQSection from "@/components/sections/HomeFAQSection";
 import JoinTheCultSection from "@/components/sections/JoinTheCultSection";
 
 export const metadata = {
-  title: "Shop Genuine — Luxury Perfume Maison",
-  description: "Discover Shop Genuine — a luxury perfume house creating exquisite fragrances that blend timeless elegance with modern craftsmanship.",
+  title: "Shop Genuine — Authentic Nutrition, Grocery, Pharmacy & Cosmetics",
+  description:
+    "Shop 100% authentic products at Shop Genuine — nutrition, grocery, pharmacy and cosmetics from the brands you love. Genuine products, honest prices, fast delivery across India.",
 };
 
 export default function Home() {

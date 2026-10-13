@@ -11,9 +11,10 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
+import { Logo } from '../../src/components/Logo';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, spacing, typography } from '../../src/theme';
+import { colors, fonts, spacing, typography } from '../../src/theme';
 
 const RESEND_COOLDOWN = 30;
 
@@ -74,6 +75,7 @@ export default function VerifyScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Logo height={64} style={styles.logo} />
         <Text style={styles.title}>Check your email</Text>
         <Text style={styles.subtitle}>
           We sent a 6-digit code to <Text style={styles.strong}>{email}</Text>. It expires in 10
@@ -114,12 +116,13 @@ export default function VerifyScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   container: { padding: spacing.lg, gap: spacing.sm, flexGrow: 1 },
-  title: { ...typography.h1, color: colors.text, marginTop: spacing.lg },
+  logo: { marginTop: spacing.xl, marginBottom: spacing.lg },
+  title: { ...typography.h1, color: colors.text },
   subtitle: { ...typography.small, color: colors.textMuted, lineHeight: 20 },
-  strong: { color: colors.text, fontWeight: '600' },
+  strong: { color: colors.text, fontFamily: fonts.semibold },
   form: { gap: spacing.lg, marginTop: spacing.xl },
-  otpInput: { fontSize: 22, letterSpacing: 8, fontWeight: '600' },
+  otpInput: { fontSize: 22, letterSpacing: 8, fontFamily: fonts.semibold },
   resendRow: { alignItems: 'center' },
-  link: { ...typography.small, color: colors.primary, fontWeight: '600' },
+  link: { ...typography.small, color: colors.primary, fontFamily: fonts.semibold },
   muted: { ...typography.small, color: colors.textMuted },
 });

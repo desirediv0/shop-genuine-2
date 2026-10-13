@@ -3,6 +3,7 @@ import Razorpay from "razorpay";
 import { prisma } from "../config/db.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponsive } from "../utils/ApiResponsive.js";
+import { logger } from "../utils/logger.js";
 import { sendOrderStatusPush } from "../utils/pushNotification.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import sendEmail from "../utils/sendEmail.js";
@@ -12,6 +13,23 @@ import { processReferralReward } from "./referral.controller.js";
 import { decrypt } from "../utils/encryption.js";
 import { processOrderForShipping } from "../utils/shiprocket.js";
 
+
+/**
+ * The image to freeze into an OrderItem's snapshot.
+ *
+ * A variant image is preferred because it shows the exact thing bought, but
+ * most of the catalogue's images hang off the product rather than the variant,
+ * and `Product` has no scalar `image` column — so a variant-only lookup stored
+ * `null` for almost every order and left order history with blank thumbnails.
+ */
+function snapshotImage(variant) {
+  const image =
+    variant.images?.find((img) => img.isPrimary) ||
+    variant.images?.[0] ||
+    variant.product?.images?.find((img) => img.isPrimary) ||
+    variant.product?.images?.[0];
+  return image ? getFileUrl(image.url) : null;
+}
 
 async function getPaymentGatewayConfig(userId = null, gateway = "RAZORPAY") {
 
@@ -30,12 +48,30 @@ async function getPaymentGatewayConfig(userId = null, gateway = "RAZORPAY") {
   }
 
   if (!paymentSettings) {
+    // Fallback for customers with no gateway row of their own. `findFirst` with
+    // no ordering is non-deterministic, so with two active rows the merchant
+    // account that receives the money would be whatever Postgres happened to
+    // return — order it so the choice is stable and predictable.
     paymentSettings = await prisma.paymentGatewaySetting.findFirst({
       where: {
         gateway: gateway.toUpperCase(),
         isActive: true,
       },
+      orderBy: { createdAt: "asc" },
     });
+
+    const activeCount = await prisma.paymentGatewaySetting.count({
+      where: { gateway: gateway.toUpperCase(), isActive: true },
+    });
+
+    if (activeCount > 1) {
+      // Worth shouting about: money is being routed by a tie-break rather than
+      // by an explicit choice.
+      logger(
+        "WARN",
+        `${activeCount} active ${gateway.toUpperCase()} gateway rows exist; using the oldest (${paymentSettings?.id}). Deactivate the ones you do not want to receive payments.`
+      );
+    }
   }
 
   if (!paymentSettings || !paymentSettings.isActive) {
@@ -903,11 +939,10 @@ export const paymentVerification = asyncHandler(async (req, res) => {
         const subtotal = price * item.quantity;
 
         // Create immutable product snapshot
-        const primaryImage = variant.images?.find(img => img.isPrimary) || variant.images?.[0];
         const productSnapshot = {
           name: variant.product.name,
           slug: variant.product.slug,
-          image: primaryImage ? getFileUrl(primaryImage.url) : (variant.product.image ? getFileUrl(variant.product.image) : null),
+          image: snapshotImage(variant),
           sku: variant.sku,
           brand: variant.product.brand ? { id: variant.product.brand.id, name: variant.product.brand.name } : null,
           categories: (variant.product.categories || []).map(pc => ({ id: pc.categoryId, name: pc.category?.name })),
@@ -1738,7 +1773,11 @@ export const phonePeCallback = asyncHandler(async (req, res) => {
         include: {
           productVariant: {
             include: {
-              product: true,
+              product: {
+                include: {
+                  images: { where: { isPrimary: true }, take: 1 },
+                },
+              },
             },
           },
           bundleCampaign: {
@@ -1864,11 +1903,10 @@ export const phonePeCallback = asyncHandler(async (req, res) => {
           const price = parseFloat(variant.salePrice || variant.price);
 
           // Create immutable product snapshot
-          const primaryImage = variant.images?.find(img => img.isPrimary) || variant.images?.[0];
           const productSnapshot = {
             name: variant.product.name,
             slug: variant.product.slug,
-            image: primaryImage ? getFileUrl(primaryImage.url) : (variant.product.image ? getFileUrl(variant.product.image) : null),
+            image: snapshotImage(variant),
             sku: variant.sku,
             brand: variant.product.brand ? { id: variant.product.brand.id, name: variant.product.brand.name } : null,
             categories: (variant.product.categories || []).map(pc => ({ id: pc.categoryId, name: pc.category?.name })),
@@ -2398,11 +2436,10 @@ export const createCashOrder = asyncHandler(async (req, res) => {
         const variant = item.productVariant;
 
         // Create immutable product snapshot
-        const primaryImage = variant.images?.find(img => img.isPrimary) || variant.images?.[0];
         const productSnapshot = {
           name: variant.product.name,
           slug: variant.product.slug,
-          image: primaryImage ? getFileUrl(primaryImage.url) : (variant.product.image ? getFileUrl(variant.product.image) : null),
+          image: snapshotImage(variant),
           sku: variant.sku,
           brand: variant.product.brand ? { id: variant.product.brand.id, name: variant.product.brand.name } : null,
           categories: (variant.product.categories || []).map(pc => ({ id: pc.categoryId, name: pc.category?.name })),

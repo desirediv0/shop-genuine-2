@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme';
+import { Icon } from './Icon';
 
 interface Props {
   value: number;
@@ -19,12 +20,15 @@ export function QuantityStepper({ value, min = 1, max = 99, disabled, onChange }
       <Pressable
         onPress={() => canDecrease && onChange(value - 1)}
         disabled={!canDecrease}
-        hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel="Decrease quantity"
-        style={[styles.btn, !canDecrease && styles.btnDisabled]}
+        style={({ pressed }) => [styles.btn, pressed && canDecrease && styles.pressed]}
       >
-        <Text style={styles.sign}>−</Text>
+        <Icon
+          name="minus"
+          size={16}
+          color={canDecrease ? colors.text : colors.textMuted}
+        />
       </Pressable>
 
       <Text style={styles.value} accessibilityLabel={`Quantity ${value}`}>
@@ -34,12 +38,11 @@ export function QuantityStepper({ value, min = 1, max = 99, disabled, onChange }
       <Pressable
         onPress={() => canIncrease && onChange(value + 1)}
         disabled={!canIncrease}
-        hitSlop={8}
         accessibilityRole="button"
         accessibilityLabel="Increase quantity"
-        style={[styles.btn, !canIncrease && styles.btnDisabled]}
+        style={({ pressed }) => [styles.btn, pressed && canIncrease && styles.pressed]}
       >
-        <Text style={styles.sign}>+</Text>
+        <Icon name="plus" size={16} color={canIncrease ? colors.text : colors.textMuted} />
       </Pressable>
     </View>
   );
@@ -49,25 +52,24 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+    backgroundColor: colors.surfaceAlt,
     borderRadius: radius.pill,
-    overflow: 'hidden',
     alignSelf: 'flex-start',
+    padding: 3,
   },
   btn: {
     width: 34,
     height: 34,
+    borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.backgroundAlt,
+    backgroundColor: colors.surface,
   },
-  btnDisabled: { opacity: 0.4 },
-  sign: { ...typography.h3, color: colors.text, lineHeight: 20 },
+  pressed: { backgroundColor: colors.border },
   value: {
     ...typography.bodyStrong,
     color: colors.text,
-    minWidth: 36,
+    minWidth: 40,
     textAlign: 'center',
     paddingHorizontal: spacing.xs,
   },

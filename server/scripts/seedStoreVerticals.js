@@ -21,14 +21,23 @@ async function main() {
   const assignSlug = assignArg ? assignArg.split("=")[1] : null;
 
   for (const v of VERTICALS) {
-    const existing = await prisma.storeVertical.findUnique({ where: { slug: v.slug } });
+    // Both name and slug are unique. A vertical created by hand in the admin
+    // may already hold this name under a different slug (e.g. "genuine-grocery"
+    // rather than "grocery"), so match on either — looking up by slug alone
+    // would try to insert a duplicate name and fail the unique constraint.
+    const existing = await prisma.storeVertical.findFirst({
+      where: { OR: [{ slug: v.slug }, { name: v.name }] },
+    });
 
     if (existing) {
       await prisma.storeVertical.update({
-        where: { slug: v.slug },
+        where: { id: existing.id },
+        // Keep whatever slug and image the admin already chose; only ensure the
+        // vertical is named, ordered and active.
         data: { name: v.name, order: v.order, isActive: true },
       });
-      console.log(`updated  ${v.name}`);
+      const note = existing.slug !== v.slug ? ` (kept existing slug "${existing.slug}")` : "";
+      console.log(`updated  ${v.name}${note}`);
     } else {
       await prisma.storeVertical.create({
         // `image` is required by the schema; the admin dashboard replaces it

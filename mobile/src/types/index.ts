@@ -52,11 +52,38 @@ export interface ProductSummary {
   flashSale?: FlashSaleInfo | null;
 }
 
+/**
+ * The single-product endpoint returns more than the list does. These are the
+ * admin-editable fields the product page shows when they are filled in; all are
+ * optional because most products leave them empty.
+ */
+export interface ProductDetail extends ProductSummary {
+  shippingReturn?: string | null;
+  legalInfo?: string | null;
+  lifestyleImage?: string | null;
+  lifestyleDescription?: string | null;
+}
+
 export interface FlashSaleInfo {
   id: string;
   name: string;
   discountPercent?: number;
   endsAt?: string;
+}
+
+/**
+ * A merchandising row on the home screen, managed in the admin under Product
+ * Sections. Membership lives in ProductSectionItem — it is NOT the same thing
+ * as the `Product.featured` boolean.
+ */
+export interface ProductSection {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  displayOrder: number;
+  maxProducts: number;
 }
 
 export interface Pagination {
@@ -69,14 +96,26 @@ export interface Pagination {
 export interface ProductListResponse {
   products: ProductSummary[];
   pagination: Pagination;
+  /**
+   * Only `/public/categories/:slug/products` returns this. It carries the
+   * category's real name — without it the screen can only de-slug the URL,
+   * which turned "Biscuits & Cookies" into "biscuits  cookies".
+   */
+  category?: Category;
 }
 
 export interface Category {
   id: string;
   name: string;
   slug: string;
+  /** Often null — the admin does not require category artwork. */
   image?: string | null;
   productCount?: number;
+  /**
+   * Prisma relation count. Scoped to the selected sub-brand when the request
+   * carries storeVerticalId, so it reflects what the shopper would actually see.
+   */
+  _count?: { products: number };
   subCategories?: SubCategory[];
 }
 
@@ -102,11 +141,16 @@ export interface StoreVertical {
   order: number;
 }
 
+/**
+ * Matches the Banner model: there is no flat `image` field — the server returns
+ * separate desktop and mobile artwork, and either can be null.
+ */
 export interface Banner {
   id: string;
   title?: string | null;
   subtitle?: string | null;
-  image: string;
+  desktopImage: string | null;
+  mobileImage: string | null;
   link?: string | null;
 }
 
@@ -163,11 +207,23 @@ export type OrderStatus =
   | 'RETURN_APPROVED'
   | 'RETURN_COMPLETED';
 
+/**
+ * Order items arrive in two shapes. `/payment/orders` flattens them to `name`
+ * and `image`; `/users/orders/:id` returns the snapshot fields (`productName`,
+ * `productImage`) plus the live `product`. Read them through `orderItemName`
+ * and `orderItemImage` in `utils/format` rather than any single field.
+ */
 export interface OrderItem {
   id: string;
   productId: string;
-  name: string;
-  image: string | null;
+  name?: string;
+  image?: string | null;
+  productName?: string;
+  productImage?: string | null;
+  product?: {
+    name?: string;
+    images?: { url: string; isPrimary?: boolean }[];
+  };
   price: Numeric;
   quantity: number;
   subtotal: Numeric;
@@ -187,7 +243,13 @@ export interface Order {
   codCharge?: Numeric;
   total: Numeric;
   couponCode?: string | null;
+  /**
+   * `/payment/orders` reports the specific instrument ("CARD", "CASH"); the
+   * detail endpoint reports the gateway ("RAZORPAY") and carries the instrument
+   * on `razorpayPayment`. Read both through `orderPaymentLabel`.
+   */
   paymentMethod: string;
+  razorpayPayment?: { paymentMethod?: string | null } | null;
   paymentStatus?: string;
   items: OrderItem[];
   shippingAddress?: Address | null;

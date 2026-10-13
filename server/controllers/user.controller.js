@@ -3,6 +3,7 @@ import { ApiResponsive } from "../utils/ApiResponsive.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { prisma } from "../config/db.js";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import sendEmail from "../utils/sendEmail.js";
 import {
@@ -428,6 +429,26 @@ export const verifyOtp = asyncHandler(async (req, res, next) => {
 });
 
 // Forgot password - request reset
+/**
+ * A fingerprint of the user's current password hash, embedded in the reset token.
+ *
+ * The reset token is a stateless JWT, so on its own it stays usable for its full
+ * hour — a forwarded or leaked reset email could be replayed to change the
+ * password again, and any older reset link still worked after a successful
+ * reset. Binding the token to the hash makes it single-use without a migration:
+ * the moment the password changes the hash changes, so the fingerprint no longer
+ * matches and every outstanding link for that account dies. It also invalidates
+ * pending links when the user changes their password by other means.
+ *
+ * Only a fingerprint is carried, never the hash itself.
+ */
+const passwordFingerprint = (passwordHash) =>
+  crypto
+    .createHash("sha256")
+    .update(String(passwordHash ?? ""))
+    .digest("hex")
+    .slice(0, 16);
+
 export const forgotPassword = asyncHandler(async (req, res, next) => {
   const { email } = req.body;
 
@@ -457,7 +478,7 @@ export const forgotPassword = asyncHandler(async (req, res, next) => {
 
   // Generate JWT reset token (no DB storage required)
   const resetToken = jwt.sign(
-    { id: user.id, purpose: "pwdreset" },
+    { id: user.id, purpose: "pwdreset", pv: passwordFingerprint(user.password) },
     process.env.RESET_TOKEN_SECRET || process.env.ACCESS_JWT_SECRET,
     { expiresIn: "1h" }
   );
@@ -516,6 +537,16 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
 
     if (!user) {
       throw new ApiError(404, "User not found");
+    }
+
+    // Tokens issued before this password was last changed are spent. Links
+    // minted before this check existed carry no `pv` and are still honoured, so
+    // reset emails already in inboxes keep working.
+    if (decoded.pv && decoded.pv !== passwordFingerprint(user.password)) {
+      throw new ApiError(
+        400,
+        "This reset link has already been used. Please request a new one."
+      );
     }
 
     // Hash new password

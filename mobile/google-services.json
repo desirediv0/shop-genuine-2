@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237028612102",
+    "project_id": "shopgenuine-cf0aa",
+    "storage_bucket": "shopgenuine-cf0aa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237028612102:android:df74cb6cc99b961e224b87",
+        "android_client_info": {
+          "package_name": "com.shopgenuine.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVkXH3RyKDf07M4bHJjjGZaBrpcckt3eE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
