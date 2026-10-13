@@ -117,7 +117,6 @@ const run = async () => {
         description: p.description,
         isActive: p.isActive,
         visibility: p.visibility,
-        gender: p.gender,
         featured: p.featured,
         ourProduct: p.ourProduct,
         hasVariants: p.hasVariants,
