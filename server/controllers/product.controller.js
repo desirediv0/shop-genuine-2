@@ -18,7 +18,6 @@ export const getAllProducts = asyncHandler(async (req, res) => {
     maxPrice,
     featured,
     productType,
-    gender,
     storeVerticalId,
     color, // For backward compatibility
     size, // For backward compatibility
@@ -89,10 +88,6 @@ export const getAllProducts = asyncHandler(async (req, res) => {
       productType: {
         array_contains: [productType],
       },
-    }),
-    // Filter by gender
-    ...(gender && ["MEN", "WOMEN", "UNISEX"].includes(gender) && {
-      gender,
     }),
     // Filter by store vertical
     ...(storeVerticalId && { storeVerticalId }),
@@ -346,7 +341,6 @@ export const getAllProducts = asyncHandler(async (req, res) => {
           }))
           : [],
       })),
-      gender: product.gender,
       basePrice,
       hasSale,
       regularPrice,
@@ -401,9 +395,6 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
       brand: true,
       images: {
         orderBy: { isPrimary: "desc" },
-      },
-      notes: {
-        orderBy: { order: "asc" },
       },
       variants: {
         where: { isActive: true },
@@ -505,11 +496,6 @@ export const getProductBySlug = asyncHandler(async (req, res) => {
       ...image,
       url: getFileUrl(image.url),
     })),
-    notes: product.notes.map((note) => ({
-      ...note,
-      image: getFileUrl(note.image),
-    })),
-    lifestyleImage: product.lifestyleImage ? getFileUrl(product.lifestyleImage) : null,
     // Format videos from video reels
     videos,
     // Format variants with proper image URLs and attributes
@@ -1624,9 +1610,6 @@ export const getSecretProductBySlug = asyncHandler(async (req, res) => {
       images: {
         orderBy: { isPrimary: "desc" },
       },
-      notes: {
-        orderBy: { order: "asc" },
-      },
       variants: {
         where: { isActive: true },
         include: {
@@ -1734,11 +1717,6 @@ export const getSecretProductBySlug = asyncHandler(async (req, res) => {
       ...image,
       url: getFileUrl(image.url),
     })),
-    notes: product.notes.map((note) => ({
-      ...note,
-      image: getFileUrl(note.image),
-    })),
-    lifestyleImage: product.lifestyleImage ? getFileUrl(product.lifestyleImage) : null,
     variants: formattedVariants,
     avgRating,
     reviewCount: product._count.reviews,

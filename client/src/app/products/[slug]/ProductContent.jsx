@@ -491,18 +491,9 @@ export default function ProductContent({ slug }) {
               <span className="text-[11px] uppercase tracking-[0.08em] font-medium mb-4" style={{ color: "#F97316" }}>{product.brand.name}</span>
             )}
 
-            {/* Title + Gender */}
+            {/* Title */}
             <div className="flex items-start gap-3 mb-4 flex-wrap">
               <h1 className="font-display text-3xl md:text-[2.6rem] leading-[1.1] tracking-tight" style={{ color: "#2A2A35" }}>{product.name}</h1>
-              {product.gender && (
-                <Link
-                  href={`/products?gender=${product.gender}`}
-                  className="mt-1.5 inline-flex items-center px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.06em] transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: "#1D4ED8", color: "#fff", borderRadius: "16px" }}
-                >
-                  {product.gender}
-                </Link>
-              )}
             </div>
 
             {/* Rating */}
@@ -510,29 +501,6 @@ export default function ProductContent({ slug }) {
               <div className="flex gap-0.5">{[1, 2, 3, 4, 5].map(i => <IconStar key={i} className="h-3.5 w-3.5" style={{ color: "#F97316" }} fill="#F97316" stroke={0} />)}</div>
               <span className="text-[11px] tracking-[0.03em] uppercase" style={{ color: "#726A78" }}>({product.reviewCount || 0} reviews)</span>
             </div>
-
-            {/* Product Notes */}
-            {product.notes && product.notes.length > 0 && (
-              <div className="mb-7">
-                <p className="text-[11px] font-medium uppercase tracking-[0.08em] mb-4" style={{ color: "#2A2A35" }}>Notes</p>
-                <div className="flex flex-wrap gap-4">
-                  {product.notes.map((note) => (
-                    <div key={note.id} className="flex flex-col items-center gap-2">
-                      <div className="relative w-16 h-16 overflow-hidden" style={{ borderRadius: "18px" }}>
-                        <Image
-                          src={getImageUrl(note.image)}
-                          alt={note.title || "Note"}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      </div>
-                      <span className="text-[11px] font-normal tracking-wide" style={{ color: "#726A78" }}>{note.title}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Price */}
             <div className="mb-7 pb-7" style={{ borderBottom: "1px solid #F1E1E9" }}><PriceDisplay /></div>
@@ -755,15 +723,10 @@ export default function ProductContent({ slug }) {
         <div className="max-w-4xl space-y-0" style={{ borderTop: "1px solid #F1E1E9" }}>
           {[
             { key: "fragranceNotes", label: "Fragrance Notes" },
-            { key: "feelings", label: "Feelings" },
-            { key: "occasions", label: "Occasions" },
-            { key: "behindThePerfume", label: "Behind the Perfume" },
             { key: "shippingReturn", label: "Shipping & Return" },
-            { key: "legalInfo", label: "Legal Information" },
           ].map(({ key, label }) => {
             const content = product[key];
-            const hasNotesList = key === "fragranceNotes" && product.notes && product.notes.length > 0;
-            if (!content && !hasNotesList) return null;
+            if (!content) return null;
             const isOpen = !!openSections[key];
             return (
               <div key={key} style={{ borderBottom: "1px solid #F1E1E9" }}>
@@ -782,26 +745,6 @@ export default function ProductContent({ slug }) {
                   className="overflow-hidden transition-all duration-500"
                   style={{ maxHeight: isOpen ? "1200px" : "0", opacity: isOpen ? 1 : 0, marginBottom: isOpen ? "24px" : "0" }}
                 >
-                  {key === "fragranceNotes" && product.notes && product.notes.length > 0 && (
-                    <div className="mb-6">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 py-2">
-                        {product.notes.map((note) => (
-                          <div key={note.id || note.title} className="flex flex-col items-center p-3 rounded-xl border border-line/60 bg-ivory/40 hover:border-gold/50 transition-all text-center group">
-                            <div className="relative w-16 h-16 sm:w-20 sm:h-20 overflow-hidden mb-2 rounded-xl shadow-sm">
-                              <Image
-                                src={getImageUrl(note.image)}
-                                alt={note.title || "Fragrance Note"}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                sizes="80px"
-                              />
-                            </div>
-                            <span className="text-[11px] font-medium tracking-wider uppercase text-noir">{note.title}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   {content && (
                     <div className="text-[14px] leading-relaxed font-normal tracking-wide" style={{ color: "#726A78" }} dangerouslySetInnerHTML={{ __html: content }} />
                   )}
@@ -857,34 +800,6 @@ export default function ProductContent({ slug }) {
           <ReviewSection product={product} />
         </div>
       </div>
-
-      {/* Lifestyle Section */}
-      {(product.lifestyleImage || product.lifestyleDescription) && (
-        <div className="max-w-7xl mx-auto px-5 md:px-8 lg:px-10 mb-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-14 items-center">
-            {product.lifestyleImage && (
-              <div className="relative aspect-[4/3] overflow-hidden" style={{ borderRadius: "16px" }}>
-                <Image
-                  src={getImageUrl(product.lifestyleImage)}
-                  alt={`${product.name} lifestyle`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
-              </div>
-            )}
-            {product.lifestyleDescription && (
-              <div className={product.lifestyleImage ? "" : "md:col-span-2 max-w-2xl mx-auto text-center"}>
-                <div
-                  className="text-[14px] leading-relaxed font-normal tracking-wide"
-                  style={{ color: "#726A78" }}
-                  dangerouslySetInnerHTML={{ __html: product.lifestyleDescription }}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Categories Strip */}
       <CategoriesCarousel />

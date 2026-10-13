@@ -26,7 +26,7 @@ import {
   Eye,
   Truck,
   Video,
-  Shield,
+
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SafeRender } from "@/components/SafeRender";
@@ -411,6 +411,8 @@ export default function DashboardLayout() {
                   Action.CREATE
                 )}
               />
+              {/* Hidden: Cult Subscribers */}
+              {/*
               <NavItem
                 href="/newsletter-subscribers"
                 icon={<Users className="h-[1.125rem] w-[1.125rem]" />}
@@ -421,6 +423,7 @@ export default function DashboardLayout() {
                   Action.READ
                 )}
               />
+              */}
 
               {/* Bundle Management - Single Item (Hidden) */}
               {/* <NavItem
@@ -434,7 +437,8 @@ export default function DashboardLayout() {
                 )}
               /> */}
 
-              {/* Secret Collection */}
+              {/* Hidden: Secret Collection */}
+              {/*
               <CollapsibleNavItem
                 title="Secret Collection"
                 icon={<Shield className="h-[1.125rem] w-[1.125rem]" />}
@@ -458,6 +462,7 @@ export default function DashboardLayout() {
                   },
                 ]}
               />
+              */}
 
               {/* Fragrance Finder - Collapsible (Hidden as requested) */}
               {/* <CollapsibleNavItem
@@ -945,6 +950,8 @@ export default function DashboardLayout() {
                   Action.CREATE
                 )}
               />
+              {/* Hidden: Cult Subscribers */}
+              {/*
               <NavItem
                 href="/newsletter-subscribers"
                 icon={<Users className="h-[1.125rem] w-[1.125rem]" />}
@@ -956,6 +963,7 @@ export default function DashboardLayout() {
                   Action.READ
                 )}
               />
+              */}
 
               {/* Bundle Management - Single Item (Hidden) */}
               {/* <NavItem

@@ -205,8 +205,6 @@ export function ProductForm({
     ourProduct: false,
     productType: [] as string[],
     isActive: true,
-    visibility: "PUBLIC" as string,
-    gender: "UNISEX" as string,
     storeVerticalId: "" as string,
     // SEO fields
     metaTitle: "",
@@ -215,12 +213,7 @@ export function ProductForm({
     tags: [] as string[],
     // Rich text sections
     fragranceNotes: "",
-    feelings: "",
-    occasions: "",
-    behindThePerfume: "",
     shippingReturn: "",
-    legalInfo: "",
-    lifestyleDescription: "",
     // single brand association
     brandId: "",
     topBrandIds: [] as string[],
@@ -232,15 +225,6 @@ export function ProductForm({
     shippingHeight: "",
     shippingWeight: "",
   });
-
-  // Product notes state
-  const [productNotes, setProductNotes] = useState<
-    { id?: string; title: string; image: string; file?: File; isNew?: boolean }[]
-  >([]);
-
-  // Lifestyle image state
-  const [lifestyleImageFile, setLifestyleImageFile] = useState<File | null>(null);
-  const [lifestyleImagePreview, setLifestyleImagePreview] = useState<string>("");
 
   // Product videos state
   const [productVideos, setProductVideos] = useState<
@@ -299,12 +283,7 @@ export function ProductForm({
   // Section editors state
   const [sectionContents, setSectionContents] = useState<Record<string, string>>({
     fragranceNotes: "",
-    feelings: "",
-    occasions: "",
-    behindThePerfume: "",
     shippingReturn: "",
-    legalInfo: "",
-    lifestyleDescription: "",
   });
 
   // Memoize editor config to prevent re-renders when other state changes
@@ -747,18 +726,8 @@ export function ProductForm({
             // Set section editor contents
             setSectionContents({
               fragranceNotes: productData.fragranceNotes || "",
-              feelings: productData.feelings || "",
-              occasions: productData.occasions || "",
-              behindThePerfume: productData.behindThePerfume || "",
               shippingReturn: productData.shippingReturn || "",
-              legalInfo: productData.legalInfo || "",
-              lifestyleDescription: productData.lifestyleDescription || "",
             });
-
-            // Set lifestyle image preview for edit mode
-            if (productData.lifestyleImage) {
-              setLifestyleImagePreview(productData.lifestyleImage);
-            }
 
             setProduct({
               name: productData.name || "",
@@ -812,8 +781,6 @@ export function ProductForm({
                 productData.isActive !== undefined
                   ? productData.isActive
                   : true,
-              visibility: productData.visibility || "PUBLIC",
-              gender: productData.gender || "UNISEX",
               storeVerticalId:
                 productData.storeVertical?.id || productData.storeVerticalId || "",
               // SEO fields
@@ -823,12 +790,7 @@ export function ProductForm({
               tags: productData.tags || [],
               // Rich text sections
               fragranceNotes: productData.fragranceNotes || "",
-              feelings: productData.feelings || "",
-              occasions: productData.occasions || "",
-              behindThePerfume: productData.behindThePerfume || "",
               shippingReturn: productData.shippingReturn || "",
-              legalInfo: productData.legalInfo || "",
-              lifestyleDescription: productData.lifestyleDescription || "",
               topBrandIds: productData.topBrandIds || [],
               newBrandIds: productData.newBrandIds || [],
               hotBrandIds: productData.hotBrandIds || [],
@@ -838,15 +800,6 @@ export function ProductForm({
               shippingHeight: productData.variants?.[0]?.shippingHeight?.toString() || "",
               shippingWeight: productData.variants?.[0]?.shippingWeight?.toString() || "",
             });
-
-            // Set product notes for edit mode
-            setProductNotes(
-              (productData.notes || []).map((note: any) => ({
-                id: note.id,
-                title: note.title || "",
-                image: note.image || "",
-              }))
-            );
 
             // Set selected categories (for radio buttons, not checkboxes)
             setSelectedCategories(productCategories);
@@ -989,36 +942,6 @@ export function ProductForm({
     } else {
       setProduct((prev) => ({ ...prev, [name]: value }));
     }
-  };
-
-  // Product notes helpers
-  const handleAddNote = () => {
-    setProductNotes((prev) => [...prev, { title: "", image: "", isNew: true }]);
-  };
-
-  const handleRemoveNote = (index: number) => {
-    setProductNotes((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleNoteTitleChange = (index: number, title: string) => {
-    setProductNotes((prev) =>
-      prev.map((note, i) => (i === index ? { ...note, title } : note))
-    );
-  };
-
-  const handleNoteImageChange = (index: number, file: File | null) => {
-    if (!file) return;
-    const MAX_SIZE = 100 * 1024 * 1024; // 100MB
-    if (file.size > MAX_SIZE) {
-      toast.error(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 100MB.`);
-      return;
-    }
-    const imageUrl = URL.createObjectURL(file);
-    setProductNotes((prev) =>
-      prev.map((note, i) =>
-        i === index ? { ...note, file, image: imageUrl, isNew: true } : note
-      )
-    );
   };
 
   // Handle attribute value selection
@@ -1229,23 +1152,11 @@ export function ProductForm({
       formData.append("ourProduct", String(product.ourProduct));
       formData.append("productType", JSON.stringify(product.productType));
       formData.append("isActive", String(product.isActive));
-      formData.append("visibility", product.visibility);
-      formData.append("gender", product.gender || "UNISEX");
       formData.append("storeVerticalId", product.storeVerticalId || "");
       formData.append("hasVariants", String(hasVariants));
       // Add rich text sections (from sectionContents which JoditEditor updates)
       formData.append("fragranceNotes", sectionContents.fragranceNotes || "");
-      formData.append("feelings", sectionContents.feelings || "");
-      formData.append("occasions", sectionContents.occasions || "");
-      formData.append("behindThePerfume", sectionContents.behindThePerfume || "");
       formData.append("shippingReturn", sectionContents.shippingReturn || "");
-      formData.append("legalInfo", sectionContents.legalInfo || "");
-      formData.append("lifestyleDescription", sectionContents.lifestyleDescription || "");
-
-      // Add lifestyle image if selected
-      if (lifestyleImageFile) {
-        formData.append("lifestyleImage", lifestyleImageFile);
-      }
 
       // Add SEO fields
       formData.append("metaTitle", product.metaTitle || "");
@@ -1382,31 +1293,6 @@ export function ProductForm({
       formData.append("topBrandIds", JSON.stringify(product.topBrandIds || []));
       formData.append("newBrandIds", JSON.stringify(product.newBrandIds || []));
       formData.append("hotBrandIds", JSON.stringify(product.hotBrandIds || []));
-
-      // Add product notes data and files
-      // Validate notes - new notes must have images
-      const notesWithoutImage = productNotes.filter(
-        (note) => !note.id && !note.file && !note.image
-      );
-      if (notesWithoutImage.length > 0) {
-        toast.error(
-          `${notesWithoutImage.length} note(s) have no image and will be skipped. Please add images to all notes.`
-        );
-      }
-
-      const notesForSubmit = productNotes.map((note, index) => ({
-        id: note.id,
-        title: note.title,
-        order: index,
-        // Existing image URL is only sent for notes without a new file
-        image: !note.file ? note.image : undefined,
-      }));
-      formData.append("notes", JSON.stringify(notesForSubmit));
-      productNotes.forEach((note, index) => {
-        if (note.file) {
-          formData.append(`noteImages_${index}`, note.file);
-        }
-      });
 
       let response;
       let savedProductId = productId;
@@ -2174,39 +2060,6 @@ export function ProductForm({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Label htmlFor="visibility" className="text-sm font-medium">Visibility</Label>
-                    <select
-                      id="visibility"
-                      name="visibility"
-                      value={product.visibility}
-                      onChange={(e) =>
-                        setProduct((prev) => ({ ...prev, visibility: e.target.value }))
-                      }
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="PUBLIC">Public Product</option>
-                      <option value="SECRET">Secret Collection</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="gender" className="text-sm font-medium">Gender</Label>
-                    <select
-                      id="gender"
-                      name="gender"
-                      value={product.gender}
-                      onChange={(e) =>
-                        setProduct((prev) => ({ ...prev, gender: e.target.value }))
-                      }
-                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="MEN">Men</option>
-                      <option value="WOMEN">Women</option>
-                      <option value="UNISEX">Unisex</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-2">
                     <Label htmlFor="storeVerticalId" className="text-sm font-medium">Store / Vertical</Label>
                     <select
                       id="storeVerticalId"
@@ -2499,108 +2352,6 @@ export function ProductForm({
             </div>
           )}
 
-          {/* Product Notes Section */}
-          <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-            <div className="flex items-center justify-between border-b pb-2">
-              <h2 className="text-xl font-semibold">
-                Product Notes
-                <span className="ml-2 text-sm font-normal text-muted-foreground">
-                  ({productNotes.length}/20)
-                </span>
-              </h2>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddNote}
-                disabled={productNotes.length >= 20}
-              >
-                <Plus className="h-4 w-4 mr-1" /> Add Note
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Add note images with labels (e.g., Mandarin, Pear, Orange Blossom). These will be displayed on the product page. Max 20 notes, each image max 100MB.
-            </p>
-            {productNotes.length >= 20 && (
-              <p className="text-xs text-amber-600 font-medium">
-                Maximum limit of 20 notes reached. Remove a note to add a new one.
-              </p>
-            )}
-
-            {productNotes.length === 0 && (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                No notes added yet. Click &ldquo;Add Note&rdquo; to add product notes.
-              </p>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {productNotes.map((note, index) => (
-                <div key={index} className="space-y-3 rounded-md border p-3 bg-background">
-                  <div className="space-y-2">
-                    <Label htmlFor={`note-title-${index}`}>Note Title</Label>
-                    <Input
-                      id={`note-title-${index}`}
-                      value={note.title}
-                      onChange={(e) => handleNoteTitleChange(index, e.target.value)}
-                      placeholder="e.g., Mandarin"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Note Image</Label>
-                    {note.image ? (
-                      <div className="relative aspect-square rounded-md overflow-hidden border">
-                        <img
-                          src={note.image}
-                          alt={note.title || `Note ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          className="absolute top-1 right-1 h-6 w-6"
-                          onClick={() =>
-                            setProductNotes((prev) =>
-                              prev.map((n, i) =>
-                                i === index ? { ...n, image: "", file: undefined } : n
-                              )
-                            )
-                          }
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center aspect-square rounded-md border border-dashed cursor-pointer hover:bg-muted transition-colors">
-                        <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
-                        <span className="text-xs text-muted-foreground">Click to upload</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) =>
-                            handleNoteImageChange(index, e.target.files?.[0] || null)
-                          }
-                        />
-                      </label>
-                    )}
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => handleRemoveNote(index)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" /> Remove
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Product Details Sections */}
           <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
             <h2 className="text-xl font-semibold border-b pb-2">
@@ -2620,48 +2371,12 @@ export function ProductForm({
                 }}
               />
               <SectionEditor
-                label="Feelings"
-                value={sectionContents.feelings}
-                placeholder="Describe the feelings this fragrance evokes..."
-                onChange={(content) => {
-                  setSectionContents((prev) => ({ ...prev, feelings: content }));
-                  setProduct((prev) => ({ ...prev, feelings: content }));
-                }}
-              />
-              <SectionEditor
-                label="Occasions"
-                value={sectionContents.occasions}
-                placeholder="Describe suitable occasions..."
-                onChange={(content) => {
-                  setSectionContents((prev) => ({ ...prev, occasions: content }));
-                  setProduct((prev) => ({ ...prev, occasions: content }));
-                }}
-              />
-              <SectionEditor
-                label="Behind the Perfume"
-                value={sectionContents.behindThePerfume}
-                placeholder="Tell the story behind this perfume..."
-                onChange={(content) => {
-                  setSectionContents((prev) => ({ ...prev, behindThePerfume: content }));
-                  setProduct((prev) => ({ ...prev, behindThePerfume: content }));
-                }}
-              />
-              <SectionEditor
                 label="Shipping & Return"
                 value={sectionContents.shippingReturn}
                 placeholder="Enter shipping and return policy..."
                 onChange={(content) => {
                   setSectionContents((prev) => ({ ...prev, shippingReturn: content }));
                   setProduct((prev) => ({ ...prev, shippingReturn: content }));
-                }}
-              />
-              <SectionEditor
-                label="Legal Information"
-                value={sectionContents.legalInfo}
-                placeholder="Enter legal information..."
-                onChange={(content) => {
-                  setSectionContents((prev) => ({ ...prev, legalInfo: content }));
-                  setProduct((prev) => ({ ...prev, legalInfo: content }));
                 }}
               />
             </div>
@@ -2809,77 +2524,6 @@ export function ProductForm({
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Lifestyle Section */}
-          <div className="space-y-4 rounded-lg border p-4 bg-gray-50">
-            <h2 className="text-xl font-semibold border-b pb-2">
-              Lifestyle Section
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Add a large lifestyle image with a description. This will appear on the product page above &ldquo;You Might Also Like&rdquo;.
-            </p>
-
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Lifestyle Image</Label>
-                {lifestyleImagePreview ? (
-                  <div className="relative aspect-[4/3] rounded-md overflow-hidden border">
-                    <img
-                      src={lifestyleImagePreview}
-                      alt="Lifestyle preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-8 w-8"
-                      onClick={() => {
-                        setLifestyleImageFile(null);
-                        setLifestyleImagePreview("");
-                        setProduct((prev) => ({ ...prev, lifestyleImage: "" }));
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center aspect-[4/3] rounded-md border border-dashed cursor-pointer hover:bg-muted transition-colors">
-                    <ImageIcon className="h-10 w-10 text-muted-foreground mb-2" />
-                    <span className="text-sm text-muted-foreground">Click to upload lifestyle image</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        if (file) {
-                          setLifestyleImageFile(file);
-                          setLifestyleImagePreview(URL.createObjectURL(file));
-                        }
-                      }}
-                    />
-                  </label>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label>Lifestyle Description</Label>
-                <SectionEditor
-                  label=""
-                  value={sectionContents.lifestyleDescription}
-                  placeholder="Enter lifestyle description..."
-                  onChange={(content) => {
-                    setSectionContents((prev) => ({ ...prev, lifestyleDescription: content }));
-                    setProduct((prev) => ({ ...prev, lifestyleDescription: content }));
-                  }}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Rich text description shown next to the lifestyle image.
-                </p>
-              </div>
-            </div>
           </div>
 
           {/* SEO Section */}

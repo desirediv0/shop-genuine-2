@@ -40,110 +40,6 @@ const buildProductSeo = (name, description, metaTitle, metaDescription) => {
   };
 };
 
-// Helper to process product notes (create/update/delete) with S3 image handling
-const processProductNotes = async (tx, notesJson, productId, files, existingNotes = []) => {
-  let notes = [];
-  if (notesJson) {
-    try {
-      notes = typeof notesJson === "string" ? JSON.parse(notesJson) : notesJson;
-      if (!Array.isArray(notes)) notes = [];
-    } catch (e) {
-      console.error("Error parsing notes:", e);
-      notes = [];
-    }
-  }
-
-  const existingMap = new Map(existingNotes.map((n) => [n.id, n]));
-  const keptIds = new Set();
-  const skippedNotes = [];
-  const failedNotes = [];
-
-  // Group note image files by index (noteImages_0, noteImages_1, ...)
-  const noteImageFiles = {};
-  (files || []).forEach((file) => {
-    const match = file.fieldname.match(/^noteImages_(\d+)$/);
-    if (match) {
-      const idx = parseInt(match[1]);
-      if (!noteImageFiles[idx]) noteImageFiles[idx] = [];
-      noteImageFiles[idx].push(file);
-    }
-  });
-
-  const resultNotes = [];
-
-  for (let i = 0; i < notes.length; i++) {
-    const note = notes[i];
-    const noteFiles = noteImageFiles[i] || [];
-    const file = noteFiles[0];
-
-    if (note.id && existingMap.has(note.id)) {
-      // Existing note - update
-      keptIds.add(note.id);
-      const existing = existingMap.get(note.id);
-      let imageUrl = existing.image;
-
-      if (file) {
-        try {
-          await deleteFromS3(existing.image);
-          imageUrl = await processAndUploadImage(file, `products/${productId}/notes`);
-        } catch (e) {
-          console.error("Error updating note image:", e);
-          // Keep existing image if upload fails
-          imageUrl = existing.image;
-        }
-      }
-
-      const updated = await tx.productNote.update({
-        where: { id: note.id },
-        data: {
-          title: note.title || existing.title,
-          image: imageUrl,
-          order: note.order !== undefined ? note.order : existing.order,
-        },
-      });
-      resultNotes.push(updated);
-    } else {
-      // New note
-      if (!file) {
-        console.warn(`Note ${i} has no image, skipping`);
-        // Track skipped notes for response
-        skippedNotes.push({ index: i, title: note.title || `Note ${i + 1}` });
-        continue;
-      }
-      try {
-        const imageUrl = await processAndUploadImage(file, `products/${productId}/notes`);
-        const created = await tx.productNote.create({
-          data: {
-            productId,
-            title: note.title || "",
-            image: imageUrl,
-            order: note.order !== undefined ? note.order : i,
-          },
-        });
-        resultNotes.push(created);
-      } catch (e) {
-        console.error("Error creating note:", e);
-        // Track failed notes for response
-        failedNotes.push({ index: i, title: note.title || `Note ${i + 1}`, error: e.message });
-      }
-    }
-  }
-
-  // Delete notes that are no longer present
-  for (const [id, note] of existingMap) {
-    if (!keptIds.has(id)) {
-      try {
-        await deleteFromS3(note.image);
-        await tx.productNote.delete({ where: { id } });
-      } catch (e) {
-        console.error("Error deleting note:", e);
-      }
-    }
-  }
-
-  return { notes: resultNotes, skippedNotes, failedNotes };
-};
-
 // Get products by type (featured, bestseller, trending, new, etc.)
 export const getProductsByType = asyncHandler(async (req, res, next) => {
   const { productType } = req.params;
@@ -214,7 +110,6 @@ export const getProductsByType = asyncHandler(async (req, res, next) => {
     // Add image URLs and clean up the data
     return {
       ...product,
-      lifestyleImage: product.lifestyleImage ? getFileUrl(product.lifestyleImage) : null,
       // Extract categories into a more usable format
       categories: (product.categories || []).map((pc) => ({
         id: pc.category.id,
@@ -361,8 +256,6 @@ export const getProducts = asyncHandler(async (req, res, next) => {
     // Add image URLs and clean up the data
     return {
       ...product,
-      // Convert lifestyle image to full URL
-      lifestyleImage: product.lifestyleImage ? getFileUrl(product.lifestyleImage) : null,
       // Extract categories into a more usable format
       categories: (product.categories || []).map((pc) => ({
         id: pc.category.id,
@@ -467,9 +360,6 @@ export const getProductById = asyncHandler(async (req, res, next) => {
         },
         orderBy: { createdAt: "desc" },
       },
-      notes: {
-        orderBy: { order: "asc" },
-      },
     },
   });
 
@@ -480,8 +370,6 @@ export const getProductById = asyncHandler(async (req, res, next) => {
   // Format the response data
   const formattedProduct = {
     ...product,
-    // Convert lifestyle image to full URL
-    lifestyleImage: product.lifestyleImage ? getFileUrl(product.lifestyleImage) : null,
     // Extract categories into a more usable format
     categories: (product.categories || []).map((pc) => ({
       id: pc.category.id,
@@ -502,10 +390,6 @@ export const getProductById = asyncHandler(async (req, res, next) => {
     images: (product.images || []).map((image) => ({
       ...image,
       url: getFileUrl(image.url),
-    })),
-    notes: (product.notes || []).map((note) => ({
-      ...note,
-      image: getFileUrl(note.image),
     })),
     variants: (product.variants || []).map((variant) => {
       const formatted = formatVariantWithAttributes(variant);
@@ -573,16 +457,9 @@ export const createProduct = asyncHandler(async (req, res, next) => {
     keywords,
     ourProduct,
     visibility,
-    gender,
     storeVerticalId,
-    notes: notesJson,
     fragranceNotes,
-    feelings,
-    occasions,
-    behindThePerfume,
     shippingReturn,
-    legalInfo,
-    lifestyleDescription,
   } = req.body;
 
   // Validation checks with better error handling
@@ -674,8 +551,6 @@ export const createProduct = asyncHandler(async (req, res, next) => {
   }
 
   // Create the product with transaction to ensure variants are created as well
-  // Declare notesResult outside transaction so it's accessible after transaction completes
-  let notesResult;
   try {
     const result = await prisma.$transaction(async (prisma) => {
       // Create the product
@@ -742,18 +617,12 @@ export const createProduct = asyncHandler(async (req, res, next) => {
             : [],
           ourProduct: ourProduct === "true" || ourProduct === true,
           visibility: visibility === "SECRET" ? "SECRET" : "PUBLIC",
-          gender: ["MEN", "WOMEN", "UNISEX"].includes(gender) ? gender : "UNISEX",
           storeVerticalId:
             storeVerticalId === "" || storeVerticalId === "null" || !storeVerticalId
               ? null
               : storeVerticalId,
           fragranceNotes,
-          feelings,
-          occasions,
-          behindThePerfume,
           shippingReturn,
-          legalInfo,
-          lifestyleDescription,
         },
       });
 
@@ -1047,27 +916,6 @@ export const createProduct = asyncHandler(async (req, res, next) => {
         }
       }
 
-      // Upload lifestyle image if provided
-      let lifestyleImageUrl = null;
-      const lifestyleImageFile = req.files?.find(
-        (f) => f.fieldname === "lifestyleImage"
-      );
-      if (lifestyleImageFile) {
-        try {
-          lifestyleImageUrl = await processAndUploadImage(
-            lifestyleImageFile,
-            `products/${newProduct.id}/lifestyle`
-          );
-          console.log(`✅ Lifestyle image uploaded: ${lifestyleImageUrl}`);
-          await prisma.product.update({
-            where: { id: newProduct.id },
-            data: { lifestyleImage: lifestyleImageUrl },
-          });
-        } catch (error) {
-          console.error("❌ Error uploading lifestyle image:", error);
-        }
-      }
-
       // Upload product images if provided
       if (req.files && req.files.length > 0) {
         console.log(
@@ -1093,13 +941,11 @@ export const createProduct = asyncHandler(async (req, res, next) => {
           }
         }
 
-        // Filter only product images (skip variant, note, lifestyle images)
+        // Filter only product images (skip variant images)
         const productImageFiles = req.files.filter(
           (f) =>
             f.fieldname === "images" ||
-            (!f.fieldname.startsWith("variantImages_") &&
-              !f.fieldname.startsWith("noteImages_") &&
-              f.fieldname !== "lifestyleImage")
+            !f.fieldname.startsWith("variantImages_")
         );
 
         for (let i = 0; i < productImageFiles.length; i++) {
@@ -1211,15 +1057,6 @@ export const createProduct = asyncHandler(async (req, res, next) => {
         }
       }
 
-      // Process product notes
-      notesResult = await processProductNotes(
-        prisma,
-        notesJson,
-        newProduct.id,
-        req.files,
-        []
-      );
-
       // Return product with relations
       return await prisma.product.findUnique({
         where: { id: newProduct.id },
@@ -1230,9 +1067,6 @@ export const createProduct = asyncHandler(async (req, res, next) => {
             },
           },
           images: true,
-          notes: {
-            orderBy: { order: "asc" },
-          },
           variants: {
             include: {
               attributes: {
@@ -1255,8 +1089,6 @@ export const createProduct = asyncHandler(async (req, res, next) => {
     try {
       const formattedProduct = {
         ...result,
-        // Convert lifestyle image to full URL
-        lifestyleImage: result.lifestyleImage ? getFileUrl(result.lifestyleImage) : null,
         // Extract categories into a more usable format
         categories: (result.categories || []).map((pc) => ({
           id: pc.category.id,
@@ -1272,10 +1104,6 @@ export const createProduct = asyncHandler(async (req, res, next) => {
         images: (result.images || []).map((image) => ({
           ...image,
           url: getFileUrl(image.url),
-        })),
-        notes: (result.notes || []).map((note) => ({
-          ...note,
-          image: getFileUrl(note.image),
         })),
         variants: (result.variants || []).map((variant) => ({
           ...variant,
@@ -1299,8 +1127,6 @@ export const createProduct = asyncHandler(async (req, res, next) => {
           variantIdsWithOrders && variantIdsWithOrders.length > 0
             ? "Some variants could not be deleted because they have associated orders."
             : undefined,
-        // Include notes processing results
-        _notesResult: notesResult || { notes: [], skippedNotes: [], failedNotes: [] },
       };
 
       // Send success response
@@ -1369,16 +1195,9 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
     keywords,
     ourProduct,
     visibility,
-    gender,
     storeVerticalId,
-    notes: notesJson,
     fragranceNotes,
-    feelings,
-    occasions,
-    behindThePerfume,
     shippingReturn,
-    legalInfo,
-    lifestyleDescription,
   } = req.body;
 
   // Check if product exists
@@ -1391,9 +1210,6 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
         },
       },
       images: true,
-      notes: {
-        orderBy: { order: "asc" },
-      },
       variants: {
         include: {
           attributes: {
@@ -1525,8 +1341,6 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
   }
 
   // Update the product with transaction to handle variants and images
-  // Declare notesResult outside transaction so it's accessible after transaction completes
-  let notesResult;
   try {
     const result = await prisma.$transaction(async (prisma) => {
       const hasVariantsValue = hasVariants === "true" || hasVariants === true;
@@ -1594,9 +1408,6 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
           ...(visibility !== undefined && {
             visibility: visibility === "SECRET" ? "SECRET" : "PUBLIC",
           }),
-          ...(gender !== undefined && {
-            gender: ["MEN", "WOMEN", "UNISEX"].includes(gender) ? gender : "UNISEX",
-          }),
           ...(storeVerticalId !== undefined && {
             storeVerticalId:
               storeVerticalId === "" || storeVerticalId === "null"
@@ -1604,12 +1415,7 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
                 : storeVerticalId,
           }),
           ...(fragranceNotes !== undefined && { fragranceNotes }),
-          ...(feelings !== undefined && { feelings }),
-          ...(occasions !== undefined && { occasions }),
-          ...(behindThePerfume !== undefined && { behindThePerfume }),
           ...(shippingReturn !== undefined && { shippingReturn }),
-          ...(legalInfo !== undefined && { legalInfo }),
-          ...(lifestyleDescription !== undefined && { lifestyleDescription }),
         },
       });
 
@@ -2605,13 +2411,11 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
           }
         }
 
-        // Upload new images (filter out variant, note, lifestyle images)
+        // Upload new images (filter out variant images)
         const productImageFiles = req.files.filter(
           (f) =>
             f.fieldname === "images" ||
-            (!f.fieldname.startsWith("variantImages_") &&
-              !f.fieldname.startsWith("noteImages_") &&
-              f.fieldname !== "lifestyleImage")
+            !f.fieldname.startsWith("variantImages_")
         );
 
         for (let i = 0; i < productImageFiles.length; i++) {
@@ -2665,39 +2469,6 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
         }
       }
 
-      // Handle lifestyle image upload/update
-      const lifestyleImageFile = req.files?.find(
-        (f) => f.fieldname === "lifestyleImage"
-      );
-      if (lifestyleImageFile) {
-        try {
-          // Delete old lifestyle image if exists
-          if (product.lifestyleImage) {
-            await deleteFromS3(product.lifestyleImage);
-            console.log(`🗑️ Deleted old lifestyle image: ${product.lifestyleImage}`);
-          }
-          const lifestyleImageUrl = await processAndUploadImage(
-            lifestyleImageFile,
-            `products/${productId}/lifestyle`
-          );
-          await prisma.product.update({
-            where: { id: productId },
-            data: { lifestyleImage: lifestyleImageUrl },
-          });
-          console.log(`✅ Lifestyle image updated: ${lifestyleImageUrl}`);
-        } catch (error) {
-          console.error("❌ Error updating lifestyle image:", error);
-        }
-      }
-
-      // Process product notes
-      notesResult = await processProductNotes(
-        prisma,
-        notesJson,
-        productId,
-        req.files,
-        product.notes || []
-      );
 
       // Get the current state of variants to ensure we have the latest data
       const refreshedVariants = await prisma.$queryRaw`
@@ -2714,9 +2485,6 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
             },
           },
           images: true,
-          notes: {
-            orderBy: { order: "asc" },
-          },
           variants: {
             include: {
               attributes: {
@@ -2759,8 +2527,6 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
     // Format the response data
     const formattedProduct = {
       ...result,
-      // Convert lifestyle image to full URL
-      lifestyleImage: result.lifestyleImage ? getFileUrl(result.lifestyleImage) : null,
       // Extract categories into a more usable format
       categories: (result.categories || []).map((pc) => ({
         id: pc.category.id,
@@ -2777,10 +2543,6 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
         ...image,
         url: getFileUrl(image.url),
       })),
-      notes: (result.notes || []).map((note) => ({
-        ...note,
-        image: getFileUrl(note.image),
-      })),
       variants: formatVariantsWithAttributes(result.variants || []).map(
         (variant) => ({
           ...variant,
@@ -2794,8 +2556,6 @@ export const updateProduct = asyncHandler(async (req, res, next) => {
       ),
       // Include message when variants couldn't be deleted due to orders
       _message: undefined,
-      // Include notes processing results
-      _notesResult: notesResult || { notes: [], skippedNotes: [], failedNotes: [] },
     };
 
     res
@@ -2822,7 +2582,6 @@ export const deleteProduct = asyncHandler(async (req, res, next) => {
     where: { id: productId },
     include: {
       orderItems: { take: 1 },
-      notes: true,
       images: true,
       variants: {
         include: {
@@ -2868,16 +2627,6 @@ export const deleteProduct = asyncHandler(async (req, res, next) => {
 
   // === STEP 1: Delete all S3 images ===
 
-  // Delete lifestyle image
-  if (product.lifestyleImage) {
-    try {
-      await deleteFromS3(product.lifestyleImage);
-      console.log(`Deleted lifestyle image from S3: ${product.lifestyleImage}`);
-    } catch (error) {
-      console.error(`Failed to delete lifestyle image from S3: ${product.lifestyleImage}`, error);
-    }
-  }
-
   // Delete product images from S3
   if (product.images && product.images.length > 0) {
     for (const image of product.images) {
@@ -2906,24 +2655,9 @@ export const deleteProduct = asyncHandler(async (req, res, next) => {
     }
   }
 
-  // Delete note images from S3
-  if (product.notes && product.notes.length > 0) {
-    for (const note of product.notes) {
-      try {
-        await deleteFromS3(note.image);
-        console.log(`Deleted note image from S3: ${note.image}`);
-      } catch (error) {
-        console.error(`Failed to delete note image from S3: ${note.image}`, error);
-      }
-    }
-  }
-
   // === STEP 2: Delete all database relations then the product ===
 
   await prisma.$transaction(async (tx) => {
-    // Delete notes
-    await tx.productNote.deleteMany({ where: { productId } });
-
     // Delete variant attribute values and images explicitly
     const variantIds = product.variants.map((v) => v.id);
     if (variantIds.length > 0) {

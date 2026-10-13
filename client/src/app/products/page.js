@@ -300,37 +300,6 @@ function ProductsContent() {
       </FilterSection>
 
       <FilterSection
-        title="Gender"
-        isOpen={!!openSections.gender}
-        onToggle={() => setOpenSections((p) => ({ ...p, gender: !p.gender }))}
-      >
-        <div className="flex flex-wrap gap-2">
-          {[
-            { value: "MEN", label: "Men" },
-            { value: "WOMEN", label: "Women" },
-            { value: "UNISEX", label: "Unisex" },
-          ].map(({ value, label }) => {
-            const active = filters.gender === value;
-            return (
-              <button
-                key={value}
-                onClick={() => handleFilterChange("gender", active ? "" : value)}
-                className="px-4 py-2 text-[11px] tracking-[0.08em] transition-all duration-300 font-normal"
-                style={{
-                  border: active ? "1px solid #F97316" : "1px solid #F1E1E9",
-                  backgroundColor: active ? "#F97316" : "transparent",
-                  color: active ? "#fff" : "#726A78",
-                  borderRadius: "999px",
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </FilterSection>
-
-      <FilterSection
         title="Price Range"
         isOpen={!!openSections.price}
         onToggle={() => setOpenSections((p) => ({ ...p, price: !p.price }))}

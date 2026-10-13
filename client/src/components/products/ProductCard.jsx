@@ -243,11 +243,6 @@ export const ProductCard = ({ product, viewMode = "grid" }) => {
 
             <div className="flex items-center gap-2 flex-wrap mb-2">
               <RatingRow />
-              {product.gender && (
-                <span className="text-[11px] font-medium text-blueberry bg-blueberry-50 px-2 py-0.5 rounded-md capitalize">
-                  {product.gender}
-                </span>
-              )}
             </div>
 
             {showPrice ? (
