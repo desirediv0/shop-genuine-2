@@ -138,7 +138,15 @@ export default function AccountScreen() {
           </View>
           <View style={styles.referralBody}>
             <Text style={styles.referralLabel}>Invite friends</Text>
-            <Text style={styles.referralCode} selectable>
+            {/* One line always: at 360dp a 12-character code broke as
+                "REFD400F4SM / D". Shrink to fit instead. */}
+            <Text
+              style={styles.referralCode}
+              selectable
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
               {referralQ.data.referralCode}
             </Text>
             <Text style={styles.referralHint}>

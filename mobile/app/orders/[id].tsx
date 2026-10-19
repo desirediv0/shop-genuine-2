@@ -233,8 +233,16 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     ...shadow.card,
   },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderNumber: { ...typography.h2, color: colors.text },
+  // Order numbers run to ~21 characters, which pushed the status pill past the
+  // card edge on a 360dp phone. Let the pill drop below instead.
+  headerRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  orderNumber: { ...typography.h2, color: colors.text, flexShrink: 1 },
   card: {
     padding: spacing.lg,
     borderRadius: radius.lg,

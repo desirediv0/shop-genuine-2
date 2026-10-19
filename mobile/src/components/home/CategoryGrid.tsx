@@ -53,7 +53,10 @@ export function CategoryGrid({
                 <MaterialCommunityIcons name={visual.icon} size={Math.round(tile * 0.42)} color={visual.fg} />
               )}
             </View>
-            <Text style={styles.label} numberOfLines={2}>
+            {/* Tiles are ~78dp wide on a 360dp phone. With a large system
+                font, "Fruits & Vegetables" broke mid-word into "Fruits & V /
+                egetables", so the label stops growing at 115%. */}
+            <Text style={styles.label} numberOfLines={2} maxFontSizeMultiplier={1.15}>
               {c.name}
             </Text>
           </Pressable>
@@ -71,7 +74,9 @@ export function CategoryGrid({
             <Text style={styles.moreCount}>+{categories.length - shown.length}</Text>
             <Icon name="forward" size={16} color={colors.primary} />
           </View>
-          <Text style={styles.label}>See all</Text>
+          <Text style={styles.label} maxFontSizeMultiplier={1.15}>
+            See all
+          </Text>
         </Pressable>
       ) : null}
     </View>

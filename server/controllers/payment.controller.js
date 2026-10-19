@@ -500,6 +500,9 @@ export const paymentVerification = asyncHandler(async (req, res) => {
       include: {
         productVariant: {
           include: {
+            // Photos often live on the variant, not the product; without them
+            // the order's snapshot saved no image at all.
+            images: { orderBy: { isPrimary: "desc" }, take: 1 },
             product: {
               include: {
                 images: {
@@ -1308,9 +1311,8 @@ export const getOrderHistory = asyncHandler(async (req, res) => {
         id: item.id,
         productId: item.productId,
         name: item.product.name,
-        image: item.product.images[0]
-          ? getFileUrl(item.product.images[0].url)
-          : null,
+        // Saved snapshot first; then the variant's photo, then the product's.
+        image: item.productSnapshot?.image || snapshotImage({ ...item.variant, product: item.product }),
         slug: item.product.slug,
         // Extract all attributes dynamically
         attributes: (() => {
@@ -1495,9 +1497,8 @@ export const getOrderDetails = asyncHandler(async (req, res) => {
       id: item.id,
       productId: item.productId,
       name: item.product.name,
-      image: item.product.images[0]
-        ? getFileUrl(item.product.images[0].url)
-        : null,
+      // Saved snapshot first; then the variant's photo, then the product's.
+      image: item.productSnapshot?.image || snapshotImage({ ...item.variant, product: item.product }),
       slug: item.product.slug,
       color: item.variant.color?.name,
       size: item.variant.size?.name || null,
@@ -1773,6 +1774,9 @@ export const phonePeCallback = asyncHandler(async (req, res) => {
         include: {
           productVariant: {
             include: {
+              // Photos often live on the variant, not the product; without them
+              // the order's snapshot saved no image at all.
+              images: { orderBy: { isPrimary: "desc" }, take: 1 },
               product: {
                 include: {
                   images: { where: { isPrimary: true }, take: 1 },
@@ -2081,6 +2085,9 @@ export const createCashOrder = asyncHandler(async (req, res) => {
       include: {
         productVariant: {
           include: {
+            // Photos often live on the variant, not the product; without them
+            // the order's snapshot saved no image at all.
+            images: { orderBy: { isPrimary: "desc" }, take: 1 },
             product: {
               include: {
                 images: {

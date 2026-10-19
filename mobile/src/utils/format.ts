@@ -7,14 +7,29 @@ export function toNumber(value: Numeric | null | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-const inr = new Intl.NumberFormat('en-IN', {
+const inrWhole = new Intl.NumberFormat('en-IN', {
   style: 'currency',
   currency: 'INR',
   maximumFractionDigits: 0,
 });
 
+const inrPaise = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/**
+ * Whole rupees print as ₹31, anything with paise as ₹27.90. Rounding every
+ * price to the rupee made a 10% coupon on ₹31 read "Total ₹28" while Razorpay
+ * charged ₹27.90 — the app has to show the amount actually taken.
+ */
 export function formatPrice(value: Numeric | null | undefined): string {
-  return inr.format(toNumber(value));
+  // Work in whole paise so float noise (31 - 3.1 = 27.900000000000002) never
+  // decides which format is used.
+  const paise = Math.round(toNumber(value) * 100);
+  return paise % 100 === 0 ? inrWhole.format(paise / 100) : inrPaise.format(paise / 100);
 }
 
 export function formatDate(value?: string | null): string {

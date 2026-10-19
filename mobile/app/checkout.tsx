@@ -22,7 +22,20 @@ import { useToast } from '../src/context/ToastContext';
 import { colors, fonts, radius, shadow, spacing, typography } from '../src/theme';
 import type { Address } from '../src/types';
 import { formatPrice } from '../src/utils/format';
-import { payWithRazorpay, isRazorpayAvailable } from '../src/utils/razorpay';
+import {
+  PaymentCancelledError,
+  isRazorpayAvailable,
+  payWithRazorpay,
+} from '../src/utils/razorpay';
+
+/**
+ * First usable phone number. `??` is not enough: an account created without a
+ * phone carries `""`, which `??` keeps — so the address's number was skipped and
+ * Razorpay opened on its own "enter mobile number" step.
+ */
+function firstPhone(...candidates: (string | null | undefined)[]): string | undefined {
+  return candidates.find((p) => (p ?? '').replace(/\D/g, '').length >= 10) ?? undefined;
+}
 
 type PaymentChoice = 'COD' | 'RAZORPAY';
 
@@ -193,6 +206,7 @@ export default function CheckoutScreen() {
       // then asks for name and email again on the card form — three screens the
       // shopper has already filled in elsewhere.
       const shipping = addressList.find((a) => a.id === addressId);
+      const contact = firstPhone(user?.phone, shipping?.phone);
       const result = await payWithRazorpay({
         key: keyRes.key,
         orderId: rzpOrder.id,
@@ -202,12 +216,8 @@ export default function CheckoutScreen() {
         description: `${cart.totalQuantity} item(s)`,
         prefill: {
           ...(user?.email ? { email: user.email } : {}),
-          ...(user?.phone || shipping?.phone
-            ? { contact: user?.phone ?? shipping?.phone }
-            : {}),
-          ...(user?.name || shipping?.name
-            ? { name: user?.name ?? shipping?.name }
-            : {}),
+          ...(contact ? { contact } : {}),
+          ...(user?.name || shipping?.name ? { name: user?.name || shipping?.name } : {}),
         },
       });
 
@@ -228,7 +238,8 @@ export default function CheckoutScreen() {
       toast('Payment successful', 'success');
       router.replace(`/orders/${verified.orderId}`);
     } catch (e) {
-      toast((e as Error).message, 'error');
+      // Closing the payment sheet is a choice, not an error.
+      toast((e as Error).message, e instanceof PaymentCancelledError ? 'info' : 'error');
     } finally {
       setPlacing(false);
     }

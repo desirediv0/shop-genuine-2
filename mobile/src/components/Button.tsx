@@ -69,7 +69,17 @@ export function Button({
           {icon ? (
             <Icon name={icon} size={ICON_SIZE[size]} color={tint} filled={iconFilled} />
           ) : null}
-          <Text style={[LABEL_SIZE[size], { color: tint }]}>{label}</Text>
+          {/* A button label never wraps: on a narrow phone, or with a larger
+              system font, "View cart" broke onto two lines and the button
+              grew taller than everything beside it. Shrink slightly instead. */}
+          <Text
+            style={[LABEL_SIZE[size], styles.label, { color: tint }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
+            {label}
+          </Text>
         </View>
       )}
     </Pressable>
@@ -84,7 +94,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  content: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  // maxWidth + flexShrink let a long label shrink inside the button rather
+  // than spill past its edges.
+  content: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, maxWidth: '100%' },
+  label: { flexShrink: 1 },
   fullWidth: { alignSelf: 'stretch' },
 
 });

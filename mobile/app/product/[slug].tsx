@@ -466,7 +466,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   saveBtnOn: { borderColor: colors.primaryBorder, backgroundColor: colors.primarySoft },
-  cartBtn: { flex: 1 },
+  // Shares the row with the heart and the stepper, so the default 24dp side
+  // padding left too little room for the label on a 360dp phone.
+  cartBtn: { flex: 1, paddingHorizontal: spacing.sm },
   pressed: { opacity: 0.85 },
   galleryPanel: {
     backgroundColor: colors.surface,

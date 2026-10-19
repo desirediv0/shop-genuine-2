@@ -1379,6 +1379,8 @@ export const getOrderDetails = asyncHandler(async (req, res, next) => {
           },
           variant: {
             include: {
+              // For orders saved before snapshots carried the variant's photo.
+              images: { orderBy: { isPrimary: "desc" }, take: 1 },
               attributes: {
                 include: {
                   attributeValue: {
@@ -1432,7 +1434,8 @@ export const getOrderDetails = asyncHandler(async (req, res, next) => {
         // Snapshot data (immutable - never changes after order)
         productName: snapshot?.name || item.product?.name,
         productSlug: snapshot?.slug || item.product?.slug,
-        productImage: snapshot?.image || null,
+        // Older snapshots have no image when the photo lives on the variant.
+        productImage: snapshot?.image || getFileUrl(item.variant?.images?.[0]?.url) || null,
         sku: snapshot?.sku || item.variant?.sku,
         brand: snapshot?.brand || null,
         categories: snapshot?.categories || [],
