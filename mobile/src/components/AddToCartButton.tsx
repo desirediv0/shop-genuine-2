@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
 import { useToast } from '../context/ToastContext';
 import { colors, fonts, radius, shadow } from '../theme';
 import type { ProductSummary } from '../types';
 import { pickDefaultVariant } from '../utils/format';
-import { Icon } from './Icon';
+import { QtyStepper } from './QtyStepper';
 
 /**
  * One-tap add for product cards, turning into a − qty + stepper once the item
@@ -40,6 +41,8 @@ export function AddToCartButton({ product }: { product: ProductSummary }) {
 
   const run = async (action: () => Promise<void>) => {
     if (busy) return;
+    // A light tap of feedback confirms the add before the network replies.
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setBusy(true);
     try {
       await action();
@@ -76,41 +79,15 @@ export function AddToCartButton({ product }: { product: ProductSummary }) {
   }
 
   return (
-    <View
-      style={styles.stepper}
-      accessibilityLabel={`${qty} of ${product.name} in cart`}
-    >
-      <Pressable
-        onPress={() =>
-          run(() => (qty - 1 < floor ? removeItem(line!) : updateItem(line!, qty - 1)))
-        }
-        disabled={busy}
-        hitSlop={6}
-        accessibilityRole="button"
-        accessibilityLabel={qty - 1 < floor ? `Remove ${product.name}` : 'Decrease quantity'}
-        style={styles.stepBtn}
-      >
-        <Icon name="minus" size={15} color={colors.textInverse} />
-      </Pressable>
-
-      {busy ? (
-        <ActivityIndicator size="small" color={colors.textInverse} />
-      ) : (
-        <Text style={styles.qty}>{qty}</Text>
-      )}
-
-      <Pressable
-        onPress={() => run(() => updateItem(line!, qty + 1))}
-        disabled={busy || atStockLimit}
-        hitSlop={6}
-        accessibilityRole="button"
-        accessibilityLabel="Increase quantity"
-        accessibilityState={{ disabled: busy || atStockLimit }}
-        style={[styles.stepBtn, atStockLimit && styles.dim]}
-      >
-        <Icon name="plus" size={15} color={colors.textInverse} />
-      </Pressable>
-    </View>
+    <QtyStepper
+      qty={qty}
+      busy={busy}
+      plusDisabled={atStockLimit}
+      label={`${qty} of ${product.name} in cart`}
+      minusLabel={qty - 1 < floor ? `Remove ${product.name}` : 'Decrease quantity'}
+      onMinus={() => run(() => (qty - 1 < floor ? removeItem(line!) : updateItem(line!, qty - 1)))}
+      onPlus={() => run(() => updateItem(line!, qty + 1))}
+    />
   );
 }
 
@@ -131,17 +108,4 @@ const styles = StyleSheet.create({
   },
   addText: { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 0.4, color: colors.primary },
   pressed: { opacity: 0.85 },
-  stepper: {
-    height: HEIGHT,
-    width: 76,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    ...shadow.card,
-  },
-  stepBtn: { width: 24, height: HEIGHT, alignItems: 'center', justifyContent: 'center' },
-  qty: { fontFamily: fonts.bold, fontSize: 13, color: colors.textInverse },
-  dim: { opacity: 0.4 },
 });

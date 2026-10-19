@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { payments } from '../../api/services';
 import { colors, radius, spacing, typography } from '../../theme';
@@ -15,7 +15,7 @@ import { Icon, type IconName } from '../Icon';
  * business has not published, and a product page is no place to invent them.
  * (The website's equivalent still carries the old perfume shop's wording.)
  */
-export function PromiseRow() {
+export function PromiseRow({ style }: { style?: StyleProp<ViewStyle> } = {}) {
   // Same key as checkout, so this is usually already cached.
   const settingsQ = useQuery({ queryKey: ['paymentSettings'], queryFn: () => payments.settings() });
   const settings = settingsQ.data;
@@ -33,7 +33,7 @@ export function PromiseRow() {
   ];
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, style]}>
       {items.map((item) => (
         <View key={item.label} style={styles.item}>
           <View style={styles.iconWrap}>

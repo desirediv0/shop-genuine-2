@@ -12,13 +12,14 @@ import {
 import { AddressForm, type AddressDraft } from '../src/components/AddressForm';
 import { AddressSheet } from '../src/components/AddressSheet';
 import { Button } from '../src/components/Button';
+import { Icon, type IconName } from '../src/components/Icon';
 import { Input } from '../src/components/Input';
 import { ErrorState, LoadingState } from '../src/components/States';
 import { useAuth } from '../src/context/AuthContext';
 import { useCart } from '../src/context/CartContext';
 import { useStoreVertical } from '../src/context/StoreVerticalContext';
 import { useToast } from '../src/context/ToastContext';
-import { colors, fonts, radius, spacing, typography } from '../src/theme';
+import { colors, fonts, radius, shadow, spacing, typography } from '../src/theme';
 import type { Address } from '../src/types';
 import { formatPrice } from '../src/utils/format';
 import { payWithRazorpay, isRazorpayAvailable } from '../src/utils/razorpay';
@@ -237,7 +238,7 @@ export default function CheckoutScreen() {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Address */}
-        <Section title="Delivery address">
+        <Section icon="address" title="Delivery address">
           {addressList.length === 0 ? (
             <Text style={styles.muted}>No saved addresses yet.</Text>
           ) : (
@@ -271,9 +272,10 @@ export default function CheckoutScreen() {
         </Section>
 
         {/* Payment */}
-        <Section title="Payment method">
+        <Section icon="card" title="Payment method">
           {settings?.cashEnabled ? (
             <Choice
+              icon="cash"
               selected={method === 'COD'}
               title="Cash on Delivery"
               subtitle={
@@ -287,6 +289,7 @@ export default function CheckoutScreen() {
 
           {settings?.razorpayEnabled ? (
             <Choice
+              icon="card"
               selected={method === 'RAZORPAY'}
               title="Card / UPI / Netbanking"
               subtitle="Pay securely via Razorpay"
@@ -302,7 +305,7 @@ export default function CheckoutScreen() {
         </Section>
 
         {/* Coupon */}
-        <Section title="Coupon">
+        <Section icon="tag" title="Coupon">
           {appliedCoupon ? (
             <View style={styles.couponApplied}>
               <View style={styles.optionBody}>
@@ -343,7 +346,7 @@ export default function CheckoutScreen() {
         </Section>
 
         {/* Summary */}
-        <Section title="Order summary">
+        <Section icon="orders" title="Order summary">
           <Row
             label={`Subtotal (${cart.totalQuantity} ${
               cart.totalQuantity === 1 ? 'item' : 'items'
@@ -355,7 +358,7 @@ export default function CheckoutScreen() {
             <Row label={`Discount (${appliedCoupon?.code})`} value={`−${formatPrice(discount)}`} />
           ) : null}
           <Text style={styles.muted}>
-            Shipping is calculated by the server when the order is placed.
+            Delivery charges, if any, are added when the order is placed.
           </Text>
         </Section>
       </ScrollView>
@@ -391,21 +394,36 @@ export default function CheckoutScreen() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  icon,
+  title,
+  children,
+}: {
+  icon: IconName;
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionHead}>
+        <View style={styles.sectionIcon}>
+          <Icon name={icon} size={16} color={colors.primary} />
+        </View>
+        <Text style={styles.sectionTitle}>{title}</Text>
+      </View>
       <View style={styles.sectionBody}>{children}</View>
     </View>
   );
 }
 
 function Choice({
+  icon,
   selected,
   title,
   subtitle,
   onPress,
 }: {
+  icon: IconName;
   selected: boolean;
   title: string;
   subtitle: string;
@@ -423,6 +441,9 @@ function Choice({
         <Text style={styles.optionTitle}>{title}</Text>
         <Text style={styles.optionText}>{subtitle}</Text>
       </View>
+      <View style={styles.choiceIcon}>
+        <Icon name={icon} size={22} color={selected ? colors.primary : colors.textMuted} />
+      </View>
     </Pressable>
   );
 }
@@ -438,8 +459,23 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xxxl, gap: spacing.xl },
-  section: { gap: spacing.md },
+  scroll: { padding: spacing.lg, paddingBottom: spacing.xxxl, gap: spacing.md },
+  section: {
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  sectionHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  sectionIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sectionTitle: { ...typography.h3, color: colors.text },
   sectionBody: { gap: spacing.sm },
   muted: { ...typography.small, color: colors.textMuted },
@@ -452,7 +488,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
   },
-  optionSelected: { borderColor: colors.primary, backgroundColor: colors.backgroundAlt },
+  optionSelected: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   radio: {
     width: 20,
     height: 20,
@@ -465,6 +501,7 @@ const styles = StyleSheet.create({
   },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
   optionBody: { flex: 1, gap: 2 },
+  choiceIcon: { alignSelf: 'center' },
   optionTitle: { ...typography.small, color: colors.text, fontFamily: fonts.semibold },
   optionText: { ...typography.small, color: colors.textMuted },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },

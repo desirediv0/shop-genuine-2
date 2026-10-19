@@ -34,7 +34,6 @@ export interface ProductQuery {
   minPrice?: number;
   maxPrice?: number;
   featured?: boolean;
-  gender?: string;
   storeVerticalId?: string;
   attributeValueIds?: string;
 }

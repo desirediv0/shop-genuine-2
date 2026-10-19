@@ -105,6 +105,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.md,
     overflow: 'hidden',
+    // A hairline keeps white packshots from melting into a white card edge.
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     ...shadow.card,
   },
   pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
@@ -122,7 +125,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     left: 6,
-    backgroundColor: colors.primary,
+    // Logo blue for deals, so orange always means "tap to act" (ADD).
+    backgroundColor: colors.deal,
     paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 6,

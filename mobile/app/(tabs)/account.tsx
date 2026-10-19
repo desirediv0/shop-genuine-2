@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { auth as authApi, referrals } from '../../src/api/services';
@@ -7,10 +8,10 @@ import { Button } from '../../src/components/Button';
 import { DeleteAccountSheet } from '../../src/components/DeleteAccountSheet';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { PushDebugPanel } from '../../src/components/PushDebugPanel';
-import { EmptyState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
+import { storeTheme } from '../../src/theme/stores';
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -42,21 +43,42 @@ export default function AccountScreen() {
 
   if (!isAuthenticated) {
     return (
-      <View style={styles.signedOut}>
-        <EmptyState
-          title="You're not signed in"
-          message="Sign in to track orders, save addresses and keep a wishlist."
-          actionLabel="Sign in"
-          onAction={() => router.push('/auth/login')}
-        />
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <View style={styles.hero}>
+          <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+          <View style={styles.heroMark} pointerEvents="none">
+            <Icon name="account" size={140} color="rgba(255,255,255,0.12)" filled />
+          </View>
+          <Text style={styles.heroOverline}>WELCOME</Text>
+          <Text style={styles.heroTitle}>Your Genuine account</Text>
+          <Text style={styles.heroText}>
+            Sign in to track orders, check out faster and keep your favourites in one place.
+          </Text>
+
+          <View style={styles.benefits}>
+            <Benefit icon="orders" text="Track every order, step by step" />
+            <Benefit icon="address" text="Saved addresses for one-tap checkout" />
+            <Benefit icon="wishlist" text="Save products for later" />
+          </View>
+
+          <Pressable
+            onPress={() => router.push('/auth/login')}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.heroBtn, pressed && styles.pressed]}
+          >
+            <Text style={[styles.heroBtnText, { color: BRAND.ink }]}>Sign in</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/auth/register')} hitSlop={8} accessibilityRole="button">
+            <Text style={styles.heroLink}>
+              New here? <Text style={styles.heroLinkStrong}>Create an account</Text>
+            </Text>
+          </Pressable>
+        </View>
+
         {/* Minting a push token needs no account, so keep diagnostics reachable
             while signed out — only the test send requires auth. */}
-        {__DEV__ ? (
-          <View style={styles.signedOutPanel}>
-            <PushDebugPanel />
-          </View>
-        ) : null}
-      </View>
+        {__DEV__ ? <PushDebugPanel /> : null}
+      </ScrollView>
     );
   }
 
@@ -83,49 +105,58 @@ export default function AccountScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {/* Profile header */}
-      <View style={styles.profile}>
+      {/* Profile */}
+      <View style={styles.profileCard}>
+        <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {(user?.name ?? user?.email ?? '?').charAt(0).toUpperCase()}
+          <Text style={[styles.avatarText, { color: BRAND.ink }]}>
+            {(user?.name?.trim() || user?.email || '?').charAt(0).toUpperCase()}
           </Text>
         </View>
         <View style={styles.profileBody}>
-          <Text style={styles.name}>{user?.name ?? 'Your account'}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
+          <Text style={styles.name} numberOfLines={1}>
+            {user?.name ?? 'Your account'}
+          </Text>
+          <Text style={styles.email} numberOfLines={1}>
+            {user?.email}
+          </Text>
         </View>
       </View>
 
-      {/* Navigation */}
-      <View style={styles.group}>
-        <MenuRow
-          label="My orders"
-          caption="Track and manage your orders"
-          icon="orders"
-          onPress={() => router.push('/orders')}
-        />
-        <MenuRow
-          label="Saved addresses"
-          caption="Where we deliver"
-          icon="address"
-          onPress={() => router.push('/addresses')}
-        />
-        <MenuRow
-          label="Saved items"
-          caption="Your wishlist"
-          icon="wishlist"
-          onPress={() => router.push('/wishlist')}
-        />
+      {/* The three places people go from here */}
+      <View style={styles.tiles}>
+        <Tile icon="orders" label="Orders" onPress={() => router.push('/orders')} />
+        <Tile icon="address" label="Addresses" onPress={() => router.push('/addresses')} />
+        <Tile icon="wishlist" label="Saved" onPress={() => router.navigate('/wishlist')} />
       </View>
 
       {/* Referral */}
       {referralQ.data?.referralCode ? (
         <View style={styles.referral}>
-          <Text style={styles.referralLabel}>Your referral code</Text>
-          <Text style={styles.referralCode}>{referralQ.data.referralCode}</Text>
-          <Text style={styles.referralHint}>
-            Share it with friends — they get a welcome offer when they sign up.
-          </Text>
+          <View style={styles.referralIcon}>
+            <Icon name="gift" size={22} color={colors.primary} filled />
+          </View>
+          <View style={styles.referralBody}>
+            <Text style={styles.referralLabel}>Invite friends</Text>
+            <Text style={styles.referralCode} selectable>
+              {referralQ.data.referralCode}
+            </Text>
+            <Text style={styles.referralHint}>
+              Share your code — they get a welcome offer when they sign up.
+            </Text>
+          </View>
+          <Pressable
+            onPress={() =>
+              Share.share({
+                message: `Shop 100% authentic products on Shop Genuine. Use my referral code ${referralQ.data?.referralCode} when you sign up.`,
+              }).catch(() => {})
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Share your referral code"
+            style={({ pressed }) => [styles.shareBtn, pressed && styles.pressed]}
+          >
+            <Text style={styles.shareText}>Share</Text>
+          </Pressable>
         </View>
       ) : null}
 
@@ -166,85 +197,142 @@ export default function AccountScreen() {
   );
 }
 
-function MenuRow({
-  label,
-  caption,
-  icon,
-  onPress,
-}: {
-  label: string;
-  caption?: string;
-  icon: IconName;
-  onPress: () => void;
-}) {
+function Tile({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
-      <View style={styles.menuIcon}>
-        <Icon name={icon} size={19} color={colors.primary} />
+      <View style={styles.tileIcon}>
+        <Icon name={icon} size={21} color={colors.primary} />
       </View>
-      <View style={styles.menuText}>
-        <Text style={styles.menuLabel}>{label}</Text>
-        {caption ? <Text style={styles.menuCaption}>{caption}</Text> : null}
-      </View>
-      <Icon name="forward" size={17} color={colors.textMuted} />
+      <Text style={styles.tileLabel}>{label}</Text>
     </Pressable>
   );
 }
 
+function Benefit({ icon, text }: { icon: IconName; text: string }) {
+  return (
+    <View style={styles.benefit}>
+      <View style={styles.benefitIcon}>
+        <Icon name={icon} size={15} color={colors.textInverse} />
+      </View>
+      <Text style={styles.benefitText}>{text}</Text>
+    </View>
+  );
+}
+
+/** "All stores" blue — the account belongs to every store, not one. */
+const BRAND = storeTheme(null);
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.xl, paddingBottom: spacing.xxl },
-  signedOut: { flex: 1 },
-  signedOutPanel: { padding: spacing.lg },
-  profile: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg },
+  content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
+  pressed: { opacity: 0.85 },
+
+  hero: { borderRadius: radius.xl, overflow: 'hidden', padding: spacing.xl, ...shadow.raised },
+  heroMark: { position: 'absolute', right: -24, top: -20, transform: [{ rotate: '-10deg' }] },
+  heroOverline: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.4, color: 'rgba(255,255,255,0.72)' },
+  heroTitle: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5, color: colors.textInverse, marginTop: 2 },
+  heroText: { ...typography.small, color: 'rgba(255,255,255,0.88)', marginTop: spacing.xs },
+  benefits: { gap: spacing.md, marginTop: spacing.xl },
+  benefit: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  benefitIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.pill,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  benefitText: { ...typography.smallStrong, color: colors.textInverse, flex: 1 },
+  heroBtn: {
+    marginTop: spacing.xl,
+    height: 50,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroBtnText: { fontFamily: fonts.bold, fontSize: 15 },
+  heroLink: { ...typography.small, color: 'rgba(255,255,255,0.86)', textAlign: 'center', marginTop: spacing.md },
+  heroLinkStrong: { fontFamily: fonts.semibold, color: colors.textInverse },
+
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    padding: spacing.xl,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    ...shadow.raised,
+  },
   avatar: {
-    width: 60,
-    height: 60,
+    width: 58,
+    height: 58,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { fontFamily: fonts.bold, fontSize: 24 },
+  profileBody: { flex: 1, gap: 2 },
+  name: { fontFamily: fonts.bold, fontSize: 19, color: colors.textInverse },
+  email: { ...typography.small, color: 'rgba(255,255,255,0.82)' },
+
+  tiles: { flexDirection: 'row', gap: spacing.md },
+  tile: {
+    flex: 1,
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.lg,
     borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    ...shadow.card,
+  },
+  tileIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tileLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text },
+
+  referral: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.lg,
+    borderRadius: radius.lg,
+    backgroundColor: colors.primarySoft,
+  },
+  referralIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  referralBody: { flex: 1 },
+  referralLabel: { fontFamily: fonts.semibold, fontSize: 12, color: colors.primary },
+  referralCode: { fontFamily: fonts.bold, fontSize: 18, letterSpacing: 1.2, color: colors.text },
+  referralHint: { ...typography.tiny, color: colors.textSecondary, marginTop: 1 },
+  shareBtn: {
+    paddingHorizontal: spacing.lg,
+    height: 36,
+    borderRadius: radius.pill,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { ...typography.h1, color: colors.textInverse },
-  profileBody: { flex: 1, gap: 2 },
-  name: { ...typography.h2, color: colors.text },
-  email: { ...typography.small, color: colors.textMuted },
+  shareText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textInverse },
+
   group: { gap: spacing.md },
-  menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    ...shadow.card,
-  },
-  pressed: { opacity: 0.85 },
-  menuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radius.md,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuText: { flex: 1, gap: 1 },
-  menuLabel: { ...typography.bodyStrong, color: colors.text },
-  menuCaption: { ...typography.small, color: colors.textMuted },
-  referral: {
-    padding: spacing.xl,
-    borderRadius: radius.lg,
-    backgroundColor: colors.primarySoft,
-    gap: spacing.xs,
-  },
-  referralLabel: { ...typography.overline, color: colors.primary },
-  referralCode: { ...typography.h1, color: colors.text, letterSpacing: 1.5, marginVertical: 2 },
-  referralHint: { ...typography.small, color: colors.textSecondary },
   deleteWrap: { alignItems: 'center', paddingVertical: spacing.md },
   delete: { ...typography.small, color: colors.error, fontFamily: fonts.semibold },
 });

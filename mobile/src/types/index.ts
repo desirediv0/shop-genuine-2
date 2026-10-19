@@ -48,20 +48,17 @@ export interface ProductSummary {
   variantCount: number;
   reviewCount: number;
   avgRating?: number;
-  gender?: 'MEN' | 'WOMEN' | 'UNISEX';
   flashSale?: FlashSaleInfo | null;
 }
 
 /**
- * The single-product endpoint returns more than the list does. These are the
- * admin-editable fields the product page shows when they are filled in; all are
- * optional because most products leave them empty.
+ * The single-product endpoint returns more than the list does. Shipping &
+ * returns is the admin-editable field the product page shows when it is filled
+ * in; optional because most products leave it empty. (Legal info and the
+ * lifestyle image/description were dropped from the schema on 2026-10-19.)
  */
 export interface ProductDetail extends ProductSummary {
   shippingReturn?: string | null;
-  legalInfo?: string | null;
-  lifestyleImage?: string | null;
-  lifestyleDescription?: string | null;
 }
 
 export interface FlashSaleInfo {
@@ -159,6 +156,8 @@ export interface CartItem {
   quantity: number;
   price: number;
   originalPrice: number;
+  /** List price before any sale. Servers older than 2026-10-19 do not send it. */
+  mrp?: number;
   subtotal: number;
   moq: number;
   cartItemType?: 'NORMAL' | 'BUNDLE';
@@ -291,4 +290,6 @@ export interface WishlistItem {
   slug?: string;
   image?: string | null;
   price?: Numeric;
+  /** List price, for the strikethrough and discount badge. */
+  regularPrice?: Numeric;
 }

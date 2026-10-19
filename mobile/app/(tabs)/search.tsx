@@ -13,21 +13,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { catalogue } from '../../src/api/services';
-import { StoreVerticalSwitcher } from '../../src/components/StoreVerticalSwitcher';
+import { StoreBand } from '../../src/components/home/StoreBand';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { useProductLayout } from '../../src/hooks/useProductLayout';
-import { Icon } from '../../src/components/Icon';
+import { storeTheme } from '../../src/theme/stores';
+import { Icon, type IconName } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
 import { EmptyState, ErrorState } from '../../src/components/States';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { Category } from '../../src/types';
 import { pickDefaultVariant, toNumber } from '../../src/utils/format';
 
-const SORTS = [
-  { label: 'Newest', sort: 'createdAt', order: 'desc' as const },
-  { label: 'Price: low to high', sort: 'price', order: 'asc' as const },
-  { label: 'Price: high to low', sort: 'price', order: 'desc' as const },
-  { label: 'Name', sort: 'name', order: 'asc' as const },
+const SORTS: { label: string; sort: string; order: 'asc' | 'desc'; icon: IconName }[] = [
+  { label: 'Newest', sort: 'createdAt', order: 'desc', icon: 'star' },
+  { label: 'Price: low to high', sort: 'price', order: 'asc', icon: 'up' },
+  { label: 'Price: high to low', sort: 'price', order: 'desc', icon: 'down' },
+  { label: 'Name', sort: 'name', order: 'asc', icon: 'filter' },
 ];
 
 const PAGE_SIZE = 12;
@@ -38,7 +39,8 @@ export default function SearchScreen() {
   // so rows ran a few pixels wide; one helper now owns both numbers.
   const { columns, gridCardWidth: cardWidth } = useProductLayout();
 
-  const { verticalId, verticalParam } = useStoreVertical();
+  const { verticalId, verticalParam, vertical } = useStoreVertical();
+  const theme = storeTheme(vertical?.name);
   const [term, setTerm] = useState(params.q ?? '');
   const [debounced, setDebounced] = useState(params.q ?? '');
   const [category, setCategory] = useState<string | null>(null);
@@ -116,29 +118,29 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <View style={styles.switcherWrap}>
-        <StoreVerticalSwitcher />
-      </View>
-
-      {/* Search field */}
-      <View style={styles.searchWrap}>
-        <Icon name="search" size={18} color={colors.textMuted} />
-        <TextInput
-          value={term}
-          onChangeText={setTerm}
-          placeholder="Search products, brands…"
-          placeholderTextColor={colors.textMuted}
-          style={styles.searchInput}
-          returnKeyType="search"
-          autoCorrect={false}
-          clearButtonMode="while-editing"
-          accessibilityLabel="Search products"
-        />
-        {term.length > 0 ? (
-          <Pressable onPress={() => setTerm('')} hitSlop={10} accessibilityRole="button">
-            <Icon name="close" size={17} color={colors.textMuted} />
-          </Pressable>
-        ) : null}
+      {/* Same store panel as Home, with the real search field inside */}
+      <View style={styles.bandWrap}>
+        <StoreBand>
+          <View style={styles.searchWrap}>
+            <Icon name="search" size={19} color={theme.solid} />
+            <TextInput
+              value={term}
+              onChangeText={setTerm}
+              placeholder={`Search in ${vertical ? theme.short : 'all stores'}…`}
+              placeholderTextColor={colors.textMuted}
+              style={styles.searchInput}
+              returnKeyType="search"
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+              accessibilityLabel="Search products"
+            />
+            {term.length > 0 ? (
+              <Pressable onPress={() => setTerm('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear search">
+                <Icon name="close" size={17} color={colors.textMuted} />
+              </Pressable>
+            ) : null}
+          </View>
+        </StoreBand>
       </View>
 
       {/* Category filter */}
@@ -149,11 +151,12 @@ export default function SearchScreen() {
           style={styles.chipScroll}
           contentContainerStyle={styles.filterRow}
         >
-          <Filter label="All" active={category === null} onPress={() => setCategory(null)} />
+          <Filter label="All" active={category === null} accent={theme.solid} onPress={() => setCategory(null)} />
           {categories.map((c) => (
             <Filter
               key={c.id}
               label={c.name}
+              accent={theme.solid}
               active={category === c.slug}
               onPress={() => setCategory(category === c.slug ? null : c.slug)}
             />
@@ -172,6 +175,8 @@ export default function SearchScreen() {
           <Filter
             key={s.label}
             label={s.label}
+            icon={s.icon}
+            accent={theme.solid}
             active={sortIndex === i}
             onPress={() => setSortIndex(i)}
           />
@@ -233,10 +238,14 @@ export default function SearchScreen() {
 function Filter({
   label,
   active,
+  accent,
+  icon,
   onPress,
 }: {
   label: string;
   active: boolean;
+  accent: string;
+  icon?: IconName;
   onPress: () => void;
 }) {
   return (
@@ -244,8 +253,9 @@ function Filter({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
-      style={[styles.filter, active && styles.filterActive]}
+      style={[styles.filter, active && { backgroundColor: accent, borderColor: accent }]}
     >
+      {icon ? <Icon name={icon} size={14} color={active ? colors.textInverse : colors.textMuted} /> : null}
       <Text style={[styles.filterText, active && styles.filterTextActive]} numberOfLines={1}>
         {label}
       </Text>
@@ -255,19 +265,18 @@ function Filter({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  switcherWrap: { paddingTop: spacing.sm },
+  bandWrap: { paddingTop: spacing.sm },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.sm,
+    gap: spacing.sm,
+    height: 50,
     paddingHorizontal: spacing.lg,
-    borderRadius: radius.lg,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
     ...shadow.card,
   },
-  searchInput: { flex: 1, ...typography.body, color: colors.text, paddingVertical: spacing.md + 2 },
+  searchInput: { flex: 1, ...typography.body, color: colors.text, paddingVertical: 0 },
   // flexGrow/Shrink 0 stops the row being squeezed by the list below it, which
   // otherwise clips the chip labels top and bottom.
   chipScroll: { flexGrow: 0, flexShrink: 0 },
@@ -285,6 +294,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm + 2,
     borderRadius: radius.pill,
@@ -293,7 +305,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     maxWidth: 200,
   },
-  filterActive: { backgroundColor: colors.text, borderColor: colors.text },
   filterText: { ...typography.small, color: colors.textSecondary },
   filterTextActive: { color: colors.textInverse, fontFamily: fonts.medium },
   list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },

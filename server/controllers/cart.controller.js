@@ -217,6 +217,9 @@ export const getUserCart = asyncHandler(async (req, res) => {
         quantity: item.quantity,
         price: effectivePrice, // Use effective price (from slab if applicable)
         originalPrice: parseFloat(variant.salePrice || variant.price), // Original price before slab
+        // List price before any sale, so the app can show what the shopper is
+        // saving — originalPrice above already includes the sale discount.
+        mrp: parseFloat(variant.price),
         subtotal: itemTotal,
         moq: effectiveMOQ,
         moqSource,
@@ -787,6 +790,7 @@ export const updateCartItem = asyncHandler(async (req, res) => {
     quantity: updatedCartItem.quantity,
     price: effectivePrice,
     originalPrice: parseFloat(variant.salePrice || variant.price),
+    mrp: parseFloat(variant.price),
     subtotal: itemTotal,
     priceSource,
     appliedSlab,

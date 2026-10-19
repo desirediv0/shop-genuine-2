@@ -7,10 +7,11 @@ import { wishlist as wishlistApi } from '../../src/api/services';
 import { Icon } from '../../src/components/Icon';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
+import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { useWishlist } from '../../src/hooks/useWishlist';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, radius, shadow, spacing, typography } from '../../src/theme';
-import { formatPrice } from '../../src/utils/format';
+import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
+import { discountPercent, formatPrice, toNumber } from '../../src/utils/format';
 
 export default function WishlistScreen() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function WishlistScreen() {
   const { toast } = useToast();
 
   const query = useWishlist();
+  const { columns, gridCardWidth: cardWidth } = useProductLayout();
 
   const remove = useMutation({
     mutationFn: (id: string) => wishlistApi.remove(id),
@@ -64,53 +66,107 @@ export default function WishlistScreen() {
 
   return (
     <FlatList
+      // numColumns cannot change on a mounted list; remount if it does.
+      key={columns}
       data={items}
       keyExtractor={(i) => i.id}
+      numColumns={columns}
+      columnWrapperStyle={styles.column}
       contentContainerStyle={styles.list}
-      renderItem={({ item }) => (
-        <Pressable
-          style={styles.row}
-          onPress={() => item.slug && router.push(`/product/${item.slug}`)}
-          accessibilityRole="button"
-        >
-          <Image source={item.image ?? undefined} style={styles.thumb} contentFit="cover" />
-          <View style={styles.body}>
-            <Text style={styles.name} numberOfLines={2}>
-              {item.name}
-            </Text>
-            {item.price != null ? (
-              <Text style={styles.price}>{formatPrice(item.price)}</Text>
-            ) : null}
-          </View>
+      showsVerticalScrollIndicator={false}
+      ListHeaderComponent={
+        <Text style={styles.count}>
+          {items.length} saved {items.length === 1 ? 'item' : 'items'}
+        </Text>
+      }
+      renderItem={({ item }) => {
+        const price = item.price != null ? toNumber(item.price) : null;
+        const regular = item.regularPrice != null ? toNumber(item.regularPrice) : null;
+        const off = price != null && regular != null ? discountPercent(regular, price) : 0;
+        return (
+          // Same card language as everywhere else. No ADD here: the saved-items
+          // endpoint sends no stock levels, so a quick add could not tell what
+          // is buyable — the product page can, and is one tap away.
           <Pressable
-            onPress={() => remove.mutate(item.id)}
-            hitSlop={10}
+            style={({ pressed }) => [styles.card, { width: cardWidth }, pressed && styles.pressed]}
+            onPress={() => item.slug && router.push(`/product/${item.slug}`)}
             accessibilityRole="button"
-            accessibilityLabel={`Remove ${item.name} from saved items`}
-            style={styles.removeBtn}
+            accessibilityLabel={`${item.name}${price != null ? `, ${formatPrice(price)}` : ''}`}
           >
-            <Icon name="trash" size={16} color={colors.textMuted} />
+            <View style={styles.imageWrap}>
+              <Image source={item.image ?? undefined} style={styles.image} contentFit="contain" transition={200} />
+              {off > 0 ? (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{off}% OFF</Text>
+                </View>
+              ) : null}
+              <Pressable
+                onPress={() => remove.mutate(item.id)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove ${item.name} from saved items`}
+                style={styles.heart}
+              >
+                <Icon name="wishlist" size={16} color={colors.primary} filled />
+              </Pressable>
+            </View>
+            <View style={styles.body}>
+              <Text style={styles.name} numberOfLines={2}>
+                {item.name}
+              </Text>
+              {price != null ? (
+                <View style={styles.priceRow}>
+                  <Text style={styles.price}>{formatPrice(price)}</Text>
+                  {off > 0 && regular != null ? <Text style={styles.strike}>{formatPrice(regular)}</Text> : null}
+                </View>
+              ) : null}
+            </View>
           </Pressable>
-        </Pressable>
-      )}
+        );
+      }}
     />
   );
 }
 
 const styles = StyleSheet.create({
   list: { padding: spacing.lg, gap: spacing.md, backgroundColor: colors.background, flexGrow: 1 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.lg,
-    padding: spacing.md,
+  column: { gap: spacing.sm },
+  count: { ...typography.small, color: colors.textMuted, marginBottom: spacing.xs },
+  card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     ...shadow.card,
   },
-  thumb: { width: 64, height: 64, borderRadius: radius.md, backgroundColor: colors.surfaceAlt },
-  body: { flex: 1, gap: 3 },
-  name: { ...typography.smallStrong, color: colors.text },
-  price: { ...typography.price, color: colors.text },
-  removeBtn: { padding: spacing.sm },
+  pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
+  imageWrap: { aspectRatio: 1, padding: spacing.sm, backgroundColor: colors.surface },
+  image: { width: '100%', height: '100%' },
+  badge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: colors.deal,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  badgeText: { fontFamily: fonts.medium, fontSize: 9, lineHeight: 12, color: colors.textInverse },
+  heart: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 28,
+    height: 28,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  body: { paddingHorizontal: spacing.sm, paddingTop: 6, paddingBottom: 10, gap: 2 },
+  name: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16, minHeight: 32, color: colors.text },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 5, marginTop: 2 },
+  price: { fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
+  strike: { fontFamily: fonts.regular, fontSize: 11, color: colors.textMuted, textDecorationLine: 'line-through' },
 });

@@ -28,6 +28,7 @@ function guestLinesToCart(lines: GuestCartLine[]): Cart {
     quantity: l.quantity,
     price: l.price,
     originalPrice: l.price,
+    mrp: l.regularPrice,
     subtotal: l.price * l.quantity,
     moq: 1,
     cartItemType: 'NORMAL',

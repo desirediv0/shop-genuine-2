@@ -17,6 +17,9 @@ export const colors = {
   primaryPressed: '#DD5F0B',
   /** Tinted background for chips, badges and selected rows. */
   primarySoft: '#FFF1E7',
+  /** The blue from the Shop Genuine logo, used for discounts and deals. */
+  deal: '#1D4ED8',
+  dealSoft: '#E9EFFD',
   primaryBorder: '#FCD9BD',
 
   // Warm neutrals. Text is a warm near-black, never pure #000.

@@ -1,18 +1,22 @@
-import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../src/components/Button';
 import { Icon } from '../../src/components/Icon';
-import { QuantityStepper } from '../../src/components/QuantityStepper';
+import { QtyStepper } from '../../src/components/QtyStepper';
 import { EmptyState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, radius, shadow, spacing, typography } from '../../src/theme';
+import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { CartItem } from '../../src/types';
 import { formatPrice, variantLabel } from '../../src/utils/format';
+
+/** List price for a line: the server's `mrp` when it sends one. */
+const listPrice = (i: CartItem) => Math.max(i.mrp ?? i.originalPrice ?? i.price, i.price);
 
 export default function CartScreen() {
   const router = useRouter();
@@ -38,6 +42,12 @@ export default function CartScreen() {
     );
   }
 
+  // Savings against the list price. Lines from servers that do not send
+  // `mrp` fall back to `originalPrice`, which can only under-count — this
+  // never claims a saving the shopper is not getting.
+  const itemTotal = cart.items.reduce((sum, i) => sum + listPrice(i) * i.quantity, 0);
+  const savings = Math.max(0, Math.round(itemTotal - cart.subtotal));
+
   const onCheckout = () => {
     if (!isAuthenticated) {
       toast('Please sign in to check out', 'info');
@@ -49,42 +59,74 @@ export default function CartScreen() {
 
   return (
     <View style={styles.screen}>
-      <FlatList
-        data={cart.items}
-        keyExtractor={(i) => i.id}
-        contentContainerStyle={styles.list}
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          isGuestCart ? (
-            <View style={styles.notice}>
-              <Text style={styles.noticeText}>
-                You&apos;re browsing as a guest. Sign in at checkout and this cart comes with you.
-              </Text>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {savings > 0 ? (
+          <View style={styles.savings}>
+            <View style={styles.savingsIcon}>
+              <Icon name="tag" size={16} color={colors.success} filled />
             </View>
-          ) : null
-        }
-        renderItem={({ item }) => (
-          <CartRow
-            item={item}
-            disabled={mutating}
-            onChange={(q) => updateItem(item, q)}
-            onRemove={() => removeItem(item)}
-          />
-        )}
-      />
+            <Text style={styles.savingsText}>
+              You&apos;re saving <Text style={styles.savingsAmount}>{formatPrice(savings)}</Text> on
+              this order
+            </Text>
+          </View>
+        ) : null}
 
-      {/* Summary */}
-      <View style={[styles.summary, { paddingBottom: insets.bottom + spacing.md }]}>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>
-            Subtotal ({cart.totalQuantity} {cart.totalQuantity === 1 ? 'item' : 'items'})
+        {isGuestCart ? (
+          <Pressable
+            onPress={() => router.push('/auth/login')}
+            accessibilityRole="button"
+            style={styles.guest}
+          >
+            <Icon name="account" size={18} color={colors.primary} />
+            <Text style={styles.guestText}>
+              Shopping as a guest. <Text style={styles.guestLink}>Sign in</Text> and this cart comes
+              with you.
+            </Text>
+          </Pressable>
+        ) : null}
+
+        {/* All items in one card, the way a basket reads */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            {cart.totalQuantity} {cart.totalQuantity === 1 ? 'item' : 'items'} in your cart
           </Text>
-          <Text style={styles.summaryValue}>{formatPrice(cart.subtotal)}</Text>
+          {cart.items.map((item, i) => (
+            <CartRow
+              key={item.id}
+              item={item}
+              first={i === 0}
+              onChange={(q) => updateItem(item, q)}
+              onRemove={() => removeItem(item)}
+            />
+          ))}
         </View>
-        <Text style={styles.summaryNote}>
-          Shipping and any discounts are calculated at checkout.
-        </Text>
-        <Button label="Proceed to checkout" fullWidth onPress={onCheckout} loading={mutating} />
+
+        {/* Bill */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Bill details</Text>
+          <BillRow label="Item total" value={formatPrice(itemTotal)} />
+          {savings > 0 ? (
+            <BillRow label="Discount" value={`− ${formatPrice(savings)}`} tone="success" />
+          ) : null}
+          <View style={styles.billDivider} />
+          <BillRow label="Subtotal" value={formatPrice(cart.subtotal)} strong />
+          <Text style={styles.billNote}>Delivery and coupons are applied at checkout.</Text>
+        </View>
+      </ScrollView>
+
+      {/* Checkout bar */}
+      <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.md }]}>
+        <View>
+          <Text style={styles.barTotal}>{formatPrice(cart.subtotal)}</Text>
+          <Text style={styles.barLabel}>TOTAL</Text>
+        </View>
+        <Button
+          label="Proceed to checkout"
+          onPress={onCheckout}
+          loading={mutating}
+          style={styles.barBtn}
+        />
       </View>
     </View>
   );
@@ -92,99 +134,179 @@ export default function CartScreen() {
 
 function CartRow({
   item,
-  disabled,
+  first,
   onChange,
   onRemove,
 }: {
   item: CartItem;
-  disabled: boolean;
-  onChange: (q: number) => void;
-  onRemove: () => void;
+  first: boolean;
+  onChange: (q: number) => Promise<void>;
+  onRemove: () => Promise<void>;
 }) {
+  const [busy, setBusy] = useState(false);
+  const { toast } = useToast();
   const label = variantLabel(item.variant.attributes);
+  const list = listPrice(item);
+  const floor = Math.max(1, item.moq || 1);
+
+  const run = async (action: () => Promise<void>) => {
+    if (busy) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setBusy(true);
+    try {
+      await action();
+    } catch (e) {
+      toast((e as Error).message, 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <View style={styles.row}>
-      <Image source={item.product.image ?? undefined} style={styles.thumb} contentFit="cover" />
+    <View style={[styles.row, !first && styles.rowDivider]}>
+      <View style={styles.thumbTile}>
+        <Image source={item.product.image ?? undefined} style={styles.thumb} contentFit="contain" />
+      </View>
 
       <View style={styles.rowBody}>
         <Text style={styles.rowName} numberOfLines={2}>
           {item.product.name}
         </Text>
         {label ? <Text style={styles.rowVariant}>{label}</Text> : null}
-        <Text style={styles.rowPrice}>{formatPrice(item.price)}</Text>
-
-        <View style={styles.rowActions}>
-          <QuantityStepper
-            value={item.quantity}
-            min={item.moq || 1}
-            max={99}
-            disabled={disabled}
-            onChange={onChange}
-          />
-          <Pressable
-            onPress={onRemove}
-            disabled={disabled}
-            hitSlop={10}
-            accessibilityRole="button"
-            accessibilityLabel={`Remove ${item.product.name} from cart`}
-            style={styles.removeBtn}
-          >
-            <Icon name="trash" size={15} color={colors.textMuted} />
-          </Pressable>
+        <View style={styles.rowPrices}>
+          <Text style={styles.rowPrice}>{formatPrice(item.price)}</Text>
+          {list > item.price ? <Text style={styles.rowStrike}>{formatPrice(list)}</Text> : null}
         </View>
       </View>
 
-      <Text style={styles.rowSubtotal}>{formatPrice(item.subtotal)}</Text>
+      <View style={styles.rowRight}>
+        <QtyStepper
+          qty={item.quantity}
+          busy={busy}
+          label={`${item.quantity} of ${item.product.name}`}
+          minusLabel={item.quantity - 1 < floor ? `Remove ${item.product.name}` : 'Decrease quantity'}
+          onMinus={() => run(() => (item.quantity - 1 < floor ? onRemove() : onChange(item.quantity - 1)))}
+          onPlus={() => run(() => onChange(item.quantity + 1))}
+        />
+        <Text style={styles.rowSubtotal}>{formatPrice(item.subtotal)}</Text>
+      </View>
+    </View>
+  );
+}
+
+function BillRow({
+  label,
+  value,
+  strong,
+  tone,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  tone?: 'success';
+}) {
+  return (
+    <View style={styles.billRow}>
+      <Text style={[styles.billLabel, strong && styles.billStrong]}>{label}</Text>
+      <Text
+        style={[styles.billValue, strong && styles.billStrong, tone === 'success' && styles.billSuccess]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  list: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xl },
-  notice: {
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-  },
-  noticeText: { ...typography.small, color: colors.textSecondary },
-  row: {
+  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: 140 },
+  savings: {
     flexDirection: 'row',
-    gap: spacing.lg,
+    alignItems: 'center',
+    gap: spacing.md,
     padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.successSoft,
+  },
+  savingsIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savingsText: { ...typography.small, color: colors.success, flex: 1 },
+  savingsAmount: { fontFamily: fonts.bold },
+  guest: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.primarySoft,
+  },
+  guestText: { ...typography.small, color: colors.text, flex: 1 },
+  guestLink: { fontFamily: fonts.semibold, color: colors.primary },
+  card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
+    padding: spacing.lg,
     ...shadow.card,
   },
-  thumb: {
-    width: 76,
-    height: 76,
+  cardTitle: { fontFamily: fonts.bold, fontSize: 15, color: colors.text, marginBottom: spacing.sm },
+  row: { flexDirection: 'row', gap: spacing.md, paddingVertical: spacing.md },
+  rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  thumbTile: {
+    width: 62,
+    height: 62,
     borderRadius: radius.md,
-    backgroundColor: colors.surfaceAlt,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    padding: 4,
   },
-  rowBody: { flex: 1, gap: 3 },
-  rowName: { ...typography.smallStrong, color: colors.text },
+  thumb: { width: '100%', height: '100%' },
+  rowBody: { flex: 1, gap: 2 },
+  rowName: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, color: colors.text },
   rowVariant: { ...typography.tiny, color: colors.textMuted },
-  rowPrice: { ...typography.smallStrong, color: colors.textSecondary },
-  rowActions: {
+  rowPrices: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 2 },
+  rowPrice: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text },
+  rowStrike: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    color: colors.textMuted,
+    textDecorationLine: 'line-through',
+  },
+  rowRight: { alignItems: 'flex-end', justifyContent: 'space-between' },
+  rowSubtotal: { fontFamily: fonts.bold, fontSize: 14, color: colors.text, marginTop: spacing.sm },
+  billRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
+  billLabel: { ...typography.small, color: colors.textSecondary },
+  billValue: { ...typography.small, color: colors.text },
+  billStrong: { fontFamily: fonts.bold, fontSize: 15, color: colors.text },
+  billSuccess: { color: colors.success, fontFamily: fonts.semibold },
+  billDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginVertical: spacing.sm,
+  },
+  billNote: { ...typography.tiny, color: colors.textMuted, marginTop: spacing.sm },
+  bar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.lg,
-    marginTop: spacing.sm,
-  },
-  removeBtn: { padding: spacing.xs },
-  rowSubtotal: { ...typography.price, color: colors.text },
-  summary: {
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    backgroundColor: colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    gap: spacing.sm,
+    ...shadow.bar,
   },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  summaryLabel: { ...typography.body, color: colors.textMuted },
-  summaryValue: { ...typography.priceLarge, color: colors.text },
-  summaryNote: { ...typography.tiny, color: colors.textMuted, marginBottom: spacing.sm },
+  barTotal: { fontFamily: fonts.bold, fontSize: 19, color: colors.text },
+  barLabel: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1, color: colors.textMuted },
+  barBtn: { flex: 1 },
 });

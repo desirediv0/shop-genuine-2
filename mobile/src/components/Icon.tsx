@@ -45,6 +45,31 @@ const GLYPHS = {
   empty: ['file-tray-outline', 'file-tray'],
   image: ['image-outline', 'image'],
   filter: ['options-outline', 'options'],
+
+  // Store identities
+  grid: ['grid-outline', 'grid'],
+  leaf: ['leaf-outline', 'leaf'],
+  fitness: ['barbell-outline', 'barbell'],
+  pharmacy: ['medkit-outline', 'medkit'],
+  sparkles: ['sparkles-outline', 'sparkles'],
+
+  // Category fallbacks, for categories uploaded without an image
+  basket: ['basket-outline', 'basket'],
+  grain: ['nutrition-outline', 'nutrition'],
+  cookie: ['cafe-outline', 'cafe'],
+  drink: ['wine-outline', 'wine'],
+  egg: ['egg-outline', 'egg'],
+  frozen: ['snow-outline', 'snow'],
+  snack: ['fast-food-outline', 'fast-food'],
+  spice: ['flame-outline', 'flame'],
+  sweet: ['ice-cream-outline', 'ice-cream'],
+  tea: ['cafe-outline', 'cafe'],
+  water: ['water-outline', 'water'],
+  meal: ['restaurant-outline', 'restaurant'],
+  fish: ['fish-outline', 'fish'],
+  flower: ['flower-outline', 'flower'],
+  bolt: ['flash-outline', 'flash'],
+  star: ['star-outline', 'star'],
 } as const;
 
 export type IconName = keyof typeof GLYPHS;

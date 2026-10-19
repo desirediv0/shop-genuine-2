@@ -9,19 +9,16 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
+import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { catalogue, wishlist as wishlistApi } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
-import { QuantityStepper } from '../../src/components/QuantityStepper';
 import { HeaderActions } from '../../src/components/HeaderActions';
+import { QtyStepper } from '../../src/components/QtyStepper';
 import { DietMark } from '../../src/components/product/DietMark';
-import {
-  CollapsibleCard,
-  DetailBlocks,
-  ProductDetailsCard,
-} from '../../src/components/product/DetailBlocks';
+import { CollapsibleCard, ProductDetailsCard } from '../../src/components/product/DetailBlocks';
 import { PromiseRow } from '../../src/components/product/PromiseRow';
 import { Icon } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
@@ -49,12 +46,12 @@ export default function ProductScreen() {
   const { railCardWidth } = useProductLayout();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { addItem, mutating } = useCart();
+  const { cart, addItem, updateItem, removeItem } = useCart();
+  const [cartBusy, setCartBusy] = useState(false);
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   const [variantId, setVariantId] = useState<string | null>(null);
-  const [quantity, setQuantity] = useState(1);
   const [imageIndex, setImageIndex] = useState(0);
 
   const { data, isLoading, isError, error, refetch } = useQuery({
@@ -72,11 +69,6 @@ export default function ProductScreen() {
   const packSize = findDetail(details, 'unit', 'net quantity', 'pack size', 'quantity', 'weight');
   const diet = dietFrom(findDetail(details, 'dietary preference', 'diet', 'food preference'));
   const shippingBlocks = useMemo(() => parseProductDetails(product?.shippingReturn), [product?.shippingReturn]);
-  const legalBlocks = useMemo(() => parseProductDetails(product?.legalInfo), [product?.legalInfo]);
-  const lifestyleBlocks = useMemo(
-    () => parseProductDetails(product?.lifestyleDescription),
-    [product?.lifestyleDescription],
-  );
 
   // The server's related list is "same category", which is empty whenever a
   // category holds one product — true of every live product so far — and the
@@ -150,14 +142,27 @@ export default function ProductScreen() {
   const stock = variant?.quantity ?? 0;
   const inStock = !!variant?.isActive && stock > 0;
 
-  const onAddToCart = async () => {
-    if (!variant) return;
+  const saving = off > 0 ? regular - price : 0;
+
+  // The bar works like the cards: "Add to cart", then − qty + once it is in.
+  const line = variant ? cart.items.find((i) => i.variant.id === variant.id) : undefined;
+  const floor = Math.max(1, line?.moq ?? 1);
+
+  const runCart = async (action: () => Promise<void>) => {
+    if (cartBusy) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setCartBusy(true);
     try {
-      await addItem(product, variant, quantity);
-      toast('Added to cart', 'success');
+      await action();
     } catch (e) {
       toast((e as Error).message, 'error');
+    } finally {
+      setCartBusy(false);
     }
+  };
+
+  const onAddToCart = () => {
+    if (variant) runCart(() => addItem(product, variant, 1));
   };
 
   const onSave = () => {
@@ -177,8 +182,8 @@ export default function ProductScreen() {
         contentContainerStyle={{ paddingBottom: 190 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Gallery */}
-        <View>
+        {/* Gallery, on a white panel so packshots sit on the white they were shot on */}
+        <View style={styles.galleryPanel}>
           <ScrollView
             horizontal
             pagingEnabled
@@ -192,13 +197,13 @@ export default function ProductScreen() {
                 <Image
                   key={uri}
                   source={uri}
-                  style={{ width, height: width }}
+                  style={{ width, height: width * 0.86 }}
                   contentFit="contain"
                   transition={220}
                 />
               ))
             ) : (
-              <View style={[styles.noImage, { width, height: width }]}>
+              <View style={[styles.noImage, { width, height: width * 0.86 }]}>
                 <Icon name="image" size={30} color={colors.textMuted} />
               </View>
             )}
@@ -236,6 +241,10 @@ export default function ProductScreen() {
             ) : null}
           </View>
 
+          {saving > 0 ? (
+            <Text style={styles.saving}>You save {formatPrice(saving)}</Text>
+          ) : null}
+
           <Text style={[styles.stock, inStock ? styles.inStock : styles.outStock]}>
             {inStock ? (stock <= 5 ? `Only ${stock} left` : 'In stock') : 'Out of stock'}
           </Text>
@@ -254,7 +263,6 @@ export default function ProductScreen() {
                       key={v.id}
                       onPress={() => {
                         setVariantId(v.id);
-                        setQuantity(1);
                       }}
                       disabled={disabled}
                       accessibilityRole="button"
@@ -281,19 +289,6 @@ export default function ProductScreen() {
             </View>
           ) : null}
 
-          {/* Quantity */}
-          {inStock ? (
-            <View style={styles.block}>
-              <Text style={styles.blockTitle}>Quantity</Text>
-              <QuantityStepper
-                value={quantity}
-                min={1}
-                max={Math.min(stock, 20)}
-                onChange={setQuantity}
-              />
-            </View>
-          ) : null}
-
           <PromiseRow />
 
           {/* A spec sheet reads as "Product details"; free text as prose. */}
@@ -302,26 +297,7 @@ export default function ProductScreen() {
             blocks={details}
           />
 
-          {lifestyleBlocks.length || product.lifestyleImage ? (
-            <View style={styles.lifestyle}>
-              {product.lifestyleImage ? (
-                <Image
-                  source={product.lifestyleImage}
-                  style={styles.lifestyleImage}
-                  contentFit="cover"
-                  transition={220}
-                />
-              ) : null}
-              {lifestyleBlocks.length ? (
-                <View style={styles.lifestyleText}>
-                  <DetailBlocks blocks={lifestyleBlocks} />
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-
           <CollapsibleCard title="Shipping & returns" blocks={shippingBlocks} />
-          <CollapsibleCard title="Legal information" blocks={legalBlocks} />
 
           {product.category?.name ? (
             <Pressable
@@ -352,22 +328,49 @@ export default function ProductScreen() {
 
       {/* Sticky action bar */}
       <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.md }]}>
-        <Button
-          label={savedEntry ? 'Saved' : 'Save'}
-          icon="wishlist"
-          iconFilled={!!savedEntry}
-          variant="outline"
+        <Pressable
           onPress={onSave}
-          loading={saveMutation.isPending}
-          style={styles.saveBtn}
-        />
-        <Button
-          label={inStock ? 'Add to cart' : 'Out of stock'}
-          onPress={onAddToCart}
-          disabled={!inStock}
-          loading={mutating}
-          style={styles.cartBtn}
-        />
+          disabled={saveMutation.isPending}
+          accessibilityRole="button"
+          accessibilityLabel={savedEntry ? 'Remove from saved' : 'Save for later'}
+          accessibilityState={{ selected: !!savedEntry }}
+          style={({ pressed }) => [styles.saveBtn, savedEntry && styles.saveBtnOn, pressed && styles.pressed]}
+        >
+          <Icon
+            name="wishlist"
+            size={22}
+            filled={!!savedEntry}
+            color={savedEntry ? colors.primary : colors.text}
+          />
+        </Pressable>
+
+        {!inStock ? (
+          <Button label="Out of stock" disabled style={styles.cartBtn} />
+        ) : line ? (
+          <>
+            <QtyStepper
+              size="lg"
+              qty={line.quantity}
+              busy={cartBusy}
+              plusDisabled={line.quantity >= stock}
+              minusLabel={line.quantity - 1 < floor ? 'Remove from cart' : 'Decrease quantity'}
+              onMinus={() =>
+                runCart(() =>
+                  line.quantity - 1 < floor ? removeItem(line) : updateItem(line, line.quantity - 1),
+                )
+              }
+              onPlus={() => runCart(() => updateItem(line, line.quantity + 1))}
+            />
+            <Button
+              label="View cart"
+              variant="outline"
+              onPress={() => router.push('/basket')}
+              style={styles.cartBtn}
+            />
+          </>
+        ) : (
+          <Button label="Add to cart" onPress={onAddToCart} loading={cartBusy} style={styles.cartBtn} />
+        )}
       </View>
     </>
   );
@@ -398,15 +401,6 @@ const styles = StyleSheet.create({
   name: { ...typography.h1, color: colors.text, marginTop: 2 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
   packSize: { ...typography.smallStrong, color: colors.textMuted },
-  lifestyle: {
-    marginTop: spacing.xl,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    ...shadow.card,
-  },
-  lifestyleImage: { width: '100%', aspectRatio: 16 / 10 },
-  lifestyleText: { padding: spacing.lg },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
@@ -416,7 +410,7 @@ const styles = StyleSheet.create({
   price: { ...typography.priceLarge, color: colors.text },
   strike: { ...typography.body, color: colors.textMuted, textDecorationLine: 'line-through' },
   offBadge: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.deal,
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: radius.sm,
@@ -460,6 +454,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     ...shadow.bar,
   },
-  saveBtn: { flex: 1 },
-  cartBtn: { flex: 2 },
+  // Icon-only, so the buying controls get the width.
+  saveBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnOn: { borderColor: colors.primaryBorder, backgroundColor: colors.primarySoft },
+  cartBtn: { flex: 1 },
+  pressed: { opacity: 0.85 },
+  galleryPanel: {
+    backgroundColor: colors.surface,
+    borderBottomLeftRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
+    overflow: 'hidden',
+    paddingBottom: spacing.xl,
+    ...shadow.card,
+  },
+  saving: { fontFamily: fonts.semibold, fontSize: 13, color: colors.success },
 });

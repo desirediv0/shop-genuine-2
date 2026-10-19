@@ -5,10 +5,11 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orders as ordersApi, payments } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
+import { Icon } from '../../src/components/Icon';
 import { ErrorState, LoadingState } from '../../src/components/States';
 import { StatusPill } from '../../src/components/StatusPill';
 import { useToast } from '../../src/context/ToastContext';
-import { colors, radius, shadow, spacing, typography } from '../../src/theme';
+import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { Order } from '../../src/types';
 import {
   formatDate,
@@ -21,6 +22,20 @@ import {
 
 /** Statuses the customer is still allowed to cancel from. */
 const CANCELLABLE = new Set(['PENDING', 'PROCESSING', 'PAID']);
+
+/**
+ * Where an order sits on its way to the door. PAID is an online order that has
+ * been placed and not yet picked up, so it sits on the first step like PENDING.
+ * Cancelled, refunded and returned orders have no step — the pill says it all.
+ */
+const STEPS = ['Placed', 'Processing', 'Shipped', 'Delivered'] as const;
+const STEP_OF: Record<string, number> = {
+  PENDING: 0,
+  PAID: 0,
+  PROCESSING: 1,
+  SHIPPED: 2,
+  DELIVERED: 3,
+};
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -65,7 +80,7 @@ export default function OrderDetailScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: order.orderNumber }} />
+      <Stack.Screen options={{ title: 'Order details' }} />
 
       <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
         {/* Status */}
@@ -76,6 +91,7 @@ export default function OrderDetailScreen() {
           </View>
           <Text style={styles.meta}>Placed {formatDate(order.date ?? order.createdAt)}</Text>
           <Text style={styles.meta}>Payment: {orderPaymentLabel(order)}</Text>
+          {order.status in STEP_OF ? <OrderProgress step={STEP_OF[order.status]} /> : null}
         </View>
 
         {/* Tracking */}
@@ -174,6 +190,39 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
   );
 }
 
+function OrderProgress({ step }: { step: number }) {
+  return (
+    <View
+      style={styles.progress}
+      accessible
+      accessibilityLabel={`Order status: ${STEPS[step]}, step ${step + 1} of ${STEPS.length}`}
+    >
+      {STEPS.map((label, i) => {
+        const done = i <= step;
+        return (
+          <View key={label} style={styles.step}>
+            <View style={styles.stepTrack}>
+              {/* The line into this step, then the line out of it. */}
+              <View style={[styles.line, i === 0 && styles.lineHidden, done && styles.lineDone]} />
+              <View style={[styles.node, done && styles.nodeDone, i === step && styles.nodeCurrent]}>
+                {done ? <Icon name="check" size={12} color={colors.textInverse} /> : null}
+              </View>
+              <View
+                style={[
+                  styles.line,
+                  i === STEPS.length - 1 && styles.lineHidden,
+                  i < step && styles.lineDone,
+                ]}
+              />
+            </View>
+            <Text style={[styles.stepLabel, done && styles.stepLabelDone]}>{label}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
@@ -195,6 +244,25 @@ const styles = StyleSheet.create({
   },
   cardTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.sm },
   meta: { ...typography.small, color: colors.textMuted },
+  progress: { flexDirection: 'row', marginTop: spacing.lg },
+  step: { flex: 1, alignItems: 'center', gap: 6 },
+  // Fixed height so the larger current-step node does not push its label down.
+  stepTrack: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch', height: 26 },
+  line: { flex: 1, height: 3, backgroundColor: colors.surfaceAlt },
+  lineHidden: { opacity: 0 },
+  lineDone: { backgroundColor: colors.success },
+  node: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  nodeDone: { backgroundColor: colors.success },
+  nodeCurrent: { borderWidth: 3, borderColor: colors.successSoft, width: 26, height: 26, borderRadius: 13 },
+  stepLabel: { fontFamily: fonts.medium, fontSize: 11.5, color: colors.textMuted },
+  stepLabelDone: { fontFamily: fonts.semibold, color: colors.text },
   strong: { ...typography.price, color: colors.text },
   item: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   thumb: { width: 56, height: 56, borderRadius: radius.md, backgroundColor: colors.surfaceAlt },

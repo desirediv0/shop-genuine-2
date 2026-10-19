@@ -21,7 +21,13 @@ function TabIcon({
   color: ColorValue;
   focused: boolean;
 }) {
-  return <Icon name={name} size={23} color={String(color)} filled={focused} />;
+  return (
+    // A soft pill behind the active icon — where you are reads at a glance,
+    // and the bar looks designed rather than default.
+    <View style={[styles.iconPill, focused && styles.iconPillActive]}>
+      <Icon name={name} size={22} color={String(color)} filled={focused} />
+    </View>
+  );
 }
 
 /** A tab icon with a count bubble, shared by Cart and Saved so they match. */
@@ -79,7 +85,7 @@ export default function TabsLayout() {
         tabBarLabelStyle: styles.tabLabel,
         headerStyle: styles.header,
         headerTintColor: colors.text,
-        headerTitleStyle: { fontFamily: fonts.semibold, fontSize: 17 },
+        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 20 },
         headerShadowVisible: false,
         sceneStyle: { backgroundColor: colors.background },
       }}
@@ -134,12 +140,20 @@ const styles = StyleSheet.create({
     ...shadow.bar,
   },
   tabItem: { paddingTop: 2 },
-  tabLabel: { ...typography.tiny, marginTop: 2 },
+  tabLabel: { ...typography.tiny, fontFamily: fonts.semibold, marginTop: 3 },
+  iconPill: {
+    width: 54,
+    height: 30,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconPillActive: { backgroundColor: colors.primarySoft },
   header: { backgroundColor: colors.background },
   badge: {
     position: 'absolute',
-    top: -5,
-    right: -9,
+    top: -3,
+    right: 6,
     minWidth: 17,
     height: 17,
     paddingHorizontal: 4,

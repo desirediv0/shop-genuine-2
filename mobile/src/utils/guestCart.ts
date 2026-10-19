@@ -17,6 +17,11 @@ export interface GuestCartLine {
   slug: string;
   image: string | null;
   price: number;
+  /**
+   * List price before any sale, so a guest's cart can show their savings.
+   * Optional: lines saved by earlier app versions do not have it.
+   */
+  regularPrice?: number;
   quantity: number;
   variantLabel: string;
   maxQuantity: number;
@@ -82,6 +87,7 @@ export async function addGuestLine(
       slug: product.slug,
       image: resolveImage(product, variant),
       price: toNumber(variant.salePrice ?? variant.price),
+      regularPrice: toNumber(variant.price),
       quantity: Math.min(quantity, variant.quantity),
       variantLabel: label,
       maxQuantity: variant.quantity,
