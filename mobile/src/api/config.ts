@@ -43,5 +43,7 @@ export const STORAGE_KEYS = {
   refreshToken: 'sg.refreshToken',
   guestCart: 'sg.guestCart',
   storeVertical: 'sg.storeVertical',
+  /** The store version a shopper said "Not now" to, so it is offered once. */
+  updateDismissed: 'sg.updateDismissed',
   recentSearches: 'sg.recentSearches',
 } as const;

@@ -12,6 +12,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import { storeTheme } from '../../src/theme/stores';
+import { buildLabel } from '../../src/utils/buildInfo';
 
 export default function AccountScreen() {
   const router = useRouter();
@@ -78,6 +79,7 @@ export default function AccountScreen() {
         {/* Minting a push token needs no account, so keep diagnostics reachable
             while signed out — only the test send requires auth. */}
         {__DEV__ ? <PushDebugPanel /> : null}
+        <Text style={styles.build}>{buildLabel()}</Text>
       </ScrollView>
     );
   }
@@ -201,6 +203,9 @@ export default function AccountScreen() {
         }}
         onClose={() => setShowDelete(false)}
       />
+      {/* Which version and over-the-air update this phone runs — the first
+          thing to ask when a shopper reports a problem. */}
+      <Text style={styles.build}>{buildLabel()}</Text>
     </ScrollView>
   );
 }
@@ -342,5 +347,6 @@ const styles = StyleSheet.create({
 
   group: { gap: spacing.md },
   deleteWrap: { alignItems: 'center', paddingVertical: spacing.md },
+  build: { ...typography.tiny, color: colors.textMuted, textAlign: 'center' },
   delete: { ...typography.small, color: colors.error, fontFamily: fonts.semibold },
 });

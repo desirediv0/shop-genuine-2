@@ -6,6 +6,7 @@
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "^2.2.0",
+    "@sentry/react-native": "~7.11.0",
     "@tanstack/react-query": "^5.103.1",
     "axios": "^1.20.0",
     "expo": "~57.0.27",
@@ -21,6 +22,7 @@
     "expo-secure-store": "~57.0.4",
     "expo-splash-screen": "~57.0.9",
     "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.26",
     "react": "19.2.3",
     "react-dom": "^19.2.3",
     "react-native": "0.86.3",
@@ -44,7 +46,13 @@
     "test:contract": "node scripts/contract-test.mjs",
     "test:verticals": "node scripts/vertical-test.mjs",
     "test:prod": "node scripts/prod-smoke.mjs",
-    "test:details": "node scripts/test-product-details.mjs"
+    "test:details": "node scripts/test-product-details.mjs",
+    "test:units": "node scripts/test-units.mjs",
+    "release:check": "node scripts/release.mjs check",
+    "build:apk": "node scripts/release.mjs apk",
+    "build:store": "node scripts/release.mjs store",
+    "update:preview": "node scripts/release.mjs update preview",
+    "update:production": "node scripts/release.mjs update production"
   },
   "private": true
 }

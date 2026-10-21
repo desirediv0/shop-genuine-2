@@ -49,6 +49,14 @@ check('categories shape', Array.isArray(cats.json?.data?.categories));
 const settings = await call('GET', '/payment/settings');
 check('paymentSettings has cashEnabled', typeof settings.json?.data?.cashEnabled === 'boolean');
 
+// The update gate fails open, so a renamed field would silently stop every
+// "Please update" screen — check the shape the app reads.
+const versionPolicy = await call('GET', '/public/app-version');
+const vp = versionPolicy.json?.data;
+check('app-version has android + ios rules',
+  ['android', 'ios'].every((p) => vp?.[p] && 'minVersion' in vp[p] && 'latestVersion' in vp[p] && 'storeUrl' in vp[p]),
+  JSON.stringify(vp));
+
 // 2. Auth flow
 const reg = await call('POST', '/users/register', {
   body: { name: 'Contract Test', email, password: 'Test@1234', phone: '9876543210' },

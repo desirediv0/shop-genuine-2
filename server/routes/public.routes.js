@@ -27,6 +27,7 @@ import { getPublishedBanners } from "../controllers/admin.banner.controller.js";
 import { getActiveFlashSales, getActiveProductSections } from "../controllers/public.controller.js";
 import { getActiveVideoReels } from "../controllers/admin.video-reel.controller.js";
 import { verifyJWTToken, requireSecretAccess } from "../middlewares/auth.middleware.js";
+import { getAppVersion } from "../controllers/appVersion.controller.js";
 
 const router = express.Router();
 
@@ -73,5 +74,8 @@ router.get("/price-visibility-settings", getPriceVisibilitySettings);
 
 // Video Reels (Watch and Buy)
 router.get("/video-reels", getActiveVideoReels);
+
+// Mobile app: minimum and latest supported store versions
+router.get("/app-version", getAppVersion);
 
 export default router;

@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   Address,
+  AppVersionPolicy,
   AuthPayload,
   Banner,
   Brand,
@@ -305,6 +306,13 @@ export const referrals = {
 export const bundles = {
   list: () => api.get<unknown>('/bundles'),
   bySlug: (slug: string) => api.get<unknown>(`/bundles/${slug}`),
+};
+
+/* ------------------------------ App version ----------------------------- */
+
+export const appInfo = {
+  /** Minimum and latest supported store versions; every field may be null. */
+  versionPolicy: () => api.get<AppVersionPolicy>('/public/app-version'),
 };
 
 /* ----------------------------- Notifications ---------------------------- */

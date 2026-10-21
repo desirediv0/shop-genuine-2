@@ -12,7 +12,7 @@ traffic, and a mismatch gets the app suspended.
 | Question | Answer |
 |---|---|
 | Does your app collect or share any of the required user data types? | **Yes** |
-| Is all of the user data collected by your app encrypted in transit? | **Yes** — the app talks to `https://api.shopgenuine.online` only |
+| Is all of the user data collected by your app encrypted in transit? | **Yes** — every connection is HTTPS: the API (`api.shopgenuine.online`), Expo's update and push services, and Sentry once crash reporting is on |
 | Do you provide a way for users to request that their data is deleted? | **Yes** — in-app, Account → Delete my account |
 
 ## Data types to declare
@@ -26,7 +26,9 @@ traffic, and a mismatch gets the app suspended.
 | Purchase history | Yes | No | Required | App functionality (order history) |
 | Payment info | **No** | No | — | See the note below |
 | App interactions | Yes | No | Required | App functionality (cart, wishlist) |
-| Device or other IDs | Yes | No | Optional | Push notifications |
+| Device or other IDs | Yes | No | Required | App functionality (app updates, push notifications) |
+| Crash logs | Yes, once Sentry is on | No | Required | App functionality, Analytics |
+| Diagnostics | Yes, once Sentry is on | No | Required | App functionality, Analytics |
 
 ### Why "Payment info" is No
 
@@ -38,10 +40,28 @@ signature. Declaring payment info as collected would be inaccurate.
 If that ever changes — for example if a card form is built into the app — this
 answer must change with it.
 
-### Why "Device or other IDs" is Optional
+### Why "Device or other IDs" is Required
 
-The Expo push token is only minted after the person grants the notification
-permission, and the app works fully without it.
+Two identifiers leave the device:
+
+- **The Expo push token**, minted only after the person grants the
+  notification permission. On its own it would be optional.
+- **The EAS Update installation id** (`EAS-Client-ID`), a random id sent with
+  every update check to Expo's update service (`u.expo.dev`). It is not linked to
+  the account, but it is sent on every launch, so the type as a whole is
+  required.
+
+Expo and Sentry process this data on Shop Genuine's behalf as service
+providers, so under Play's definitions it is collected, not "shared".
+
+### Crash logs and Diagnostics
+
+`src/utils/monitoring.ts` only sends anything when the build carries
+`EXPO_PUBLIC_SENTRY_DSN` (see RELEASING.md). **Until Sentry is switched on, leave
+these two rows out.** When it is switched on, add them **before** the update that
+enables it goes out. Reports contain the error, stack trace, app version, update id
+and device model / OS version. `sendDefaultPii` is off, so they carry no IP
+address, email or name.
 
 ## Account deletion URL
 

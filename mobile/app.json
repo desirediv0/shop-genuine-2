@@ -2,7 +2,22 @@
   "expo": {
     "name": "Shop Genuine",
     "slug": "shop-genuine",
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2c2637b2-7a6a-4b12-82e1-9099f4e01b9d",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "requestHeaders": {
+        "expo-channel-name": "preview"
+      }
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "shopgenuine",
@@ -52,7 +67,9 @@
           "icon": "./assets/notification-icon.png"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@sentry/react-native",
+      "./plugins/withGradleMemory"
     ],
     "experiments": {
       "typedRoutes": true

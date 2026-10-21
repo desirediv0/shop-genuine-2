@@ -1,7 +1,10 @@
+// Crash reporting starts before anything else can throw.
+import { withMonitoring } from '../src/utils/monitoring';
 import React, { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,6 +20,7 @@ import { useNotificationRouting } from '../src/hooks/useNotificationRouting';
 import { CartProvider } from '../src/context/CartContext';
 import { StoreVerticalProvider } from '../src/context/StoreVerticalContext';
 import { ToastProvider } from '../src/context/ToastContext';
+import { APP_VERSION_QUERY, UpdateGate } from '../src/components/UpdateGate';
 import { colors, fonts } from '../src/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -33,6 +37,20 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+// React Query listens for browser focus by default, which never fires in a
+// native app. Map it to the app returning to the foreground. Only queries that
+// opt in (the version check) refetch on it; the default above stays off.
+focusManager.setEventListener((handleFocus) => {
+  const subscription = AppState.addEventListener('change', (state) => {
+    handleFocus(state === 'active');
+  });
+  return () => subscription.remove();
+});
+
+// Ask for the version policy while the splash is still up, so an "Update
+// required" screen does not appear a moment after the shop has rendered.
+queryClient.prefetchQuery(APP_VERSION_QUERY).catch(() => {});
 
 /** Holds the splash screen until the stored session has been restored. */
 function SplashGate({ children }: { children: React.ReactNode }) {
@@ -60,7 +78,7 @@ function SplashGate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -70,6 +88,7 @@ export default function RootLayout() {
               <StoreVerticalProvider>
                 <CartProvider>
                   <SplashGate>
+                  <UpdateGate>
                   <StatusBar style="dark" />
                   <Stack
                     screenOptions={{
@@ -91,6 +110,7 @@ export default function RootLayout() {
                       options={{ headerShown: false, presentation: 'modal' }}
                     />
                   </Stack>
+                  </UpdateGate>
                   </SplashGate>
                 </CartProvider>
               </StoreVerticalProvider>
@@ -101,3 +121,5 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   );
 }
+
+export default withMonitoring(RootLayout);

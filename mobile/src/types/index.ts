@@ -276,6 +276,19 @@ export interface AuthPayload {
   refreshToken: string;
 }
 
+/** `/public/app-version` — which store versions the server still supports. */
+export interface AppVersionRule {
+  minVersion: string | null;
+  latestVersion: string | null;
+  storeUrl: string | null;
+}
+
+export interface AppVersionPolicy {
+  android: AppVersionRule;
+  ios: AppVersionRule;
+  message: string | null;
+}
+
 export interface PaymentSettings {
   cashEnabled: boolean;
   razorpayEnabled: boolean;

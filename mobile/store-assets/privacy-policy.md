@@ -37,6 +37,15 @@ without this and you can turn it off in your device settings at any time.
 
 **Technical information** needed to serve a request, such as your IP address.
 
+**To keep the app up to date:** when the app starts, it asks our update service
+whether a newer version of its screens is available. That request carries the
+app version, your phone's platform (Android or iOS) and a random installation
+identifier that is not linked to your account.
+
+**If the app crashes:** a crash report with the error, the app version and basic
+device details (model, operating system version), so we can fix the problem. It
+does not include your name, email, phone number or address.
+
 ## What we do not collect
 
 **We never see your card, UPI or netbanking details.** Payments are handled
@@ -63,6 +72,8 @@ Only the companies needed to run the service:
 | **Razorpay** | Payment details you enter with them, order amount | To take payment |
 | **[DELIVERY PARTNER]** | Name, delivery address, phone | To deliver your order |
 | **Expo / Google Firebase** | Your push token | To deliver notifications |
+| **Expo** | App version, platform, a random installation identifier | To deliver app updates |
+| **Sentry** | Crash reports (no account details) | To find and fix crashes |
 | **DigitalOcean** | Hosting and image storage | To run the service |
 | **[EMAIL PROVIDER]** | Your email address | To send order and account emails |
 
