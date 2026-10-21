@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from './Button';
 import { Input } from './Input';
+import { Sheet } from './Sheet';
 import { colors, radius, spacing, typography } from '../theme';
 
 /**
@@ -38,15 +39,11 @@ export function DeleteAccountSheet({
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={close}
-    >
-      <ScrollView contentContainerStyle={styles.sheet} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Delete your account</Text>
-
+    // Through Sheet, like the address form: a bare page-sheet Modal drew its
+    // title under the Android status bar, and the keyboard could cover the
+    // password field on iOS.
+    <Sheet visible={visible} title="Delete your account" onClose={close}>
+      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <View style={styles.warning}>
           <Text style={styles.warningTitle}>This cannot be undone</Text>
           <Text style={styles.warningText}>
@@ -91,13 +88,12 @@ export function DeleteAccountSheet({
           />
         </View>
       </ScrollView>
-    </Modal>
+    </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  sheet: { padding: spacing.lg, gap: spacing.lg, backgroundColor: colors.background, flexGrow: 1 },
-  title: { ...typography.h1, color: colors.text },
+  body: { gap: spacing.lg, paddingBottom: spacing.lg },
   warning: {
     padding: spacing.lg,
     borderRadius: radius.lg,

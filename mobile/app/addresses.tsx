@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { addresses as addressApi } from '../src/api/services';
 import { AddressForm, type AddressDraft } from '../src/components/AddressForm';
-import { AddressSheet } from '../src/components/AddressSheet';
+import { Sheet } from '../src/components/Sheet';
 import { Button } from '../src/components/Button';
 import { EmptyState, ErrorState, LoadingState } from '../src/components/States';
 import { useToast } from '../src/context/ToastContext';
@@ -132,7 +132,7 @@ export default function AddressesScreen() {
         )}
       />
 
-      <AddressSheet
+      <Sheet
         visible={creating || !!editing}
         title={editing ? 'Edit address' : 'New address'}
         onClose={() => {
@@ -151,7 +151,7 @@ export default function AddressesScreen() {
               setEditing(null);
             }}
           />
-      </AddressSheet>
+      </Sheet>
     </>
   );
 }

@@ -68,6 +68,9 @@ function describeChanges(before, after) {
   const { diffFingerprints } = require('@expo/fingerprint');
   const label = (s) => s?.filePath ?? s?.id ?? '?';
   return diffFingerprints(before, after)
+    // Ignored paths (generated android/ and ios/, eas.json) stay listed with a
+    // null hash and never affect the result — leave them out of the report.
+    .filter((d) => (d.afterSource ?? d.addedSource ?? d.removedSource)?.hash != null || d.beforeSource?.hash != null)
     .map((d) => {
       if (d.op === 'changed') return `  changed  ${label(d.afterSource)}`;
       if (d.op === 'added') return `  added    ${label(d.addedSource)}`;

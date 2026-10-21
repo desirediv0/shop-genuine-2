@@ -96,6 +96,9 @@ function RootLayout() {
                       headerTintColor: colors.text,
                       headerTitleStyle: { fontFamily: fonts.semibold, fontSize: 17 },
                       headerShadowVisible: false,
+                      // iOS otherwise labels the back arrow with the previous screen's title,
+                      // which here can be a route-group name like "(tabs)". Arrow only, as on Android.
+                      headerBackButtonDisplayMode: 'minimal',
                       contentStyle: { backgroundColor: colors.background },
                     }}
                   >

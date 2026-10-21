@@ -9,6 +9,9 @@ export default function AuthLayout() {
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
         headerShadowVisible: false,
+        // iOS otherwise labels the back arrow with the previous screen's title,
+        // which here can be a route-group name like "(tabs)". Arrow only, as on Android.
+        headerBackButtonDisplayMode: 'minimal',
         contentStyle: { backgroundColor: colors.background },
       }}
     >

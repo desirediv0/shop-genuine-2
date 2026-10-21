@@ -4,17 +4,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '../theme';
 
 /**
- * The screen that slides up for adding or editing an address — shared by
- * Checkout and Saved addresses so the two cannot drift apart again.
+ * A screen that slides up over the current one — the address form (Checkout,
+ * Saved addresses) and account deletion. Every full-screen form sheet should
+ * use this rather than a bare <Modal>, so the three platform fixes below are
+ * never forgotten again:
  *
- * On Android a page-sheet modal opens full screen and, with edge-to-edge on,
- * draws underneath the status bar: the "New address" title sat on top of the
- * clock. iOS presents the sheet below the status bar, so only Android adds the
- * top inset. Both need the bottom inset to keep the Save button clear of the
- * gesture bar, and room for the keyboard so the PIN code and phone fields are
- * not hidden while typing.
+ * - On Android a page-sheet modal opens full screen and, with edge-to-edge on,
+ *   draws underneath the status bar: the "New address" title sat on top of the
+ *   clock. iOS presents the sheet below the status bar, so only Android adds
+ *   the top inset.
+ * - Both need the bottom inset to keep buttons clear of the gesture bar.
+ * - Both need room for the keyboard, so the fields being typed in are not
+ *   hidden — iOS does not resize the screen for the keyboard on its own.
  */
-export function AddressSheet({
+export function Sheet({
   visible,
   title,
   onClose,

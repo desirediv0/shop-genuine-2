@@ -10,7 +10,7 @@ import {
   payments,
 } from '../src/api/services';
 import { AddressForm, type AddressDraft } from '../src/components/AddressForm';
-import { AddressSheet } from '../src/components/AddressSheet';
+import { Sheet } from '../src/components/Sheet';
 import { Button } from '../src/components/Button';
 import { Icon, type IconName } from '../src/components/Icon';
 import { Input } from '../src/components/Input';
@@ -247,7 +247,14 @@ export default function CheckoutScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        // iOS does not resize the screen for the keyboard as Android does, so
+        // the coupon field ended up under it. This makes room to scroll to it.
+        automaticallyAdjustKeyboardInsets
+      >
         {/* Address */}
         <Section icon="address" title="Delivery address">
           {addressList.length === 0 ? (
@@ -390,7 +397,7 @@ export default function CheckoutScreen() {
       </View>
 
       {/* New address sheet */}
-      <AddressSheet
+      <Sheet
         visible={showAddressForm}
         title="New address"
         onClose={() => setShowAddressForm(false)}
@@ -400,7 +407,7 @@ export default function CheckoutScreen() {
           onSubmit={(draft) => createAddress.mutate(draft)}
           onCancel={() => setShowAddressForm(false)}
         />
-      </AddressSheet>
+      </Sheet>
     </View>
   );
 }
