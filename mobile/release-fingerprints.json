@@ -1,8 +1,8 @@
 {
   "1.0.0": {
-    "hash": "cec1c9f431f773e79d4352f4ee168a1135228340",
+    "hash": "f829345b0153d768cf68e973d35941f8ed1f438b",
     "builds": {
-      "preview": "2026-10-21T08:14:59.133Z"
+      "preview": "2026-10-21T10:35:23.384Z"
     },
     "fingerprint": {
       "sources": [
@@ -430,6 +430,14 @@
         {
           "type": "dir",
           "filePath": "android",
+          "reasons": [
+            "bareNativeDir"
+          ],
+          "hash": null
+        },
+        {
+          "type": "dir",
+          "filePath": "ios",
           "reasons": [
             "bareNativeDir"
           ],
@@ -970,11 +978,11 @@
         {
           "type": "contents",
           "id": "expoConfig",
-          "contents": "{\"android\":{\"adaptiveIcon\":{\"backgroundColor\":\"#013DAC\",\"backgroundImage\":\"./assets/android-icon-background.png\",\"foregroundImage\":\"./assets/android-icon-foreground.png\",\"monochromeImage\":\"./assets/android-icon-monochrome.png\"},\"package\":\"com.shopgenuine.app\",\"permissions\":[\"android.permission.INTERNET\",\"android.permission.POST_NOTIFICATIONS\",\"android.permission.RECEIVE_BOOT_COMPLETED\"],\"predictiveBackGestureEnabled\":false,\"versionCode\":1},\"experiments\":{\"typedRoutes\":true},\"extra\":{\"eas\":{\"projectId\":\"2c2637b2-7a6a-4b12-82e1-9099f4e01b9d\"},\"router\":{}},\"icon\":\"./assets/icon.png\",\"ios\":{\"buildNumber\":\"1\",\"bundleIdentifier\":\"com.shopgenuine.app\",\"infoPlist\":{\"ITSAppUsesNonExemptEncryption\":false},\"supportsTablet\":true},\"name\":\"Shop Genuine\",\"orientation\":\"portrait\",\"owner\":\"desirediv\",\"platforms\":[\"android\",\"ios\"],\"plugins\":[\"./plugins/withGradleMemory\",\"@sentry/react-native\",\"expo-font\",\"expo-router\",\"expo-secure-store\",[\"expo-notifications\",{\"color\":\"#F97316\",\"defaultChannel\":\"default\",\"icon\":\"./assets/notification-icon.png\"}],[\"expo-splash-screen\",{\"backgroundColor\":\"#FFFFFF\",\"image\":\"./assets/logo.png\",\"imageWidth\":160,\"resizeMode\":\"contain\"}]],\"runtimeVersion\":{\"policy\":\"appVersion\"},\"scheme\":\"shopgenuine\",\"sdkVersion\":\"57.0.0\",\"slug\":\"shop-genuine\",\"updates\":{\"checkAutomatically\":\"ON_LOAD\",\"fallbackToCacheTimeout\":0,\"requestHeaders\":{\"expo-channel-name\":\"preview\"},\"url\":\"https://u.expo.dev/2c2637b2-7a6a-4b12-82e1-9099f4e01b9d\"},\"userInterfaceStyle\":\"light\",\"version\":\"1.0.0\"}",
+          "contents": "{\"android\":{\"adaptiveIcon\":{\"backgroundColor\":\"#013DAC\",\"backgroundImage\":\"./assets/android-icon-background.png\",\"foregroundImage\":\"./assets/android-icon-foreground.png\",\"monochromeImage\":\"./assets/android-icon-monochrome.png\"},\"package\":\"com.shopgenuine.app\",\"permissions\":[\"android.permission.INTERNET\",\"android.permission.POST_NOTIFICATIONS\",\"android.permission.RECEIVE_BOOT_COMPLETED\"],\"predictiveBackGestureEnabled\":false,\"versionCode\":1},\"experiments\":{\"typedRoutes\":true},\"extra\":{\"eas\":{\"projectId\":\"2c2637b2-7a6a-4b12-82e1-9099f4e01b9d\"},\"router\":{}},\"icon\":\"./assets/icon.png\",\"ios\":{\"buildNumber\":\"1\",\"bundleIdentifier\":\"com.shopgenuine.app\",\"infoPlist\":{\"ITSAppUsesNonExemptEncryption\":false,\"LSApplicationQueriesSchemes\":[\"paytmmp\",\"phonepe\",\"tez\"]},\"privacyManifests\":{\"NSPrivacyAccessedAPITypes\":[{\"NSPrivacyAccessedAPIType\":\"NSPrivacyAccessedAPICategoryFileTimestamp\",\"NSPrivacyAccessedAPITypeReasons\":[\"C617.1\"]},{\"NSPrivacyAccessedAPIType\":\"NSPrivacyAccessedAPICategoryUserDefaults\",\"NSPrivacyAccessedAPITypeReasons\":[\"CA92.1\"]}],\"NSPrivacyTracking\":false},\"supportsTablet\":false},\"name\":\"Shop Genuine\",\"orientation\":\"portrait\",\"owner\":\"desirediv\",\"platforms\":[\"android\",\"ios\"],\"plugins\":[\"./plugins/withGradleMemory\",\"@sentry/react-native\",\"expo-font\",\"expo-router\",[\"expo-notifications\",{\"color\":\"#F97316\",\"defaultChannel\":\"default\",\"icon\":\"./assets/notification-icon.png\"}],[\"expo-secure-store\",{\"faceIDPermission\":false}],[\"expo-splash-screen\",{\"backgroundColor\":\"#FFFFFF\",\"image\":\"./assets/logo.png\",\"imageWidth\":160,\"resizeMode\":\"contain\"}]],\"runtimeVersion\":{\"policy\":\"appVersion\"},\"scheme\":\"shopgenuine\",\"sdkVersion\":\"57.0.0\",\"slug\":\"shop-genuine\",\"updates\":{\"checkAutomatically\":\"ON_LOAD\",\"fallbackToCacheTimeout\":0,\"requestHeaders\":{\"expo-channel-name\":\"preview\"},\"url\":\"https://u.expo.dev/2c2637b2-7a6a-4b12-82e1-9099f4e01b9d\"},\"userInterfaceStyle\":\"light\",\"version\":\"1.0.0\"}",
           "reasons": [
             "expoConfig"
           ],
-          "hash": "f9dc564fd1dca38ddc6343f7529e082bc1bef012"
+          "hash": "57b6b04c73d463fb9d3992940f5e8cfb2807feee"
         },
         {
           "type": "contents",
@@ -1004,7 +1012,7 @@
           "hash": "cf0f3e7fcc3a3939e8faf34d173b46a4b3e008de"
         }
       ],
-      "hash": "cec1c9f431f773e79d4352f4ee168a1135228340"
+      "hash": "f829345b0153d768cf68e973d35941f8ed1f438b"
     }
   }
 }
