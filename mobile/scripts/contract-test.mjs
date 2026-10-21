@@ -156,8 +156,6 @@ check('order detail item exposes live product as fallback',
 const wl = await call('GET', '/users/wishlist', { token });
 check('wishlist shape', Array.isArray(wl.json?.data?.wishlistItems));
 
-const ref = await call('GET', '/referrals/my-code', { token });
-check('referral code present', typeof ref.json?.data?.referralCode === 'string');
 
 // 8. Removed debug endpoint
 const dbg = await call('GET', '/public/debug-products');

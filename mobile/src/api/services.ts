@@ -116,7 +116,7 @@ export const catalogue = {
 /* --------------------------------- Auth -------------------------------- */
 
 export const auth = {
-  register: (body: { name: string; email: string; password: string; phone?: string; referralCode?: string }) =>
+  register: (body: { name: string; email: string; password: string; phone?: string }) =>
     api.post<User & { emailSent: boolean; debugOtp?: string }>('/users/register', body),
 
   login: (body: { email: string; password: string }) =>
@@ -295,12 +295,6 @@ export const content = {
   faqs: () => api.get<unknown>('/faqs'),
   page: (slug: string) => api.get<unknown>(`/content/pages/${slug}`),
   contact: (body: Record<string, unknown>) => api.post<unknown>('/content/contact', body),
-};
-
-export const referrals = {
-  myCode: () =>
-    api.get<{ referralCode: string; stats: Record<string, unknown> }>('/referrals/my-code'),
-  mine: () => api.get<unknown>('/referrals/my-referrals'),
 };
 
 export const bundles = {

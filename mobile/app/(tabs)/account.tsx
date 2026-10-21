@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { auth as authApi, referrals } from '../../src/api/services';
+import { useMutation } from '@tanstack/react-query';
+import { auth as authApi } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
 import { DeleteAccountSheet } from '../../src/components/DeleteAccountSheet';
 import { Icon, type IconName } from '../../src/components/Icon';
@@ -19,12 +19,6 @@ export default function AccountScreen() {
   const { user, isAuthenticated, logout } = useAuth();
   const { toast } = useToast();
   const [signingOut, setSigningOut] = useState(false);
-
-  const referralQ = useQuery({
-    queryKey: ['referralCode'],
-    queryFn: () => referrals.myCode(),
-    enabled: isAuthenticated,
-  });
 
   const [showDelete, setShowDelete] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -131,44 +125,6 @@ export default function AccountScreen() {
         <Tile icon="address" label="Addresses" onPress={() => router.push('/addresses')} />
         <Tile icon="wishlist" label="Saved" onPress={() => router.navigate('/wishlist')} />
       </View>
-
-      {/* Referral */}
-      {referralQ.data?.referralCode ? (
-        <View style={styles.referral}>
-          <View style={styles.referralIcon}>
-            <Icon name="gift" size={22} color={colors.primary} filled />
-          </View>
-          <View style={styles.referralBody}>
-            <Text style={styles.referralLabel}>Invite friends</Text>
-            {/* One line always: at 360dp a 12-character code broke as
-                "REFD400F4SM / D". Shrink to fit instead. */}
-            <Text
-              style={styles.referralCode}
-              selectable
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              minimumFontScale={0.75}
-            >
-              {referralQ.data.referralCode}
-            </Text>
-            <Text style={styles.referralHint}>
-              Share your code — they get a welcome offer when they sign up.
-            </Text>
-          </View>
-          <Pressable
-            onPress={() =>
-              Share.share({
-                message: `Shop 100% authentic products on Shop Genuine. Use my referral code ${referralQ.data?.referralCode} when you sign up.`,
-              }).catch(() => {})
-            }
-            accessibilityRole="button"
-            accessibilityLabel="Share your referral code"
-            style={({ pressed }) => [styles.shareBtn, pressed && styles.pressed]}
-          >
-            <Text style={styles.shareText}>Share</Text>
-          </Pressable>
-        </View>
-      ) : null}
 
       {__DEV__ ? <PushDebugPanel /> : null}
 
@@ -315,35 +271,6 @@ const styles = StyleSheet.create({
   },
   tileLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text },
 
-  referral: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    backgroundColor: colors.primarySoft,
-  },
-  referralIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  referralBody: { flex: 1 },
-  referralLabel: { fontFamily: fonts.semibold, fontSize: 12, color: colors.primary },
-  referralCode: { fontFamily: fonts.bold, fontSize: 18, letterSpacing: 1.2, color: colors.text },
-  referralHint: { ...typography.tiny, color: colors.textSecondary, marginTop: 1 },
-  shareBtn: {
-    paddingHorizontal: spacing.lg,
-    height: 36,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shareText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textInverse },
 
   group: { gap: spacing.md },
   deleteWrap: { alignItems: 'center', paddingVertical: spacing.md },
