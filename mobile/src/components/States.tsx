@@ -1,8 +1,20 @@
 import React from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme';
+import type { CategoryGlyph } from '../theme/stores';
 import { Button } from './Button';
-import { Icon, type IconName } from './Icon';
+import { Illustration, type Tint } from './decor/Illustration';
+import { type IconName } from './Icon';
+
+/** The illustration's main symbol for each empty-state icon. */
+const GLYPHS: Partial<Record<IconName, CategoryGlyph>> = {
+  cart: 'cart-outline',
+  wishlist: 'heart-outline',
+  orders: 'package-variant-closed',
+  search: 'magnify',
+  address: 'map-marker-outline',
+  empty: 'basket-outline',
+};
 
 export function LoadingState({ label }: { label?: string }) {
   return (
@@ -22,9 +34,12 @@ export function ErrorState({
 }) {
   return (
     <View style={styles.center}>
-      <View style={[styles.halo, styles.haloError]}>
-        <Icon name="warning" size={26} color={colors.error} />
-      </View>
+      <Illustration
+        icon="cloud-off-outline"
+        tint={{ solid: colors.error, soft: colors.errorSoft }}
+        size={150}
+        floaters={[]}
+      />
       <Text style={styles.title}>We hit a problem</Text>
       <Text style={styles.muted}>{message}</Text>
       {onRetry ? (
@@ -34,30 +49,46 @@ export function ErrorState({
   );
 }
 
+/**
+ * An empty screen that still looks finished: an illustration in the store's
+ * colours, a line of copy, an action, and optionally something to browse
+ * underneath (`footer`, e.g. <NewInStoreRail />). With a footer the screen
+ * scrolls, and the message sits near the top instead of dead centre.
+ */
 export function EmptyState({
   title,
   message,
   actionLabel,
   onAction,
   icon = 'empty',
+  tint,
+  footer,
 }: {
   title: string;
   message?: string;
   actionLabel?: string;
   onAction?: () => void;
   icon?: IconName;
+  tint?: Tint;
+  footer?: React.ReactNode;
 }) {
-  return (
-    <View style={styles.center}>
-      <View style={styles.halo}>
-        <Icon name={icon} size={26} color={colors.primary} />
-      </View>
+  const body = (
+    <>
+      <Illustration icon={GLYPHS[icon] ?? 'basket-outline'} tint={tint} />
       <Text style={styles.title}>{title}</Text>
       {message ? <Text style={styles.muted}>{message}</Text> : null}
       {actionLabel && onAction ? (
         <Button label={actionLabel} onPress={onAction} style={styles.action} />
       ) : null}
-    </View>
+    </>
+  );
+
+  if (!footer) return <View style={styles.center}>{body}</View>;
+  return (
+    <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <View style={styles.top}>{body}</View>
+      {footer}
+    </ScrollView>
   );
 }
 
@@ -94,17 +125,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.xl,
   },
-  // A soft tinted disc behind the glyph stops an empty screen feeling blank.
-  halo: {
-    width: 62,
-    height: 62,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primarySoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.xs,
-  },
-  haloError: { backgroundColor: colors.errorSoft },
+  scroll: { paddingBottom: spacing.xxl, flexGrow: 1 },
+  top: { alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.xl, paddingTop: spacing.xl },
   title: { ...typography.h3, color: colors.text, textAlign: 'center' },
   muted: {
     ...typography.small,

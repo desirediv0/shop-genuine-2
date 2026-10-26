@@ -89,7 +89,7 @@ export default function AddressesScreen() {
         // Edge-to-edge draws under the gesture bar; keep the button above it.
         contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing.lg }]}
         ListEmptyComponent={
-          <EmptyState title="No addresses saved" message="Add one to speed up checkout." />
+          <EmptyState icon="address" title="No addresses saved" message="Add one to speed up checkout." />
         }
         ListFooterComponent={
           <Button

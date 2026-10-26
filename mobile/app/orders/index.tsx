@@ -39,6 +39,7 @@ export default function OrdersScreen() {
       <>
         <Stack.Screen options={{ title: 'My orders' }} />
         <EmptyState
+          icon="orders"
           title="No orders yet"
           message="When you place an order it will show up here."
           actionLabel="Start shopping"

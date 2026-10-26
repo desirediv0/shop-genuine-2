@@ -5,10 +5,13 @@ import { useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { auth as authApi } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
+import { Backdrop } from '../../src/components/decor/Backdrop';
 import { DeleteAccountSheet } from '../../src/components/DeleteAccountSheet';
 import { Icon, type IconName } from '../../src/components/Icon';
+import { PromiseCard } from '../../src/components/PromiseCard';
 import { PushDebugPanel } from '../../src/components/PushDebugPanel';
 import { useAuth } from '../../src/context/AuthContext';
+import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import { storeTheme } from '../../src/theme/stores';
@@ -20,6 +23,8 @@ export default function AccountScreen() {
   const { toast } = useToast();
   const [signingOut, setSigningOut] = useState(false);
 
+  const { vertical } = useStoreVertical();
+  const tint = storeTheme(vertical?.name);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -38,43 +43,48 @@ export default function AccountScreen() {
 
   if (!isAuthenticated) {
     return (
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-        <View style={styles.hero}>
-          <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-          <View style={styles.heroMark} pointerEvents="none">
-            <Icon name="account" size={140} color="rgba(255,255,255,0.12)" filled />
-          </View>
-          <Text style={styles.heroOverline}>WELCOME</Text>
-          <Text style={styles.heroTitle}>Your Genuine account</Text>
-          <Text style={styles.heroText}>
-            Sign in to track orders, check out faster and keep your favourites in one place.
-          </Text>
-
-          <View style={styles.benefits}>
-            <Benefit icon="orders" text="Track every order, step by step" />
-            <Benefit icon="address" text="Saved addresses for one-tap checkout" />
-            <Benefit icon="wishlist" text="Save products for later" />
-          </View>
-
-          <Pressable
-            onPress={() => router.push('/auth/login')}
-            accessibilityRole="button"
-            style={({ pressed }) => [styles.heroBtn, pressed && styles.pressed]}
-          >
-            <Text style={[styles.heroBtnText, { color: BRAND.ink }]}>Sign in</Text>
-          </Pressable>
-          <Pressable onPress={() => router.push('/auth/register')} hitSlop={8} accessibilityRole="button">
-            <Text style={styles.heroLink}>
-              New here? <Text style={styles.heroLinkStrong}>Create an account</Text>
+      <View style={styles.screen}>
+        <Backdrop tint={tint} />
+        <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
+          <View style={styles.hero}>
+            <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+            <View style={styles.heroMark} pointerEvents="none">
+              <Icon name="account" size={140} color="rgba(255,255,255,0.12)" filled />
+            </View>
+            <Text style={styles.heroOverline}>WELCOME</Text>
+            <Text style={styles.heroTitle}>Your Genuine account</Text>
+            <Text style={styles.heroText}>
+              Sign in to track orders, check out faster and keep your favourites in one place.
             </Text>
-          </Pressable>
-        </View>
 
-        {/* Minting a push token needs no account, so keep diagnostics reachable
-            while signed out — only the test send requires auth. */}
-        {__DEV__ ? <PushDebugPanel /> : null}
-        <Text style={styles.build}>{buildLabel()}</Text>
-      </ScrollView>
+            <View style={styles.benefits}>
+              <Benefit icon="orders" text="Track every order, step by step" />
+              <Benefit icon="address" text="Saved addresses for one-tap checkout" />
+              <Benefit icon="wishlist" text="Save products for later" />
+            </View>
+
+            <Pressable
+              onPress={() => router.push('/auth/login')}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.heroBtn, pressed && styles.pressed]}
+            >
+              <Text style={[styles.heroBtnText, { color: BRAND.ink }]}>Sign in</Text>
+            </Pressable>
+            <Pressable onPress={() => router.push('/auth/register')} hitSlop={8} accessibilityRole="button">
+              <Text style={styles.heroLink}>
+                New here? <Text style={styles.heroLinkStrong}>Create an account</Text>
+              </Text>
+            </Pressable>
+          </View>
+
+          <PromiseCard />
+
+          {/* Minting a push token needs no account, so keep diagnostics reachable
+              while signed out — only the test send requires auth. */}
+          {__DEV__ ? <PushDebugPanel /> : null}
+          <Text style={styles.build}>{buildLabel()}</Text>
+        </ScrollView>
+      </View>
     );
   }
 
@@ -100,69 +110,72 @@ export default function AccountScreen() {
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      {/* Profile */}
-      <View style={styles.profileCard}>
-        <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-        <View style={styles.avatar}>
-          <Text style={[styles.avatarText, { color: BRAND.ink }]}>
-            {(user?.name?.trim() || user?.email || '?').charAt(0).toUpperCase()}
-          </Text>
+    <View style={styles.screen}>
+      <Backdrop tint={tint} />
+      <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
+        {/* Profile */}
+        <View style={styles.profileCard}>
+          <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+          <View style={styles.avatar}>
+            <Text style={[styles.avatarText, { color: BRAND.ink }]}>
+              {(user?.name?.trim() || user?.email || '?').charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <View style={styles.profileBody}>
+            <Text style={styles.name} numberOfLines={1}>
+              {user?.name ?? 'Your account'}
+            </Text>
+            <Text style={styles.email} numberOfLines={1}>
+              {user?.email}
+            </Text>
+          </View>
         </View>
-        <View style={styles.profileBody}>
-          <Text style={styles.name} numberOfLines={1}>
-            {user?.name ?? 'Your account'}
-          </Text>
-          <Text style={styles.email} numberOfLines={1}>
-            {user?.email}
-          </Text>
+
+        {/* The three places people go from here */}
+        <View style={styles.tiles}>
+          <Tile icon="orders" label="Orders" onPress={() => router.push('/orders')} />
+          <Tile icon="address" label="Addresses" onPress={() => router.push('/addresses')} />
+          <Tile icon="wishlist" label="Saved" onPress={() => router.navigate('/wishlist')} />
         </View>
-      </View>
 
-      {/* The three places people go from here */}
-      <View style={styles.tiles}>
-        <Tile icon="orders" label="Orders" onPress={() => router.push('/orders')} />
-        <Tile icon="address" label="Addresses" onPress={() => router.push('/addresses')} />
-        <Tile icon="wishlist" label="Saved" onPress={() => router.navigate('/wishlist')} />
-      </View>
+        {__DEV__ ? <PushDebugPanel /> : null}
 
-      {__DEV__ ? <PushDebugPanel /> : null}
+        {/* Danger zone */}
+        <View style={styles.group}>
+          <Button
+            label="Sign out"
+            variant="outline"
+            fullWidth
+            loading={signingOut}
+            onPress={confirmSignOut}
+          />
+          <Pressable onPress={openDelete} hitSlop={8} style={styles.deleteWrap}>
+            <Text style={styles.delete}>Delete my account</Text>
+          </Pressable>
+        </View>
 
-      {/* Danger zone */}
-      <View style={styles.group}>
-        <Button
-          label="Sign out"
-          variant="outline"
-          fullWidth
-          loading={signingOut}
-          onPress={confirmSignOut}
+        <DeleteAccountSheet
+          visible={showDelete}
+          /*
+           * Always true in practice: the app signs in with email + password, so a
+           * user who can reach this screen necessarily has one on record. The
+           * server still accepts confirmText for password-less OAuth accounts,
+           * which can only exist on the website.
+           */
+          hasPassword
+          submitting={deleteAccount.isPending}
+          error={deleteError}
+          onConfirm={(input) => {
+            setDeleteError(null);
+            deleteAccount.mutate(input);
+          }}
+          onClose={() => setShowDelete(false)}
         />
-        <Pressable onPress={openDelete} hitSlop={8} style={styles.deleteWrap}>
-          <Text style={styles.delete}>Delete my account</Text>
-        </Pressable>
-      </View>
-
-      <DeleteAccountSheet
-        visible={showDelete}
-        /*
-         * Always true in practice: the app signs in with email + password, so a
-         * user who can reach this screen necessarily has one on record. The
-         * server still accepts confirmText for password-less OAuth accounts,
-         * which can only exist on the website.
-         */
-        hasPassword
-        submitting={deleteAccount.isPending}
-        error={deleteError}
-        onConfirm={(input) => {
-          setDeleteError(null);
-          deleteAccount.mutate(input);
-        }}
-        onClose={() => setShowDelete(false)}
-      />
-      {/* Which version and over-the-air update this phone runs — the first
-          thing to ask when a shopper reports a problem. */}
-      <Text style={styles.build}>{buildLabel()}</Text>
-    </ScrollView>
+        {/* Which version and over-the-air update this phone runs — the first
+            thing to ask when a shopper reports a problem. */}
+        <Text style={styles.build}>{buildLabel()}</Text>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -198,6 +211,7 @@ const BRAND = storeTheme(null);
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
   pressed: { opacity: 0.85 },
 

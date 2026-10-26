@@ -213,6 +213,7 @@ export default function SearchScreen() {
               </View>
             ) : (
               <EmptyState
+                icon="search"
                 title="No products found"
                 message={
                   debounced

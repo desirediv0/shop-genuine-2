@@ -157,6 +157,13 @@ const CATEGORY_ICONS: [RegExp, CategoryGlyph][] = [
   [/fish|meat|chicken/i, 'food-drumstick-outline'],
   [/protein|supplement|fitness|nutrition/i, 'dumbbell'],
   [/medicine|pharma|health|wellness/i, 'pill'],
+  // Cosmetics and baby care, before the catch-all beauty rule. Without these,
+  // "Diapers", "Cream", "Face" and "Moisturizer & Lotion" all fell back to the
+  // same basket.
+  [/diaper|baby|infant|wipes/i, 'baby-face-outline'],
+  [/cream|lotion|moistur|body butter/i, 'lotion-outline'],
+  [/face|serum|cleanser/i, 'face-woman-shimmer-outline'],
+  [/perfume|deo|fragrance/i, 'spray-bottle'],
   [/beauty|skin|cosmetic|makeup|hair/i, 'lipstick'],
   [/flower|puja|pooja/i, 'flower-outline'],
 ];

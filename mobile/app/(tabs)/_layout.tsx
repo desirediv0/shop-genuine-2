@@ -4,8 +4,10 @@ import { Platform, StyleSheet, Text, View, type ColorValue } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { useCart } from '../../src/context/CartContext';
+import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { useWishlist } from '../../src/hooks/useWishlist';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
+import { storeTheme } from '../../src/theme/stores';
 
 /**
  * Tab icons switch from outline to solid when active — the standard cue that
@@ -73,6 +75,10 @@ function SavedTabIcon(p: { color: ColorValue; focused: boolean }) {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  // Cart, Saved and Account paint a <Backdrop> that starts in this colour, so
+  // the header and the wash below it read as one tinted area.
+  const { vertical } = useStoreVertical();
+  const tint = storeTheme(vertical?.name).soft;
   const bottomPad = Math.max(insets.bottom, Platform.OS === 'android' ? spacing.md : 0);
 
   return (
@@ -83,7 +89,7 @@ export default function TabsLayout() {
         tabBarStyle: [styles.tabBar, { height: 60 + bottomPad, paddingBottom: bottomPad }],
         tabBarItemStyle: styles.tabItem,
         tabBarLabelStyle: styles.tabLabel,
-        headerStyle: styles.header,
+        headerStyle: [styles.header, { backgroundColor: tint }],
         headerTintColor: colors.text,
         headerTitleStyle: { fontFamily: fonts.bold, fontSize: 20 },
         headerShadowVisible: false,

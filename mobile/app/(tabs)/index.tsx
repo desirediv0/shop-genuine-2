@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { catalogue } from '../../src/api/services';
@@ -17,14 +18,14 @@ import { BannerCarousel } from '../../src/components/home/BannerCarousel';
 import { CategoryGrid } from '../../src/components/home/CategoryGrid';
 import { SectionHeader } from '../../src/components/home/SectionHeader';
 import { StoreHero } from '../../src/components/home/StoreHero';
-import { PromiseRow } from '../../src/components/product/PromiseRow';
+import { PromiseCard } from '../../src/components/PromiseCard';
 import { Logo } from '../../src/components/Logo';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { useProductLayout } from '../../src/hooks/useProductLayout';
-import { storeTheme } from '../../src/theme/stores';
+import { storeTheme, type StoreTheme } from '../../src/theme/stores';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ErrorState, Skeleton } from '../../src/components/States';
-import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
+import { colors, radius, spacing, typography } from '../../src/theme';
 import type { Banner, Category, ProductSection, ProductSummary } from '../../src/types';
 
 /** Banner links are stored as website paths, so translate them to app routes. */
@@ -208,7 +209,7 @@ export default function HomeScreen() {
           </View>
         ) : (
           <>
-            {sectionRows.map(({ section, products, loading }) => (
+            {sectionRows.map(({ section, products, loading }, i) => (
               <ProductRail
                 key={section.id}
                 title={section.name}
@@ -216,6 +217,9 @@ export default function HomeScreen() {
                 products={products}
                 cardWidth={cardWidth}
                 onSeeAll={() => router.navigate('/search')}
+                // The first row sits on a band of the store colour, so the page
+                // is not one unbroken stretch of beige between identical rows.
+                spotlight={i === 0 ? theme : undefined}
               />
             ))}
 
@@ -232,10 +236,7 @@ export default function HomeScreen() {
           </>
         )}
 
-        <View style={styles.promise}>
-          <Text style={styles.promiseTitle}>The Genuine promise</Text>
-          <PromiseRow style={styles.promiseRow} />
-        </View>
+        <PromiseCard style={styles.promise} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -247,12 +248,15 @@ function ProductRail({
   loading,
   cardWidth,
   onSeeAll,
+  spotlight,
 }: {
   title: string;
   products: ProductSummary[];
   loading: boolean;
   cardWidth: number;
   onSeeAll?: () => void;
+  /** Draw the row on a band of this store's colour, with faint circles. */
+  spotlight?: StoreTheme;
 }) {
   if (loading) {
     return (
@@ -272,7 +276,19 @@ function ProductRail({
   if (!products.length) return null;
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, spotlight && styles.spotlight]}>
+      {spotlight ? (
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <LinearGradient
+            colors={[spotlight.soft, colors.background]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={[styles.spotCircle, { backgroundColor: spotlight.solid }]} />
+          <View style={[styles.spotRing, { borderColor: spotlight.solid }]} />
+        </View>
+      ) : null}
       <SectionHeader title={title} onSeeAll={onSeeAll} />
 
       <FlatList
@@ -324,22 +340,25 @@ const styles = StyleSheet.create({
   emptyStoreBtnText: { ...typography.bodyStrong, color: colors.textInverse },
   railContent: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xs },
   railSkeleton: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg },
-  promise: {
-    marginTop: spacing.xxl,
-    marginHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
-    paddingHorizontal: spacing.sm,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surface,
-    ...shadow.card,
+  promise: { marginTop: spacing.xxl, marginHorizontal: spacing.lg },
+  spotlight: { paddingVertical: spacing.lg, overflow: 'hidden' },
+  spotCircle: {
+    position: 'absolute',
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    top: -110,
+    right: -60,
+    opacity: 0.08,
   },
-  promiseTitle: {
-    fontFamily: fonts.semibold,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    color: colors.textMuted,
-    textAlign: 'center',
+  spotRing: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    bottom: -50,
+    left: -30,
+    borderWidth: 1.5,
+    opacity: 0.12,
   },
-  promiseRow: { marginTop: spacing.sm, borderTopWidth: 0, borderBottomWidth: 0 },
 });

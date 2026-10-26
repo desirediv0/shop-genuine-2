@@ -5,13 +5,17 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../src/components/Button';
+import { Backdrop } from '../../src/components/decor/Backdrop';
 import { Icon } from '../../src/components/Icon';
+import { NewInStoreRail } from '../../src/components/NewInStoreRail';
 import { QtyStepper } from '../../src/components/QtyStepper';
 import { EmptyState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
+import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
+import { storeTheme } from '../../src/theme/stores';
 import type { CartItem } from '../../src/types';
 import { formatPrice, variantLabel } from '../../src/utils/format';
 
@@ -24,21 +28,28 @@ export default function CartScreen() {
   const { cart, loading, mutating, updateItem, removeItem, isGuestCart } = useCart();
   const { isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const { vertical } = useStoreVertical();
+  const theme = storeTheme(vertical?.name);
 
   if (loading && !cart.items.length) return <LoadingState label="Loading cart…" />;
 
   if (!cart.items.length) {
     return (
-      <EmptyState
-        title="Your cart is empty"
-        message="Browse the catalogue and add something you like."
-        actionLabel="Start shopping"
-        icon="cart"
-        // Opened from a product page, this goes back to it; as the Cart tab,
-        // back goes to Home. Pushing '/' instead stacked a second copy of the
-        // tab navigator on top of the first.
-        onAction={() => (router.canGoBack() ? router.back() : router.push('/'))}
-      />
+      <View style={styles.screen}>
+        <Backdrop tint={theme} />
+        <EmptyState
+          title="Your cart is empty"
+          message="Browse the catalogue and add something you like."
+          actionLabel="Start shopping"
+          icon="cart"
+          tint={theme}
+          // Opened from a product page, this goes back to it; as the Cart tab,
+          // back goes to Home. Pushing '/' instead stacked a second copy of the
+          // tab navigator on top of the first.
+          onAction={() => (router.canGoBack() ? router.back() : router.push('/'))}
+          footer={<NewInStoreRail />}
+        />
+      </View>
     );
   }
 
@@ -59,6 +70,7 @@ export default function CartScreen() {
 
   return (
     <View style={styles.screen}>
+      <Backdrop tint={theme} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {savings > 0 ? (
           <View style={styles.savings}>
