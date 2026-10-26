@@ -22,7 +22,7 @@ import { ProductCard } from '../../src/components/ProductCard';
 import { EmptyState, ErrorState } from '../../src/components/States';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { Category } from '../../src/types';
-import { pickDefaultVariant, toNumber } from '../../src/utils/format';
+import { formatPrice, pickDefaultVariant, toNumber } from '../../src/utils/format';
 
 const SORTS: { label: string; sort: string; order: 'asc' | 'desc'; icon: IconName }[] = [
   { label: 'Newest', sort: 'createdAt', order: 'desc', icon: 'star' },
@@ -34,7 +34,9 @@ const SORTS: { label: string; sort: string; order: 'asc' | 'desc'; icon: IconNam
 const PAGE_SIZE = 12;
 
 export default function SearchScreen() {
-  const params = useLocalSearchParams<{ q?: string }>();
+  // `under` comes from Home's "Shop by price" tiles; `t` changes on every tap
+  // so the same tile re-applies its filter after the shopper cleared it.
+  const params = useLocalSearchParams<{ q?: string; under?: string; t?: string }>();
   // The grid used to size cards for a 12dp gap but lay them out with 16dp,
   // so rows ran a few pixels wide; one helper now owns both numbers.
   const { columns, gridCardWidth: cardWidth } = useProductLayout();
@@ -45,6 +47,12 @@ export default function SearchScreen() {
   const [debounced, setDebounced] = useState(params.q ?? '');
   const [category, setCategory] = useState<string | null>(null);
   const [sortIndex, setSortIndex] = useState(0);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+
+  useEffect(() => {
+    const n = Number(params.under);
+    if (params.under && n > 0) setMaxPrice(n);
+  }, [params.under, params.t]);
 
   // Debounce so typing doesn't fire a request per keystroke.
   useEffect(() => {
@@ -66,7 +74,7 @@ export default function SearchScreen() {
   const sort = SORTS[sortIndex];
 
   const query = useInfiniteQuery({
-    queryKey: ['search', debounced, category, sort.sort, sort.order, verticalId],
+    queryKey: ['search', debounced, category, sort.sort, sort.order, maxPrice, verticalId],
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
       catalogue.products({
@@ -76,6 +84,7 @@ export default function SearchScreen() {
         order: sort.order,
         ...(debounced ? { search: debounced } : {}),
         ...(category ? { category } : {}),
+        ...(maxPrice ? { maxPrice } : {}),
         ...verticalParam,
       }),
     getNextPageParam: (last) =>
@@ -171,6 +180,15 @@ export default function SearchScreen() {
         style={styles.chipScroll}
         contentContainerStyle={styles.sortRow}
       >
+        {maxPrice ? (
+          <Filter
+            label={`Under ${formatPrice(maxPrice)}`}
+            icon="close"
+            accent={theme.solid}
+            active
+            onPress={() => setMaxPrice(null)}
+          />
+        ) : null}
         {SORTS.map((s, i) => (
           <Filter
             key={s.label}

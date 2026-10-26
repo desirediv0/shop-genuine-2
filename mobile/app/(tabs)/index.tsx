@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -17,7 +17,10 @@ import { HomeAccountButton } from '../../src/components/HomeAccountButton';
 import { BannerCarousel } from '../../src/components/home/BannerCarousel';
 import { CategoryGrid } from '../../src/components/home/CategoryGrid';
 import { SectionHeader } from '../../src/components/home/SectionHeader';
+import { ShopByPrice } from '../../src/components/home/ShopByPrice';
+import { ShopByStore } from '../../src/components/home/ShopByStore';
 import { StoreHero } from '../../src/components/home/StoreHero';
+import { TopDeals } from '../../src/components/home/TopDeals';
 import { PromiseCard } from '../../src/components/PromiseCard';
 import { Logo } from '../../src/components/Logo';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
@@ -25,7 +28,7 @@ import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { storeTheme, type StoreTheme } from '../../src/theme/stores';
 import { ProductCard } from '../../src/components/ProductCard';
 import { ErrorState, Skeleton } from '../../src/components/States';
-import { colors, radius, spacing, typography } from '../../src/theme';
+import { colors, fonts, radius, spacing, typography } from '../../src/theme';
 import type { Banner, Category, ProductSection, ProductSummary } from '../../src/types';
 
 /** Banner links are stored as website paths, so translate them to app routes. */
@@ -44,6 +47,7 @@ export default function HomeScreen() {
   const { verticalId, verticalParam, vertical, select } = useStoreVertical();
   const theme = storeTheme(vertical?.name);
   const [refreshing, setRefreshing] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   // A little over three cards per row, so the next one peeks in.
   const { railCardWidth: cardWidth } = useProductLayout();
@@ -144,6 +148,23 @@ export default function HomeScreen() {
     (newestQ.data?.products.length ?? 0) === 0 &&
     categories.length === 0;
 
+  const renderRail = (
+    { section, products, loading }: { section: ProductSection; products: ProductSummary[]; loading: boolean },
+    i: number,
+  ) => (
+    <ProductRail
+      key={section.id}
+      title={section.name}
+      loading={loading}
+      products={products}
+      cardWidth={cardWidth}
+      onSeeAll={() => router.navigate('/search')}
+      // The first row sits on a band of the store colour, so the page is not
+      // one unbroken stretch of beige.
+      spotlight={i === 0 ? theme : undefined}
+    />
+  );
+
   if (sectionsQ.isError && newestQ.isError) {
     return (
       <SafeAreaView style={styles.safe} edges={['top']}>
@@ -162,6 +183,7 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -190,6 +212,17 @@ export default function HomeScreen() {
           </View>
         ) : null}
 
+        {/* On "All", a big card per stocked store; picking one recolours the
+            page from the top, so scroll back up to show the change. */}
+        {!verticalId ? (
+          <ShopByStore
+            onPick={(id) => {
+              select(id);
+              scrollRef.current?.scrollTo({ y: 0, animated: true });
+            }}
+          />
+        ) : null}
+
         {storeIsEmpty ? (
           <View style={[styles.emptyStore, { backgroundColor: theme.soft }]}>
             <Text style={styles.emptyStoreTitle}>
@@ -209,19 +242,14 @@ export default function HomeScreen() {
           </View>
         ) : (
           <>
-            {sectionRows.map(({ section, products, loading }, i) => (
-              <ProductRail
-                key={section.id}
-                title={section.name}
-                loading={loading}
-                products={products}
-                cardWidth={cardWidth}
-                onSeeAll={() => router.navigate('/search')}
-                // The first row sits on a band of the store colour, so the page
-                // is not one unbroken stretch of beige between identical rows.
-                spotlight={i === 0 ? theme : undefined}
-              />
-            ))}
+            {sectionRows.slice(0, 1).map(renderRail)}
+
+            {/* Computed rows between the admin's sections, which often hold the
+                same few products: real discounts, and price brackets. */}
+            <TopDeals />
+            <ShopByPrice />
+
+            {sectionRows.slice(1).map((row, i) => renderRail(row, i + 1))}
 
             {/* Only rendered when no section has been populated yet. */}
             {sectionsSettled && !anySectionHasProducts ? (
@@ -237,6 +265,12 @@ export default function HomeScreen() {
         )}
 
         <PromiseCard style={styles.promise} />
+
+        {/* A deliberate ending instead of the page simply running out. */}
+        <View style={styles.signoff}>
+          <Text style={styles.signoffWord}>Genuine.</Text>
+          <Text style={styles.signoffLine}>Authentic products, delivered across India.</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -341,6 +375,9 @@ const styles = StyleSheet.create({
   railContent: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xs },
   railSkeleton: { flexDirection: 'row', gap: spacing.sm, paddingHorizontal: spacing.lg },
   promise: { marginTop: spacing.xxl, marginHorizontal: spacing.lg },
+  signoff: { marginTop: spacing.xxl, paddingHorizontal: spacing.lg },
+  signoffWord: { fontFamily: fonts.bold, fontSize: 46, letterSpacing: -1.5, color: colors.text, opacity: 0.13 },
+  signoffLine: { ...typography.small, color: colors.textMuted, marginTop: 2 },
   spotlight: { paddingVertical: spacing.lg, overflow: 'hidden' },
   spotCircle: {
     position: 'absolute',

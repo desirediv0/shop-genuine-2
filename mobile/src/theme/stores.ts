@@ -118,7 +118,7 @@ export function storeTheme(name?: string | null): StoreTheme {
 }
 
 /** Pastel washes for category tiles, cycled so neighbours never match. */
-const TILE_COLOURS: { bg: string; fg: string }[] = [
+export const TILE_COLOURS: { bg: string; fg: string }[] = [
   { bg: '#FFF1E5', fg: '#C2410C' },
   { bg: '#E8F5EC', fg: '#15803D' },
   { bg: '#EAF0FD', fg: '#1D4ED8' },
