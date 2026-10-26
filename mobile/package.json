@@ -52,7 +52,9 @@
     "build:apk": "node scripts/release.mjs apk",
     "build:store": "node scripts/release.mjs store",
     "update:preview": "node scripts/release.mjs update preview",
-    "update:production": "node scripts/release.mjs update production"
+    "update:production": "node scripts/release.mjs update production",
+    "rollback:preview": "node scripts/release.mjs rollback preview",
+    "rollback:production": "node scripts/release.mjs rollback production"
   },
   "private": true
 }

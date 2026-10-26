@@ -54,11 +54,34 @@ the code that shipped inside the build.
 ### Rolling back a bad update
 
 ```sh
-npx eas-cli@latest update:list --branch production          # find the last good group id
-npx eas-cli@latest update:republish --group <good-group-id> --branch production
+npm run rollback:production                  # republish the update before the latest
+npm run rollback:production -- --to-built-in # drop all updates: run the code inside the store build
 ```
 
-Phones pick up the republished update the same way, on the next two launches.
+Phones pick up a rollback the same way they pick up any update, over their next two
+launches. `--to-built-in` always works, because a build's own code always matches it.
+Use it when there is nothing earlier to go back to, or when you're unsure which update
+was good.
+
+Two safety nets come for free:
+
+- **Phones only move forward.** expo-updates loads an update only if it is newer than
+  the code the phone runs, so a fresh build never picks up an older update. A rollback
+  works because a republish counts as a new update.
+- **Crash recovery.** If a new update crashes before the app finishes starting,
+  expo-updates falls back to the last update that worked.
+
+### Limits and tools
+
+- **Expo plan:** the Free plan serves updates to **1,000 phones a month** (unique
+  installs that download an update). The Starter plan ($19/month) covers 3,000, and
+  pay-per-phone beyond that. Check *expo.dev → Billing* before a big release once the
+  app passes about 800 users. Builds also draw on the plan's monthly build credits.
+- **eas-cli is pinned** in `scripts/release.mjs` (`eas-cli@25.3.0`). `@latest` once
+  started requiring `--environment` and broke publishing. To bump: change the version,
+  then run `npm run update:preview` once before trusting it for production.
+- **Expo login:** the scripts publish as whoever `npx eas-cli whoami` reports, which
+  should be `desirediv`. If the login expires, run `npx eas-cli login`.
 
 ## Store releases
 

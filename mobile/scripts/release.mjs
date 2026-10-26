@@ -6,6 +6,8 @@
  *   npm run build:store                      store build (EAS) on the production lane
  *   npm run update:preview -- "message"      over-the-air update to test phones
  *   npm run update:production -- "message"   over-the-air update to customers
+ *   npm run rollback:production              undo the latest update (see below)
+ *   npm run rollback:production -- --to-built-in
  *
  * The one rule it enforces: an over-the-air update only carries JavaScript, so
  * it must only reach builds whose native code it was written against. Each
@@ -25,7 +27,9 @@ const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RECORD_FILE = path.join(ROOT, 'release-fingerprints.json');
 const LANES = ['preview', 'production'];
-const EAS = ['--yes', 'eas-cli@latest'];
+// Pinned: `@latest` once changed under us (it began requiring --environment)
+// and broke publishing. Bump deliberately, then rerun a preview update.
+const EAS = ['--yes', 'eas-cli@25.3.0'];
 
 /* -------------------------------- helpers -------------------------------- */
 
@@ -245,9 +249,56 @@ async function update() {
   console.log(`\n✓ Published to ${lane}. Phones download it on next launch and run it the launch after.`);
 }
 
+/**
+ * Undo a bad update. By default, republishes the update before the latest one
+ * on the lane, so phones move back to it the same way they get any update. With
+ * --to-built-in, phones drop every update and run the code that shipped inside
+ * the store build — always compatible, and the fallback when there is nothing
+ * earlier to go back to.
+ */
+async function rollback() {
+  const lane = process.argv[3];
+  const toBuiltIn = process.argv.includes('--to-built-in');
+  if (!LANES.includes(lane)) die(`Lane must be one of: ${LANES.join(', ')}.`);
+  const version = appVersion();
+
+  if (toBuiltIn) {
+    run('npx', [
+      ...EAS, 'update:roll-back-to-embedded',
+      '--branch', lane, '--runtime-version', version,
+      '--message', 'Roll back to the code inside the app', '--non-interactive',
+    ]);
+    console.log(`\n✓ ${lane} phones on ${version} will return to their built-in code over their next two launches.`);
+    return;
+  }
+
+  const list = spawnSync('npx', [...EAS, 'update:list', '--branch', lane, '--json', '--non-interactive'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    maxBuffer: 1 << 26,
+  });
+  if (list.status !== 0) die(`Could not list the ${lane} updates:\n${list.stderr}`);
+  const updates = (JSON.parse(list.stdout).currentPage ?? []).filter((u) => u.runtimeVersion === version);
+  const [latest, ...older] = updates;
+  const previous = older.find((u) => !u.isRollBackToEmbedded);
+  if (!latest) die(`Nothing has been published to ${lane} for version ${version}.`);
+  if (!previous) {
+    die(`There is no earlier ${lane} update for ${version} to go back to.\n` +
+      `  To return phones to the code inside the app: npm run rollback:${lane} -- --to-built-in`);
+  }
+
+  console.log(`Latest ${lane} update:  ${latest.message}`);
+  console.log(`Rolling back to:        ${previous.message}`);
+  run('npx', [
+    ...EAS, 'update:republish', '--group', previous.group,
+    '--message', `Roll back to ${previous.group.slice(0, 8)}`, '--non-interactive',
+  ]);
+  console.log(`\n✓ ${lane} phones will move back over their next two launches.`);
+}
+
 /* --------------------------------- main ---------------------------------- */
 
-const commands = { check, apk: buildApk, store: buildStore, update };
+const commands = { check, apk: buildApk, store: buildStore, update, rollback };
 const command = commands[process.argv[2]];
 if (!command) die(`Usage: node scripts/release.mjs <${Object.keys(commands).join('|')}>`);
 await command();
