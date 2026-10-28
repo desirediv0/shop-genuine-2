@@ -76,9 +76,11 @@ not the website, so it doesn't depend on the website. It covers what Google chec
   no longer has the app.
 - What is deleted.
 - What is kept, and for how long. An account with no orders is deleted outright. An
-  account that has ordered is anonymised: email, name, phone and password are cleared
-  and sign-in is disabled. The order rows survive, unlinked from the person, because
-  tax law requires invoices to be kept.
+  account that has ordered is anonymised: email, name, phone and password are cleared,
+  the account shows as "Deleted customer", and sign-in is disabled. The order rows
+  survive, with the delivery address each order went to, because tax law requires
+  invoices to be kept and orders in transit still have to arrive. Other saved
+  addresses are deleted.
 
 The email address comes from the server setting `SUPPORT_EMAIL`. It defaults to
 `connect.genuinenutrition@gmail.com`, the address on the website's privacy policy.

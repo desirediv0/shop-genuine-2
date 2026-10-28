@@ -76,7 +76,7 @@ export function getDeleteAccountPage(req, res) {
     <h2>What is deleted</h2>
     <ul>
       <li>Your name, email address, phone number and password</li>
-      <li>Your saved delivery addresses</li>
+      <li>Your saved delivery addresses, except those your orders were delivered to</li>
       <li>Your cart, saved items (wishlist) and reviews</li>
       <li>Your coupons and notification settings for your devices</li>
     </ul>
@@ -84,9 +84,10 @@ export function getDeleteAccountPage(req, res) {
 
   <section class="card">
     <h2>What is kept, and for how long</h2>
-    <p>If you have placed orders, the order records — what was bought, the amounts and the payment status —
-       are kept for as long as Indian tax and accounting laws require. They are no longer linked to your name,
-       email address or phone number, and the account can never be signed into again.</p>
+    <p>If you have placed orders, the order records — what was bought, the amounts, the payment status and
+       the delivery address each order went to — are kept for as long as Indian tax and accounting laws
+       require, and so that orders already placed can still be delivered. Your account's name, email address
+       and phone number are removed, and the account can never be signed into again.</p>
     <p>If you never placed an order, nothing is kept.</p>
   </section>
 

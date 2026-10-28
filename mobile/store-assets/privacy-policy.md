@@ -102,9 +102,10 @@ Be aware of exactly what happens, because it differs depending on your history:
 - **If you have never placed an order**, your account and personal details are
   deleted outright.
 - **If you have placed an order**, your name, email and phone are removed from
-  our records and your sign-in is permanently disabled, but the order itself is
-  kept. We are required to retain invoices, and an invoice cannot exist without
-  its order.
+  your account and your sign-in is permanently disabled, but the order itself is
+  kept, together with the delivery address it was sent to. We are required to
+  retain invoices, an invoice cannot exist without its order, and an order still
+  on its way has to reach you. Your other saved addresses are deleted.
 
 You can also change your password, edit or remove saved addresses, and turn
 notifications off, all from inside the app.

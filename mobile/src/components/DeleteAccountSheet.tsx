@@ -47,8 +47,9 @@ export function DeleteAccountSheet({
         <View style={styles.warning}>
           <Text style={styles.warningTitle}>This cannot be undone</Text>
           <Text style={styles.warningText}>
-            Your profile, saved addresses, wishlist and order history will be permanently
-            removed. Orders already placed will still be fulfilled.
+            Your profile, saved addresses, cart and wishlist will be permanently deleted.
+            Records of orders you have placed are kept for tax purposes, without your name,
+            email or phone. Orders already placed will still be delivered.
           </Text>
         </View>
 

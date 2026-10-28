@@ -14,10 +14,14 @@ import { prisma } from "../config/db.js";
  *
  *   - No orders  -> the row is deleted outright and cascades clean up the rest.
  *   - Has orders -> personal data is deleted and the User row is anonymised:
- *                   no name, phone, or password, a non-routable placeholder
- *                   email, and isActive false. The account can never be signed
- *                   into again and holds no personal data, while the order
- *                   ledger stays intact.
+ *                   "Deleted customer", no phone or password, a non-routable
+ *                   placeholder email, and isActive false. The account can never
+ *                   be signed into again, while the order ledger stays intact.
+ *
+ * The order history must stay whole for the admin: the delivery address an
+ * order was shipped to is part of the order record (invoice, returns, and
+ * delivering anything still in transit), so addresses that orders point at
+ * are kept. Only addresses no order uses are deleted.
  *
  * Either way the user cannot log in afterwards and their personal data is gone.
  *
@@ -49,8 +53,10 @@ export async function deleteUserAccount(userId) {
     await tx.wishlistItem.deleteMany({ where: { userId } });
     await tx.review.deleteMany({ where: { userId } });
     await tx.userCoupon.deleteMany({ where: { userId } });
-    // Order.shippingAddressId is nullable and SET NULL, so orders survive this.
-    await tx.address.deleteMany({ where: { userId } });
+    // Keep every address an order was shipped to. Deleting them all used to
+    // null Order.shippingAddressId, so the admin lost where (and to whom, with
+    // which phone number) past and in-transit orders were delivered.
+    await tx.address.deleteMany({ where: { userId, orders: { none: {} } } });
     await tx.account.deleteMany({ where: { userId } });
 
     await tx.user.update({
@@ -59,7 +65,8 @@ export async function deleteUserAccount(userId) {
         // Unique constraint still applies, so the placeholder must be unique.
         // .invalid is reserved by RFC 2606 and can never receive mail.
         email: `deleted-${randomUUID()}@deleted.invalid`,
-        name: null,
+        // Shown wherever the admin lists this customer's orders.
+        name: "Deleted customer",
         phone: null,
         password: null,
         otp: null,
