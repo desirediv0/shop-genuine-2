@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   Easing,
   FadeIn,
@@ -12,8 +12,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useStoreVertical } from '../../context/StoreVerticalContext';
-import { colors, fonts, radius, shadow, spacing } from '../../theme';
-import { storeTheme, type StoreTheme } from '../../theme/stores';
+import { colors, fonts, radius, spacing } from '../../theme';
+import { DOT_GRID, storeMesh, storeTheme, type StoreTheme } from '../../theme/stores';
 import { Icon } from '../Icon';
 import { PressableScale } from '../motion/PressableScale';
 
@@ -39,12 +39,13 @@ function DriftingMark({ icon }: { icon: StoreTheme['icon'] }) {
 }
 
 /**
- * The coloured store panel shared by Home and Search: the current store's
- * gradient, a faint store mark for depth, whatever the screen puts inside, and
- * a row of chips to jump to any other store. The colour cross-fades when the
- * store changes, so the switch is felt as well as seen.
+ * The coloured top of Search, edge to edge and under the status bar like
+ * Home's header: the current store's colour mesh, a faint drifting store mark,
+ * whatever the screen puts inside, and a row of chips to jump to any other
+ * store. The colour cross-fades when the store changes.
  */
 export function StoreBand({ children }: { children: React.ReactNode }) {
+  const insets = useSafeAreaInsets();
   const { vertical, verticals, select } = useStoreVertical();
   const theme = storeTheme(vertical?.name);
 
@@ -64,12 +65,16 @@ export function StoreBand({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <View style={styles.band}>
-      <LinearGradient colors={under.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      <Animated.View key={`bg-${theme.key}-${theme.short}`} entering={FadeIn.duration(380)} style={StyleSheet.absoluteFill}>
-        <LinearGradient colors={theme.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+    <View style={[styles.band, { paddingTop: insets.top }]}>
+      <View style={[StyleSheet.absoluteFill, { experimental_backgroundImage: storeMesh(under) }]} />
+      <Animated.View
+        key={`bg-${theme.key}-${theme.short}`}
+        entering={FadeIn.duration(380)}
+        style={[StyleSheet.absoluteFill, { experimental_backgroundImage: storeMesh(theme) }]}
+      >
         <DriftingMark icon={theme.icon} />
       </Animated.View>
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, DOT_GRID, styles.dots]} />
 
       <View style={styles.content}>{children}</View>
 
@@ -126,29 +131,34 @@ function StoreChip({
 }
 
 const styles = StyleSheet.create({
-  band: { marginHorizontal: spacing.lg, borderRadius: radius.xl, overflow: 'hidden', ...shadow.raised },
-  watermark: { position: 'absolute', right: -26, top: -18 },
-  content: { paddingHorizontal: spacing.lg + 2, paddingTop: spacing.lg + 2 },
-  chips: { gap: spacing.sm, paddingHorizontal: spacing.lg + 2, paddingTop: spacing.md, paddingBottom: spacing.lg },
+  band: {
+    borderBottomLeftRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
+    overflow: 'hidden',
+  },
+  dots: { opacity: 0.6 },
+  watermark: { position: 'absolute', right: -26, bottom: -30 },
+  content: { paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  chips: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.lg + 2 },
   chipsSpacer: { height: spacing.lg },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 34,
-    paddingHorizontal: spacing.md,
+    height: 36,
+    paddingHorizontal: 14,
     borderRadius: radius.pill,
     backgroundColor: 'rgba(255,255,255,0.16)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.22)',
   },
   chipActive: { backgroundColor: colors.surface, borderColor: colors.surface },
-  chipText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textInverse },
+  chipText: { fontFamily: fonts.displayBold, fontSize: 13.5, color: colors.textInverse },
 });
 
 /** Shared text styles for whatever sits inside the band. */
 export const bandText = StyleSheet.create({
-  overline: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.4, color: 'rgba(255,255,255,0.72)' },
-  title: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5, color: colors.textInverse, marginTop: 2 },
+  overline: { fontFamily: fonts.displayBold, fontSize: 10.5, letterSpacing: 1.6, color: 'rgba(255,255,255,0.72)' },
+  title: { fontFamily: fonts.display, fontSize: 26, lineHeight: 32, letterSpacing: -0.7, color: colors.textInverse, marginTop: 2 },
   tagline: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: 'rgba(255,255,255,0.86)', marginTop: 2 },
 });

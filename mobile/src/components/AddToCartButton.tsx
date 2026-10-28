@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadow.card,
+    ...shadow.glow(colors.primary, 0.22),
   },
-  addText: { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 0.4, color: colors.primary },
+  addText: { fontFamily: fonts.display, fontSize: 12.5, letterSpacing: 0.3, color: colors.primary },
 });

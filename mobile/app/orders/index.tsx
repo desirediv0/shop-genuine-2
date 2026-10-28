@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderNumber: { ...typography.smallStrong, color: colors.text },
+  orderNumber: { fontFamily: fonts.displayBold, fontSize: 14, lineHeight: 19, color: colors.text },
   meta: { ...typography.small, color: colors.textMuted },
   cardFoot: {
     flexDirection: 'row',
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   thumbImage: { width: '86%', height: '86%' },
   thumbMore: { backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder },
-  thumbMoreText: { fontFamily: fonts.bold, fontSize: 13, color: colors.primary },
+  thumbMoreText: { fontFamily: fonts.display, fontSize: 13, color: colors.primary },
   totalRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   payment: { ...typography.overline, color: colors.textMuted },
   total: { ...typography.price, color: colors.text },

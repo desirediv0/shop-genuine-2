@@ -28,6 +28,8 @@ export function AuthHeader({ title, subtitle }: { title: string; subtitle: strin
 
   return (
     <View>
+      {/* A soft glow of the logo's own orange and blue behind it. */}
+      <View pointerEvents="none" style={styles.glow} />
       <Logo height={56} style={styles.logo} />
 
       <View style={styles.card}>
@@ -57,6 +59,19 @@ export function AuthHeader({ title, subtitle }: { title: string; subtitle: strin
 }
 
 const styles = StyleSheet.create({
+  // Placed low enough in the box that each glow has faded out before the top
+  // edge, so there is no cut line under the header.
+  glow: {
+    position: 'absolute',
+    top: -spacing.lg,
+    left: -spacing.lg,
+    right: -spacing.lg,
+    height: 440,
+    experimental_backgroundImage: [
+      'radial-gradient(circle at 12% 58%, rgba(249, 115, 22, 0.22) 0%, rgba(249, 115, 22, 0) 40%)',
+      'radial-gradient(circle at 92% 50%, rgba(29, 78, 216, 0.18) 0%, rgba(29, 78, 216, 0) 40%)',
+    ].join(', '),
+  },
   logo: { marginTop: spacing.lg, marginBottom: spacing.lg },
   card: {
     flexDirection: 'row',
@@ -80,6 +95,6 @@ const styles = StyleSheet.create({
   },
   cardText: { ...typography.small, color: colors.textMuted, flex: 1, lineHeight: 18 },
   cardStrong: { fontFamily: fonts.semibold, color: colors.text },
-  title: { ...typography.h1, color: colors.text },
+  title: { ...typography.display, color: colors.text },
   subtitle: { ...typography.small, color: colors.textMuted, marginTop: spacing.xs },
 });

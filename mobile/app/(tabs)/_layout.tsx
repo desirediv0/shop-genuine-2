@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Tabs, useRoute } from 'expo-router';
-import { PlatformPressable, useNavigationState } from 'expo-router/react-navigation';
+import { Tabs, useSegments } from 'expo-router';
+import { PlatformPressable } from 'expo-router/react-navigation';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -8,7 +8,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { Platform, StyleSheet, Text, View, type ColorValue } from 'react-native';
+import { StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { useCart } from '../../src/context/CartContext';
@@ -25,22 +25,17 @@ function TabIcon({
   name,
   color,
   focused,
+  active,
 }: {
   name: IconName;
   // react-navigation hands us a ColorValue, not a plain string.
   color: ColorValue;
   focused: boolean;
+  /** Whether this tab is the selected one — see TabsLayout. */
+  active: boolean;
 }) {
   // The pill grows in behind the icon and the icon gives a small hop when the
   // tab is chosen, instead of both snapping into place.
-  //
-  // `focused` cannot drive this: the tab bar draws every icon twice — once with
-  // focused true, once false — and switches tabs by swapping which copy shows,
-  // so neither copy's prop ever changes. Both copies read the real selection
-  // from the tab navigator instead (a pushed screen does not change it), so
-  // whichever copy is showing animates.
-  const route = useRoute();
-  const active = useNavigationState((s) => s.routes[s.index]?.key === route.key);
   const pill = useSharedValue(active ? 1 : 0);
   const hop = useSharedValue(0);
   useEffect(() => {
@@ -74,11 +69,13 @@ function CountTabIcon({
   count,
   color,
   focused,
+  active,
 }: {
   name: IconName;
   count: number;
   color: ColorValue;
   focused: boolean;
+  active: boolean;
 }) {
   // The badge pops whenever the number changes, so adding to the cart (or
   // saving) is seen to land even from another screen.
@@ -94,7 +91,7 @@ function CountTabIcon({
 
   return (
     <View>
-      <TabIcon name={name} color={color} focused={focused} />
+      <TabIcon name={name} color={color} focused={focused} active={active} />
       {count > 0 ? (
         <Animated.View style={[styles.badge, badgeStyle]}>
           <Text style={styles.badgeText} numberOfLines={1}>
@@ -106,7 +103,7 @@ function CountTabIcon({
   );
 }
 
-function CartTabIcon(p: { color: ColorValue; focused: boolean }) {
+function CartTabIcon(p: { color: ColorValue; focused: boolean; active: boolean }) {
   const { cart } = useCart();
   return <CountTabIcon name="cart" count={cart.totalQuantity} {...p} />;
 }
@@ -116,7 +113,7 @@ function CartTabIcon(p: { color: ColorValue; focused: boolean }) {
  * tap had worked. The count comes from the same query the Save button
  * invalidates, so it updates the moment a product is saved or removed.
  */
-function SavedTabIcon(p: { color: ColorValue; focused: boolean }) {
+function SavedTabIcon(p: { color: ColorValue; focused: boolean; active: boolean }) {
   const { count } = useWishlist();
   return <CountTabIcon name="wishlist" count={count} {...p} />;
 }
@@ -127,14 +124,29 @@ export default function TabsLayout() {
   // the header and the wash below it read as one tinted area.
   const { vertical } = useStoreVertical();
   const tint = storeTheme(vertical?.name).soft;
-  const bottomPad = Math.max(insets.bottom, Platform.OS === 'android' ? spacing.md : 0);
+  // The bar floats: a white pill held off the screen edges, clear of the
+  // gesture area, instead of a slab across the bottom.
+  const bottomGap = Math.max(insets.bottom, spacing.sm) + spacing.xs;
+
+  // Which tab is selected, for the icon pills. An icon's `focused` prop cannot
+  // say: the tab bar draws every icon twice — once focused, once not — and
+  // switches tabs by swapping which copy shows, so neither copy's prop ever
+  // changes. Reading the navigator from inside an icon went stale too, since an
+  // icon whose props do not change is never re-rendered. The route is read
+  // here instead, which re-renders every icon with the answer — right from
+  // launch, whichever tab the app opens on. While a screen is pushed over the
+  // tabs (product, checkout) the last tab is kept, so the pills hold still.
+  const segments = useSegments();
+  const lastTab = useRef('index');
+  if (segments[0] === '(tabs)') lastTab.current = segments[1] ?? 'index';
+  const activeTab = lastTab.current;
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: [styles.tabBar, { height: 60 + bottomPad, paddingBottom: bottomPad }],
+        tabBarStyle: [styles.tabBar, { marginBottom: bottomGap }],
         tabBarItemStyle: styles.tabItem,
         tabBarLabelStyle: styles.tabLabel,
         // No grey ripple on Android: it spread past the bar and muddied the
@@ -142,7 +154,7 @@ export default function TabsLayout() {
         tabBarButton: (props) => <PlatformPressable {...props} pressColor="transparent" />,
         headerStyle: [styles.header, { backgroundColor: tint }],
         headerTintColor: colors.text,
-        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 20 },
+        headerTitleStyle: { fontFamily: fonts.display, fontSize: 22, letterSpacing: -0.5 },
         headerShadowVisible: false,
         sceneStyle: { backgroundColor: colors.background },
       }}
@@ -152,7 +164,7 @@ export default function TabsLayout() {
         options={{
           title: 'Home',
           headerShown: false,
-          tabBarIcon: (p) => <TabIcon name="home" {...p} />,
+          tabBarIcon: (p) => <TabIcon name="home" {...p} active={activeTab === 'index'} />,
         }}
       />
       <Tabs.Screen
@@ -160,28 +172,28 @@ export default function TabsLayout() {
         options={{
           title: 'Search',
           headerShown: false,
-          tabBarIcon: (p) => <TabIcon name="search" {...p} />,
+          tabBarIcon: (p) => <TabIcon name="search" {...p} active={activeTab === 'search'} />,
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           title: 'Cart',
-          tabBarIcon: (p) => <CartTabIcon {...p} />,
+          tabBarIcon: (p) => <CartTabIcon {...p} active={activeTab === 'cart'} />,
         }}
       />
       <Tabs.Screen
         name="wishlist"
         options={{
           title: 'Saved',
-          tabBarIcon: (p) => <SavedTabIcon {...p} />,
+          tabBarIcon: (p) => <SavedTabIcon {...p} active={activeTab === 'wishlist'} />,
         }}
       />
       <Tabs.Screen
         name="account"
         options={{
           title: 'Account',
-          tabBarIcon: (p) => <TabIcon name="account" {...p} />,
+          tabBarIcon: (p) => <TabIcon name="account" {...p} active={activeTab === 'account'} />,
         }}
       />
     </Tabs>
@@ -190,14 +202,17 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
+    height: 66,
+    marginHorizontal: spacing.md,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderRadius: 26,
+    borderTopWidth: 0,
     backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-    paddingTop: spacing.sm,
-    ...shadow.bar,
+    ...shadow.raised,
   },
-  tabItem: { paddingTop: 2 },
-  tabLabel: { ...typography.tiny, fontFamily: fonts.semibold, marginTop: 3 },
+  tabItem: { paddingTop: 0 },
+  tabLabel: { ...typography.tiny, fontFamily: fonts.displayBold, marginTop: 3 },
   iconPill: {
     width: 54,
     height: 30,
@@ -223,7 +238,7 @@ const styles = StyleSheet.create({
     borderColor: colors.surface,
   },
   badgeText: {
-    fontFamily: fonts.bold,
+    fontFamily: fonts.display,
     fontSize: 9,
     lineHeight: 12,
     color: colors.textInverse,

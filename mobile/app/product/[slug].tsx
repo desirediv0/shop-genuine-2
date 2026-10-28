@@ -11,11 +11,13 @@ import {
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { catalogue, wishlist as wishlistApi } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
-import { HeaderActions } from '../../src/components/HeaderActions';
+import { FloatingBack, HeaderActions } from '../../src/components/HeaderActions';
+import { SectionHeader } from '../../src/components/home/SectionHeader';
 import { QtyStepper } from '../../src/components/QtyStepper';
 import { DietMark } from '../../src/components/product/DietMark';
 import { CollapsibleCard, ProductDetailsCard } from '../../src/components/product/DetailBlocks';
@@ -46,6 +48,7 @@ export default function ProductScreen() {
   const { width } = useWindowDimensions();
   const { railCardWidth } = useProductLayout();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const router = useRouter();
   const { cart, addItem, updateItem, removeItem } = useCart();
   const [cartBusy, setCartBusy] = useState(false);
@@ -176,15 +179,27 @@ export default function ProductScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: '', headerRight: () => <HeaderActions /> }} />
+      {/* The header floats over the photo: back, search and cart as white discs. */}
+      <Stack.Screen
+        options={{
+          title: '',
+          headerTransparent: true,
+          // The stack's default header colour would still paint over the photo.
+          headerStyle: { backgroundColor: 'transparent' },
+          headerLeft: () => <FloatingBack />,
+          headerRight: () => <HeaderActions floating />,
+        }}
+      />
 
       <ScrollView
         style={styles.screen}
         contentContainerStyle={{ paddingBottom: 190 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Gallery, on a white panel so packshots sit on the white they were shot on */}
-        <View style={styles.galleryPanel}>
+        {/* Gallery on a soft studio backdrop. Each photo is multiplied into its
+            page, so a white packshot background takes on the backdrop's glow
+            instead of showing as a white box. */}
+        <View style={[styles.stage, { paddingTop: headerHeight }]}>
           <ScrollView
             horizontal
             pagingEnabled
@@ -195,16 +210,12 @@ export default function ProductScreen() {
           >
             {gallery.length ? (
               gallery.map((uri) => (
-                <Image
-                  key={uri}
-                  source={uri}
-                  style={{ width, height: width * 0.86 }}
-                  contentFit="contain"
-                  transition={220}
-                />
+                <View key={uri} style={[styles.page, { width, height: width * 0.8 }]}>
+                  <Image source={uri} style={styles.galleryImage} contentFit="contain" transition={220} />
+                </View>
               ))
             ) : (
-              <View style={[styles.noImage, { width, height: width * 0.86 }]}>
+              <View style={[styles.page, { width, height: width * 0.8 }]}>
                 <Icon name="image" size={30} color={colors.textMuted} />
               </View>
             )}
@@ -219,13 +230,18 @@ export default function ProductScreen() {
           ) : null}
         </View>
 
-        <View style={styles.body}>
+        {/* Name, price and options on a white sheet over the bottom of the photo */}
+        <View style={styles.sheet}>
           {product.brand?.name ? <Text style={styles.brand}>{product.brand.name}</Text> : null}
           <Text style={styles.name}>{product.name}</Text>
           {packSize || diet ? (
             <View style={styles.metaRow}>
               {diet ? <DietMark diet={diet} /> : null}
-              {packSize ? <Text style={styles.packSize}>{packSize}</Text> : null}
+              {packSize ? (
+                <View style={styles.packChip}>
+                  <Text style={styles.packSize}>{packSize}</Text>
+                </View>
+              ) : null}
             </View>
           ) : null}
 
@@ -242,13 +258,20 @@ export default function ProductScreen() {
             ) : null}
           </View>
 
-          {saving > 0 ? (
-            <Text style={styles.saving}>You save {formatPrice(saving)}</Text>
-          ) : null}
-
-          <Text style={[styles.stock, inStock ? styles.inStock : styles.outStock]}>
-            {inStock ? (stock <= 5 ? `Only ${stock} left` : 'In stock') : 'Out of stock'}
-          </Text>
+          <View style={styles.statusRow}>
+            {saving > 0 ? (
+              <View style={styles.savingChip}>
+                <Icon name="tag" size={13} color={colors.success} filled />
+                <Text style={styles.saving}>You save {formatPrice(saving)}</Text>
+              </View>
+            ) : null}
+            <View style={styles.stockRow}>
+              <View style={[styles.stockDot, { backgroundColor: inStock ? colors.success : colors.error }]} />
+              <Text style={[styles.stock, inStock ? styles.inStock : styles.outStock]}>
+                {inStock ? (stock <= 5 ? `Only ${stock} left` : 'In stock') : 'Out of stock'}
+              </Text>
+            </View>
+          </View>
 
           {/* Variants */}
           {product.variants.length > 1 ? (
@@ -289,8 +312,12 @@ export default function ProductScreen() {
               </View>
             </View>
           ) : null}
+        </View>
 
-          <PromiseRow />
+        <View style={styles.body}>
+          <View style={styles.promiseCard}>
+            <PromiseRow />
+          </View>
 
           {/* A spec sheet reads as "Product details"; free text as prose. */}
           <ProductDetailsCard
@@ -304,9 +331,12 @@ export default function ProductScreen() {
             <Pressable
               style={styles.categoryLink}
               onPress={() => router.push(`/category/${product.category?.slug}`)}
+              accessibilityRole="button"
             >
-              <Text style={styles.more}>More in {product.category.name}</Text>
-              <Icon name="forward" size={15} color={colors.primary} />
+              <Text style={styles.more} numberOfLines={1}>
+                More in {product.category.name}
+              </Text>
+              <Icon name="forward" size={15} color={colors.primaryDeep} />
             </Pressable>
           ) : null}
         </View>
@@ -314,7 +344,7 @@ export default function ProductScreen() {
         {/* Same-category products from the server, or other products from the store. */}
         {suggestions.length > 0 ? (
           <View style={styles.related}>
-            <Text style={[styles.blockTitle, styles.relatedTitle]}>You might also like</Text>
+            <SectionHeader title="You might also like" />
             <FlatList
               horizontal
               data={suggestions}
@@ -381,16 +411,29 @@ export default function ProductScreen() {
   );
 }
 
+/** The studio backdrop: a soft white glow on cool grey. */
+const STAGE = '#EDF1F6';
+// closest-side: the glow has fully faded before it reaches a page edge, so
+// there is no seam between pages or against the backdrop above them.
+const STAGE_GLOW = 'radial-gradient(circle closest-side at 50% 50%, #FFFFFF 0%, rgba(255, 255, 255, 0) 100%)';
+
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  noImage: { backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
   muted: { ...typography.small, color: colors.textMuted },
+  stage: { backgroundColor: STAGE, paddingBottom: spacing.xxl + spacing.sm },
+  page: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: STAGE,
+    experimental_backgroundImage: STAGE_GLOW,
+  },
+  galleryImage: { width: '80%', height: '92%', mixBlendMode: 'multiply' },
   dots: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 6,
     position: 'absolute',
-    bottom: spacing.md,
+    bottom: spacing.xxl + 4,
     left: 0,
     right: 0,
   },
@@ -398,39 +441,71 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(15, 23, 42, 0.18)',
   },
   dotActive: { backgroundColor: colors.primary, width: 20 },
-  body: { padding: spacing.lg, paddingTop: spacing.xl, gap: spacing.sm },
+  sheet: {
+    marginTop: -spacing.xl,
+    padding: spacing.lg,
+    paddingTop: spacing.xl,
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+    borderBottomLeftRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
+    ...shadow.card,
+  },
+  body: { padding: spacing.lg, paddingTop: spacing.md, gap: spacing.sm },
   brand: { ...typography.overline, color: colors.textMuted },
-  name: { ...typography.h1, color: colors.text, marginTop: 2 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  packSize: { ...typography.smallStrong, color: colors.textMuted },
+  name: { fontFamily: fonts.displayBold, fontSize: 21, lineHeight: 28, letterSpacing: -0.4, color: colors.text },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: 2 },
+  packChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surfaceAlt,
+  },
+  packSize: { fontFamily: fonts.semibold, fontSize: 12, color: colors.textSecondary },
   priceRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: spacing.md,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
-  price: { ...typography.priceLarge, color: colors.text },
+  price: { fontFamily: fonts.display, fontSize: 32, lineHeight: 38, letterSpacing: -1, color: colors.text },
   strike: { ...typography.body, color: colors.textMuted, textDecorationLine: 'line-through' },
   offBadge: {
     backgroundColor: colors.deal,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
   },
-  offText: { ...typography.tiny, color: colors.textInverse },
+  offText: { fontFamily: fonts.display, fontSize: 12, color: colors.textInverse },
+  statusRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.md },
+  savingChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    backgroundColor: colors.successSoft,
+  },
+  saving: { fontFamily: fonts.semibold, fontSize: 12.5, color: colors.success },
+  stockRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  stockDot: { width: 7, height: 7, borderRadius: 4 },
   stock: { ...typography.smallStrong },
   inStock: { color: colors.success },
   outStock: { color: colors.error },
-  block: { marginTop: spacing.lg, gap: spacing.sm },
-  blockTitle: { ...typography.h2, color: colors.text },
+  block: { marginTop: spacing.md, gap: spacing.sm },
+  blockTitle: { ...typography.h3, color: colors.text },
   variantWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   variant: {
     borderWidth: 1.5,
     borderColor: colors.border,
-    borderRadius: radius.md,
+    borderRadius: radius.sm + 2,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     minWidth: 96,
@@ -441,12 +516,22 @@ const styles = StyleSheet.create({
   variantDisabled: { opacity: 0.4 },
   variantText: { ...typography.smallStrong, color: colors.textSecondary },
   variantTextSelected: { color: colors.text, fontFamily: fonts.semibold },
-  variantPrice: { ...typography.tiny, color: colors.textMuted },
-  more: { ...typography.smallStrong, color: colors.primary },
-  categoryLink: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  related: { paddingBottom: spacing.xl, gap: spacing.md },
-  relatedTitle: { paddingHorizontal: spacing.lg },
-  relatedRow: { paddingHorizontal: spacing.lg, gap: spacing.sm },
+  variantPrice: { fontFamily: fonts.displayBold, fontSize: 12, color: colors.textMuted },
+  promiseCard: { backgroundColor: colors.surface, borderRadius: radius.lg, ...shadow.card },
+  more: { flexShrink: 1, fontFamily: fonts.displayBold, fontSize: 13.5, color: colors.primaryDeep },
+  categoryLink: {
+    alignSelf: 'flex-start',
+    marginTop: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: 14,
+    height: 38,
+    borderRadius: radius.pill,
+    backgroundColor: colors.primarySoft,
+  },
+  related: { paddingTop: spacing.lg, paddingBottom: spacing.xl },
+  relatedRow: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xs },
   bar: {
     position: 'absolute',
     left: 0,
@@ -457,6 +542,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
     backgroundColor: colors.surface,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
     ...shadow.bar,
   },
   // Icon-only, so the buying controls get the width.
@@ -475,13 +562,4 @@ const styles = StyleSheet.create({
   // padding left too little room for the label on a 360dp phone.
   cartBtn: { flex: 1, paddingHorizontal: spacing.sm },
   pressed: { opacity: 0.85 },
-  galleryPanel: {
-    backgroundColor: colors.surface,
-    borderBottomLeftRadius: radius.xl,
-    borderBottomRightRadius: radius.xl,
-    overflow: 'hidden',
-    paddingBottom: spacing.xl,
-    ...shadow.card,
-  },
-  saving: { fontFamily: fonts.semibold, fontSize: 13, color: colors.success },
 });

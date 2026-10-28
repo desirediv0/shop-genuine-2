@@ -77,7 +77,7 @@ export default function CartScreen() {
           <Appear index={0}>
             <View style={styles.savings}>
               <View style={styles.savingsIcon}>
-                <Icon name="tag" size={16} color={colors.success} filled />
+                <Icon name="tag" size={16} color={colors.textInverse} filled />
               </View>
               <Text style={styles.savingsText}>
                 You&apos;re saving <Text style={styles.savingsAmount}>{formatPrice(savings)}</Text> on
@@ -93,7 +93,9 @@ export default function CartScreen() {
             accessibilityRole="button"
             style={styles.guest}
           >
-            <Icon name="account" size={18} color={colors.primary} />
+            <View style={styles.guestIcon}>
+              <Icon name="account" size={16} color={colors.primaryDeep} />
+            </View>
             <Text style={styles.guestText}>
               Shopping as a guest. <Text style={styles.guestLink}>Sign in</Text> and this cart comes
               with you.
@@ -132,6 +134,11 @@ export default function CartScreen() {
             <Text style={styles.billNote}>Delivery and coupons are applied at checkout.</Text>
           </View>
         </Appear>
+
+        {/* Something more to add, where the page used to just stop. */}
+        <View style={styles.more}>
+          <NewInStoreRail />
+        </View>
       </ScrollView>
 
       {/* Checkout bar */}
@@ -244,53 +251,61 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.successSoft,
+    borderRadius: radius.lg,
+    experimental_backgroundImage: 'linear-gradient(100deg, #DDF4E6 0%, #F0FAF3 100%)',
   },
   savingsIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.success,
     alignItems: 'center',
     justifyContent: 'center',
   },
   savingsText: { ...typography.small, color: colors.success, flex: 1 },
-  savingsAmount: { fontFamily: fonts.bold },
+  savingsAmount: { fontFamily: fonts.display },
   guest: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     padding: spacing.md,
-    borderRadius: radius.md,
+    borderRadius: radius.lg,
     backgroundColor: colors.primarySoft,
   },
+  guestIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   guestText: { ...typography.small, color: colors.text, flex: 1 },
-  guestLink: { fontFamily: fonts.semibold, color: colors.primary },
+  guestLink: { fontFamily: fonts.semibold, color: colors.primaryDeep },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: spacing.lg,
     ...shadow.card,
   },
-  cardTitle: { fontFamily: fonts.bold, fontSize: 15, color: colors.text, marginBottom: spacing.sm },
+  cardTitle: { ...typography.h3, color: colors.text, marginBottom: spacing.xs },
+  more: { marginHorizontal: -spacing.lg, marginTop: -spacing.md },
   row: { flexDirection: 'row', gap: spacing.md, paddingVertical: spacing.md },
   rowDivider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  // The same soft grey stage as product cards (see ProductCard).
   thumbTile: {
-    width: 62,
-    height: 62,
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    padding: 4,
+    width: 64,
+    height: 64,
+    borderRadius: 14,
+    backgroundColor: '#F5F5F5',
+    padding: 6,
   },
-  thumb: { width: '100%', height: '100%' },
+  thumb: { width: '100%', height: '100%', filter: 'brightness(0.96)' },
   rowBody: { flex: 1, gap: 2 },
   rowName: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, color: colors.text },
   rowVariant: { ...typography.tiny, color: colors.textMuted },
   rowPrices: { flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 2 },
-  rowPrice: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text },
+  rowPrice: { fontFamily: fonts.displayBold, fontSize: 13.5, color: colors.text },
   rowStrike: {
     fontFamily: fonts.regular,
     fontSize: 11,
@@ -298,11 +313,11 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   rowRight: { alignItems: 'flex-end', justifyContent: 'space-between' },
-  rowSubtotal: { fontFamily: fonts.bold, fontSize: 14, color: colors.text, marginTop: spacing.sm },
+  rowSubtotal: { fontFamily: fonts.display, fontSize: 14.5, color: colors.text, marginTop: spacing.sm },
   billRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 },
   billLabel: { ...typography.small, color: colors.textSecondary },
   billValue: { ...typography.small, color: colors.text },
-  billStrong: { fontFamily: fonts.bold, fontSize: 15, color: colors.text },
+  billStrong: { fontFamily: fonts.display, fontSize: 16, color: colors.text },
   billSuccess: { color: colors.success, fontFamily: fonts.semibold },
   billDivider: {
     height: StyleSheet.hairlineWidth,
@@ -319,13 +334,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.lg,
     paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
     backgroundColor: colors.surface,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
     ...shadow.bar,
   },
-  barTotal: { fontFamily: fonts.bold, fontSize: 19, color: colors.text },
-  barLabel: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1, color: colors.textMuted },
+  barTotal: { fontFamily: fonts.display, fontSize: 21, letterSpacing: -0.5, color: colors.text },
+  barLabel: { fontFamily: fonts.displayBold, fontSize: 10, letterSpacing: 1.2, color: colors.textMuted },
   barBtn: { flex: 1 },
 });

@@ -7,7 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, fonts, radius, shadow, spacing } from '../theme';
 import { Icon, type IconName } from './Icon';
 import { PressableScale } from './motion/PressableScale';
 
@@ -55,6 +55,7 @@ export function Button({
         styles.base,
         SIZES[size],
         VARIANTS[variant],
+        !isDisabled && FILL[variant],
         fullWidth && styles.fullWidth,
         isDisabled && DISABLED[variant],
         style,
@@ -112,9 +113,9 @@ const SIZES: Record<Size, ViewStyle> = {
 const ICON_SIZE: Record<Size, number> = { sm: 15, md: 17, lg: 19 };
 
 const LABEL_SIZE = {
-  sm: typography.smallStrong,
-  md: typography.bodyStrong,
-  lg: typography.bodyStrong,
+  sm: { fontFamily: fonts.displayBold, fontSize: 13.5, lineHeight: 19 },
+  md: { fontFamily: fonts.displayBold, fontSize: 15.5, lineHeight: 22, letterSpacing: -0.1 },
+  lg: { fontFamily: fonts.displayBold, fontSize: 16.5, lineHeight: 23, letterSpacing: -0.1 },
 };
 
 const VARIANTS: Record<Variant, ViewStyle> = {
@@ -125,8 +126,24 @@ const VARIANTS: Record<Variant, ViewStyle> = {
   danger: { backgroundColor: colors.error },
 };
 
+/**
+ * Filled buttons get a gentle gradient and a glow in their own colour, so the
+ * main action on a screen looks like it can be pressed. Left off when
+ * disabled, where the flat muted fill below takes over.
+ */
+const FILL: Partial<Record<Variant, ViewStyle>> = {
+  primary: {
+    experimental_backgroundImage: 'linear-gradient(135deg, #FB8B3D 0%, #F97316 55%, #EA580C 100%)',
+    ...shadow.glow(colors.primary, 0.36),
+  },
+  secondary: {
+    experimental_backgroundImage: 'linear-gradient(135deg, #334155 0%, #0F172A 100%)',
+    ...shadow.glow(colors.text, 0.22),
+  },
+};
+
 const PRESSED: Record<Variant, ViewStyle> = {
-  primary: { backgroundColor: colors.primaryPressed },
+  primary: { opacity: 0.92 },
   secondary: { opacity: 0.85 },
   outline: { backgroundColor: colors.surfaceAlt },
   ghost: { backgroundColor: colors.surfaceAlt },

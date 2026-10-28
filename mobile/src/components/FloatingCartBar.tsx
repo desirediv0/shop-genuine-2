@@ -58,10 +58,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
     backgroundColor: colors.primary,
+    experimental_backgroundImage: 'linear-gradient(135deg, #FB8B3D 0%, #F97316 55%, #EA580C 100%)',
     borderRadius: radius.md,
     paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.md,
-    ...shadow.raised,
+    ...shadow.glow(colors.primary, 0.42),
   },
   pressed: { opacity: 0.9 },
   iconBox: {
@@ -74,6 +75,6 @@ const styles = StyleSheet.create({
   },
   summary: { flex: 1 },
   items: { ...typography.tiny, color: colors.textInverse, opacity: 0.9 },
-  total: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 20, color: colors.textInverse },
-  cta: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textInverse },
+  total: { fontFamily: fonts.display, fontSize: 16, lineHeight: 21, color: colors.textInverse },
+  cta: { fontFamily: fonts.displayBold, fontSize: 15.5, color: colors.textInverse },
 });

@@ -21,8 +21,8 @@ import { Appear } from '../../src/components/motion/Appear';
 import { useCart } from '../../src/context/CartContext';
 import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { EmptyState, ErrorState } from '../../src/components/States';
-import { colors, fonts, radius, spacing, typography } from '../../src/theme';
-import { categoryVisual, storeTheme } from '../../src/theme/stores';
+import { colors, fonts, radius, shadow, spacing } from '../../src/theme';
+import { categoryVisual, DOT_GRID, storeMesh, storeTheme, type StoreTheme } from '../../src/theme/stores';
 
 const PAGE_SIZE = 12;
 /** Roughly where the header card's bottom edge sits, in list scroll offset. */
@@ -122,10 +122,13 @@ export default function CategoryScreen() {
             <CategoryHeader
               name={title}
               image={category?.image}
+              photos={products
+                .map((p) => p.image)
+                .filter((uri): uri is string => !!uri)
+                .slice(0, 2)}
               total={total ?? products.length}
               store={vertical?.name}
-              accent={theme.solid}
-              soft={theme.soft}
+              theme={theme}
             />
           )
         }
@@ -152,42 +155,58 @@ export default function CategoryScreen() {
 }
 
 /**
- * Names the aisle the shopper is in, and how much is in it, in the store's
- * colour — the bare grid gave no sense of place under a plain header.
+ * Names the aisle the shopper is in, and how much is in it, on the store's
+ * colour mesh with two of its products — the bare grid gave no sense of place
+ * under a plain header.
  */
 function CategoryHeader({
   name,
   image,
+  photos,
   total,
   store,
-  accent,
-  soft,
+  theme,
 }: {
   name: string;
   image?: string | null;
+  photos: string[];
   total: number;
   store?: string;
-  accent: string;
-  soft: string;
+  theme: StoreTheme;
 }) {
   const visual = categoryVisual(name, 0);
   const count = `${total} ${total === 1 ? 'product' : 'products'}`;
+  // The admin's own category artwork first, if there ever is any.
+  const shown = image ? [image] : photos;
   return (
-    <View style={[styles.header, { backgroundColor: soft }]}>
-      <View style={styles.headerTile}>
-        {image ? (
-          <Image source={image} style={styles.headerImage} contentFit="contain" />
-        ) : (
-          <MaterialCommunityIcons name={visual.icon} size={30} color={accent} />
-        )}
-      </View>
+    <View
+      style={[
+        styles.header,
+        { experimental_backgroundImage: storeMesh(theme) },
+        shadow.glow(theme.gradient[1], 0.25),
+      ]}
+    >
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, DOT_GRID, styles.dots]} />
       <View style={styles.headerText}>
         <Text style={styles.headerName} numberOfLines={2}>
           {name}
         </Text>
-        <Text style={[styles.headerMeta, { color: accent }]} numberOfLines={1}>
+        <Text style={styles.headerMeta} numberOfLines={1}>
           {count} · {store ?? 'All Genuine stores'}
         </Text>
+      </View>
+      <View style={styles.headerPhotos}>
+        {shown.length ? (
+          shown.map((uri, i) => (
+            <View key={uri} style={[styles.headerTile, i === 0 ? styles.tileFront : styles.tileBack]}>
+              <Image source={uri} style={styles.headerImage} contentFit="contain" />
+            </View>
+          ))
+        ) : (
+          <View style={[styles.headerTile, styles.tileFront]}>
+            <MaterialCommunityIcons name={visual.icon} size={30} color={theme.solid} />
+          </View>
+        )}
       </View>
     </View>
   );
@@ -198,23 +217,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.md,
-    borderRadius: radius.lg,
-    marginBottom: spacing.xs,
+    minHeight: 112,
+    paddingVertical: spacing.lg,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.md,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    marginBottom: spacing.sm,
   },
+  dots: { opacity: 0.55 },
+  headerText: { flex: 1, gap: 4 },
+  headerName: { fontFamily: fonts.display, fontSize: 23, lineHeight: 28, letterSpacing: -0.6, color: colors.textInverse },
+  headerMeta: { fontFamily: fonts.semibold, fontSize: 12.5, color: 'rgba(255,255,255,0.86)' },
+  headerPhotos: { width: 112, height: 84 },
   headerTile: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.md,
+    position: 'absolute',
+    width: 66,
+    height: 66,
+    borderRadius: 16,
+    padding: 6,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    boxShadow: '0px 8px 18px rgba(2, 6, 23, 0.25)',
   },
-  headerImage: { width: '80%', height: '80%' },
-  headerText: { flex: 1, gap: 2 },
-  headerName: { ...typography.h3, color: colors.text },
-  headerMeta: { fontFamily: fonts.semibold, fontSize: 12.5 },
+  tileFront: { left: 0, bottom: 0, zIndex: 2, transform: [{ rotate: '-7deg' }] },
+  tileBack: { right: 0, top: 0, transform: [{ rotate: '8deg' }] },
+  headerImage: { width: '100%', height: '100%' },
   list: {
     padding: spacing.lg,
     paddingBottom: spacing.xxl,

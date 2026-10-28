@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react';
 import type { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { IconName } from '../components/Icon';
+import { alpha } from './index';
 
 /**
  * Each Genuine store gets its own colour world. The business is four stores
@@ -31,6 +32,8 @@ export interface StoreTheme {
   ink: string;
   /** Rotating examples for the search box. */
   hints: string[];
+  /** Three accent colours that glow over the gradient — see storeMesh(). */
+  glows: [string, string, string];
 }
 
 const THEMES: Record<StoreTheme['key'], Omit<StoreTheme, 'short'> & { short?: string }> = {
@@ -44,6 +47,7 @@ const THEMES: Record<StoreTheme['key'], Omit<StoreTheme, 'short'> & { short?: st
     soft: '#E9EFFD',
     ink: '#1E3A8A',
     hints: ['atta', 'milk', 'chips', 'protein', 'biscuits'],
+    glows: ['#38BDF8', '#8B5CF6', '#F97316'],
   },
   grocery: {
     key: 'grocery',
@@ -54,6 +58,7 @@ const THEMES: Record<StoreTheme['key'], Omit<StoreTheme, 'short'> & { short?: st
     soft: '#E6F5EC',
     ink: '#14532D',
     hints: ['atta', 'rice', 'milk', 'eggs', 'masala'],
+    glows: ['#BEF264', '#14B8A6', '#FACC15'],
   },
   nutrition: {
     key: 'nutrition',
@@ -64,6 +69,7 @@ const THEMES: Record<StoreTheme['key'], Omit<StoreTheme, 'short'> & { short?: st
     soft: '#FDEFE5',
     ink: '#7C2D12',
     hints: ['whey protein', 'oats', 'peanut butter', 'multivitamin'],
+    glows: ['#FDE047', '#E11D48', '#FB923C'],
   },
   pharmacy: {
     key: 'pharmacy',
@@ -74,6 +80,7 @@ const THEMES: Record<StoreTheme['key'], Omit<StoreTheme, 'short'> & { short?: st
     soft: '#E2F4F2',
     ink: '#134E4A',
     hints: ['vitamins', 'first aid', 'sanitiser', 'thermometer'],
+    glows: ['#67E8F9', '#22C55E', '#38BDF8'],
   },
   cosmetics: {
     key: 'cosmetics',
@@ -84,6 +91,7 @@ const THEMES: Record<StoreTheme['key'], Omit<StoreTheme, 'short'> & { short?: st
     soft: '#FBE8F0',
     ink: '#831843',
     hints: ['face wash', 'sunscreen', 'lip balm', 'moisturiser'],
+    glows: ['#FDBA74', '#A855F7', '#FB7185'],
   },
   other: {
     key: 'other',
@@ -94,6 +102,7 @@ const THEMES: Record<StoreTheme['key'], Omit<StoreTheme, 'short'> & { short?: st
     soft: '#EEF0F4',
     ink: '#1E293B',
     hints: ['products', 'brands'],
+    glows: ['#93C5FD', '#A78BFA', '#F97316'],
   },
 };
 
@@ -116,6 +125,29 @@ export function storeTheme(name?: string | null): StoreTheme {
   const short = name.replace(/^\s*genuine\s+/i, '').trim() || name;
   return { ...THEMES[key], short };
 }
+
+/**
+ * The store gradient with three soft colour glows over it — a "mesh" look —
+ * as a CSS background-image string for `experimental_backgroundImage`. The
+ * glows fade to their own colour at zero alpha rather than to `transparent`,
+ * which would drag a grey fringe through the blend.
+ */
+export function storeMesh(t: StoreTheme): string {
+  const [a, b, c] = t.glows;
+  return [
+    `radial-gradient(circle at 92% 0%, ${alpha(a, 0.7)} 0%, ${alpha(a, 0)} 58%)`,
+    `radial-gradient(circle at 0% 100%, ${alpha(b, 0.6)} 0%, ${alpha(b, 0)} 60%)`,
+    `radial-gradient(circle at 72% 108%, ${alpha(c, 0.42)} 0%, ${alpha(c, 0)} 42%)`,
+    `linear-gradient(155deg, ${t.gradient[0]} 0%, ${t.gradient[1]} 100%)`,
+  ].join(', ');
+}
+
+/** A faint dot grid to lay over a coloured panel, for texture. */
+export const DOT_GRID = {
+  experimental_backgroundImage: 'radial-gradient(circle, rgba(255, 255, 255, 0.16) 0px, rgba(255, 255, 255, 0.16) 1.2px, rgba(255, 255, 255, 0) 1.8px)',
+  experimental_backgroundSize: '18px 18px',
+  experimental_backgroundRepeat: 'repeat',
+} as const;
 
 /** Pastel washes for category tiles, cycled so neighbours never match. */
 export const TILE_COLOURS: { bg: string; fg: string }[] = [

@@ -1,53 +1,62 @@
+import { Platform, type ViewStyle } from 'react-native';
+
 /**
  * Design system.
  *
- * The brand orange is kept exactly as the web storefront uses it, but every
- * neutral around it is warm. The previous palette paired that orange with
- * pink-tinted greys left over from the cosmetics brand (#FFF5F9, #F1E1E9),
- * and orange on pink reads muddy — that mismatch was most of why the app felt
- * harsh rather than calm.
+ * Brand orange stays the action colour and the logo blue marks deals. Around
+ * them the neutrals are cool and crisp: an earlier warm-beige page read as
+ * dull and "blank", and white cards barely separated from it. A cool light
+ * page lets white cards, product photos and the store colours carry the
+ * screen instead.
  *
- * Depth comes from a warm off-white page behind white cards plus very soft
- * shadows, instead of a 1px border around everything.
+ * Headlines, prices and buttons use Plus Jakarta Sans (it has the ₹ glyph);
+ * body copy stays Inter.
  */
 
 export const colors = {
-  // Brand — unchanged, matches client/src/app/globals.css
+  // Brand — matches client/src/app/globals.css
   primary: '#F97316',
-  primaryPressed: '#DD5F0B',
+  primaryPressed: '#EA580C',
   /** Tinted background for chips, badges and selected rows. */
-  primarySoft: '#FFF1E7',
+  primarySoft: '#FFF1E6',
+  /** Orange text on primarySoft. */
+  primaryDeep: '#C2410C',
   /** The blue from the Shop Genuine logo, used for discounts and deals. */
   deal: '#1D4ED8',
-  dealSoft: '#E9EFFD',
-  primaryBorder: '#FCD9BD',
+  dealSoft: '#E8EEFD',
+  primaryBorder: '#FED7B5',
 
-  // Warm neutrals. Text is a warm near-black, never pure #000.
-  text: '#1C1917',
-  textSecondary: '#57534E',
-  textMuted: '#8C837C',
+  // Cool neutrals. Text is a deep slate, never pure #000.
+  text: '#0F172A',
+  textSecondary: '#475569',
+  textMuted: '#667085',
   textInverse: '#FFFFFF',
 
-  /** Page sits slightly warm; cards are pure white and lift off it. */
-  background: '#FAF8F5',
+  /** Page is a cool light grey; cards are pure white and lift off it. */
+  background: '#F4F6FA',
   surface: '#FFFFFF',
-  surfaceAlt: '#F3EFEA',
+  surfaceAlt: '#EEF2F7',
   /** Kept for compatibility with existing styles. */
-  backgroundAlt: '#F3EFEA',
+  backgroundAlt: '#EEF2F7',
+  /**
+   * Behind product photos. Packshots are white-background JPEGs, drawn with
+   * `mixBlendMode: 'multiply'` so their white takes on this tint instead of
+   * leaving a hard white square (Android 10+; older phones show the white).
+   */
+  well: '#F2F5F9',
 
-  border: '#EAE4DC',
-  borderStrong: '#DCD4CA',
+  border: '#E4E9F0',
+  borderStrong: '#D2D9E4',
 
-  // Status — desaturated so they sit calmly next to the orange.
-  success: '#2F7D55',
-  successSoft: '#E7F3EC',
-  error: '#C4453A',
-  errorSoft: '#FBEAE8',
+  success: '#15803D',
+  successSoft: '#E6F6EC',
+  error: '#DC2626',
+  errorSoft: '#FDECEC',
   warning: '#B45309',
   info: '#2563EB',
 
-  overlay: 'rgba(28, 25, 23, 0.45)',
-  skeleton: '#EFEAE4',
+  overlay: 'rgba(15, 23, 42, 0.5)',
+  skeleton: '#E7EBF1',
 } as const;
 
 /** 4pt rhythm. */
@@ -61,12 +70,12 @@ export const spacing = {
   xxxl: 48,
 } as const;
 
-/** Softer, larger radii read calmer than tight corners. */
+/** Generous, soft corners — the modern default — with tighter ones for small parts. */
 export const radius = {
   sm: 10,
-  md: 14,
-  lg: 18,
-  xl: 26,
+  md: 16,
+  lg: 20,
+  xl: 28,
   pill: 999,
 } as const;
 
@@ -75,6 +84,10 @@ export const fonts = {
   medium: 'Inter_500Medium',
   semibold: 'Inter_600SemiBold',
   bold: 'Inter_700Bold',
+  /** Plus Jakarta Sans, for headlines, prices and buttons. */
+  displaySemi: 'PlusJakartaSans_600SemiBold',
+  displayBold: 'PlusJakartaSans_700Bold',
+  display: 'PlusJakartaSans_800ExtraBold',
 } as const;
 
 /**
@@ -82,10 +95,10 @@ export const fonts = {
  * what makes a type scale feel designed rather than default.
  */
 export const typography = {
-  display: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 34, letterSpacing: -0.6 },
-  h1: { fontFamily: fonts.bold, fontSize: 23, lineHeight: 29, letterSpacing: -0.4 },
-  h2: { fontFamily: fonts.semibold, fontSize: 19, lineHeight: 25, letterSpacing: -0.3 },
-  h3: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, letterSpacing: -0.2 },
+  display: { fontFamily: fonts.display, fontSize: 30, lineHeight: 36, letterSpacing: -0.9 },
+  h1: { fontFamily: fonts.display, fontSize: 24, lineHeight: 30, letterSpacing: -0.6 },
+  h2: { fontFamily: fonts.displayBold, fontSize: 19, lineHeight: 25, letterSpacing: -0.4 },
+  h3: { fontFamily: fonts.displayBold, fontSize: 16, lineHeight: 22, letterSpacing: -0.2 },
   body: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22 },
   bodyStrong: { fontFamily: fonts.medium, fontSize: 15, lineHeight: 22 },
   small: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 19 },
@@ -93,43 +106,40 @@ export const typography = {
   tiny: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 15 },
   /** Uppercase eyebrow labels. */
   overline: {
-    fontFamily: fonts.semibold,
-    fontSize: 10,
+    fontFamily: fonts.displayBold,
+    fontSize: 10.5,
     lineHeight: 14,
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     textTransform: 'uppercase' as const,
   },
-  /** Prices need tabular figures so columns line up. */
-  price: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, letterSpacing: -0.3 },
-  priceLarge: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.6 },
+  price: { fontFamily: fonts.display, fontSize: 16, lineHeight: 22, letterSpacing: -0.3 },
+  priceLarge: { fontFamily: fonts.display, fontSize: 28, lineHeight: 34, letterSpacing: -0.8 },
+  button: { fontFamily: fonts.displayBold, fontSize: 15.5, letterSpacing: -0.1 },
 } as const;
 
+/** `#RRGGBB` → `rgba(r, g, b, a)`, for glows and tinted shadows. */
+export function alpha(hex: string, a: number): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
+
 /**
- * Warm-tinted shadows. A neutral grey shadow over a warm page looks dirty, so
- * the shadow colour carries the same warmth as the background.
+ * Real, soft CSS shadows (`boxShadow`) instead of Android's flat elevation,
+ * which draws a dark offset smudge. Android draws them from 9 (API 28); older
+ * phones fall back to elevation so cards still separate.
  */
+const OLD_ANDROID = Platform.OS === 'android' && Number(Platform.Version) < 28;
+function lift(boxShadow: string, elevation: number): ViewStyle {
+  return OLD_ANDROID ? { elevation } : { boxShadow };
+}
+
 export const shadow = {
   /** Barely-there lift for cards sitting on the page. */
-  card: {
-    shadowColor: '#7C6A58',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  raised: {
-    shadowColor: '#7C6A58',
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 5,
-  },
+  card: lift('0px 1px 2px rgba(15, 23, 42, 0.05), 0px 6px 16px rgba(15, 23, 42, 0.06)', 1),
+  raised: lift('0px 2px 6px rgba(15, 23, 42, 0.06), 0px 16px 34px rgba(15, 23, 42, 0.13)', 5),
   /** For bars pinned to the bottom of the screen. */
-  bar: {
-    shadowColor: '#7C6A58',
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 12,
-  },
-} as const;
+  bar: lift('0px -4px 24px rgba(15, 23, 42, 0.08)', 12),
+  /** A coloured glow under a filled button or tile, in its own colour. */
+  glow: (hex: string, strength = 0.38): ViewStyle =>
+    lift(`0px 8px 18px ${alpha(hex, strength)}`, 4),
+};

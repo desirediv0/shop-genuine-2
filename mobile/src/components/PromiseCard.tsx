@@ -27,12 +27,12 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   title: {
-    fontFamily: fonts.semibold,
+    fontFamily: fonts.displayBold,
     fontSize: 11,
-    letterSpacing: 1.2,
+    letterSpacing: 1.4,
     textTransform: 'uppercase',
     color: colors.textMuted,
     textAlign: 'center',
   },
-  row: { marginTop: spacing.sm, borderTopWidth: 0, borderBottomWidth: 0 },
+  row: { marginTop: spacing.xs, paddingBottom: spacing.lg },
 });

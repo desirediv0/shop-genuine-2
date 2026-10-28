@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { catalogue } from '../../api/services';
 import { useStoreVertical } from '../../context/StoreVerticalContext';
 import { useProductLayout } from '../../hooks/useProductLayout';
 import { colors, fonts, radius, spacing } from '../../theme';
+import { DOT_GRID } from '../../theme/stores';
 import { discountPercent } from '../../utils/format';
 import { ProductCard } from '../ProductCard';
 import { Appear } from '../motion/Appear';
@@ -15,7 +15,17 @@ import { Appear } from '../motion/Appear';
 const MIN_DISCOUNT = 10;
 
 /**
- * The biggest real discounts among the store's 60 newest products, on a warm
+ * Deep navy with an orange glow: the one dark band on Home, so the deals stand
+ * out from everything around them and white cards pop against it.
+ */
+const DEALS_MESH = [
+  'radial-gradient(circle at 100% 0%, rgba(249, 115, 22, 0.55) 0%, rgba(249, 115, 22, 0) 52%)',
+  'radial-gradient(circle at 0% 100%, rgba(139, 92, 246, 0.42) 0%, rgba(139, 92, 246, 0) 55%)',
+  'linear-gradient(160deg, #0B1B4D 0%, #12307F 100%)',
+].join(', ');
+
+/**
+ * The biggest real discounts among the store's 60 newest products, on a dark
  * band headed "Up to N% off". Computed from the prices the server sends, so the
  * row is never a claim the shop cannot back — and it surfaces different
  * products from the admin's sections, which often repeat each other.
@@ -47,28 +57,20 @@ export function TopDeals() {
   if (deals.length < 3) return null;
 
   return (
-    <View style={styles.band}>
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        <LinearGradient
-          colors={['#FFE6D2', colors.background]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={[styles.circle, styles.circleBig]} />
-        <View style={[styles.circle, styles.circleRing]} />
-      </View>
+    <View style={[styles.band, { experimental_backgroundImage: DEALS_MESH }]}>
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, DOT_GRID, styles.dots]} />
 
       <View style={styles.header}>
-        <View style={styles.flame}>
-          <MaterialCommunityIcons name="tag-heart-outline" size={18} color={colors.textInverse} />
-        </View>
         <View style={styles.titles}>
-          <Text style={styles.title}>Top deals</Text>
+          <View style={styles.kicker}>
+            <MaterialCommunityIcons name="lightning-bolt" size={14} color={colors.primary} />
+            <Text style={styles.kickerText}>TOP DEALS</Text>
+          </View>
+          <Text style={styles.title}>Up to {deals[0].off}% off</Text>
           <Text style={styles.subtitle}>Big savings on new arrivals</Text>
         </View>
-        <View style={styles.pill}>
-          <Text style={styles.pillText}>Up to {deals[0].off}% off</Text>
+        <View style={styles.badge}>
+          <MaterialCommunityIcons name="tag-heart" size={26} color={colors.textInverse} />
         </View>
       </View>
 
@@ -89,49 +91,36 @@ export function TopDeals() {
 }
 
 const styles = StyleSheet.create({
-  band: { marginTop: spacing.xxl, paddingVertical: spacing.lg, overflow: 'hidden' },
-  circle: { position: 'absolute', borderRadius: 999 },
-  circleBig: {
-    width: 200,
-    height: 200,
-    top: -100,
-    left: -50,
-    backgroundColor: colors.primary,
-    opacity: 0.08,
-  },
-  circleRing: {
-    width: 110,
-    height: 110,
-    top: 6,
-    right: -36,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    opacity: 0.18,
-  },
+  band: { marginTop: spacing.xxl, paddingTop: spacing.xl, paddingBottom: spacing.xl },
+  dots: { opacity: 0.5 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  flame: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: spacing.lg,
   },
   titles: { flex: 1 },
-  title: { fontFamily: fonts.bold, fontSize: 18, color: colors.text },
-  subtitle: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.textMuted, marginTop: 1 },
-  pill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-    borderRadius: radius.pill,
-    backgroundColor: colors.deal,
+  kicker: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  kickerText: { fontFamily: fonts.display, fontSize: 11, letterSpacing: 1.4, color: colors.primary },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 27,
+    lineHeight: 33,
+    letterSpacing: -0.8,
+    color: colors.textInverse,
+    marginTop: 2,
   },
-  pillText: { fontFamily: fonts.bold, fontSize: 12, color: colors.textInverse },
+  subtitle: { fontFamily: fonts.regular, fontSize: 13, color: 'rgba(255,255,255,0.72)', marginTop: 1 },
+  badge: {
+    width: 54,
+    height: 54,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    experimental_backgroundImage: 'linear-gradient(145deg, #FB923C 0%, #EA580C 100%)',
+    boxShadow: '0px 10px 22px rgba(249, 115, 22, 0.45)',
+    transform: [{ rotate: '8deg' }],
+  },
   row: { paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xs },
 });

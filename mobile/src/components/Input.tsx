@@ -7,7 +7,7 @@ import {
   View,
   type TextInputProps,
 } from 'react-native';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, fonts, spacing, typography } from '../theme';
 import { Icon } from './Icon';
 
 interface Props extends TextInputProps {
@@ -73,24 +73,28 @@ export const Input = forwardRef<TextInput, Props>(function Input(
 
 const styles = StyleSheet.create({
   wrapper: { gap: spacing.sm },
-  label: { ...typography.smallStrong, color: colors.textSecondary },
+  label: { fontFamily: fonts.displayBold, fontSize: 13, lineHeight: 18, color: colors.textSecondary },
+  // A filled field that turns white with an orange ring when focused — the
+  // one place orange earns its keep on an input.
   field: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    borderRadius: 14,
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.surface,
-    minHeight: 52,
+    backgroundColor: colors.surfaceAlt,
+    minHeight: 54,
   },
-  // A focus ring in the brand colour is the one place orange earns its keep
-  // on an input.
-  focused: { borderColor: colors.primary, backgroundColor: colors.surface },
-  errored: { borderColor: colors.error },
+  focused: {
+    borderColor: colors.primary,
+    backgroundColor: colors.surface,
+    boxShadow: '0px 0px 0px 4px rgba(249, 115, 22, 0.14)',
+  },
+  errored: { borderColor: colors.error, backgroundColor: colors.surface },
   input: { flex: 1, ...typography.body, color: colors.text, paddingVertical: spacing.md },
-  toggle: { ...typography.smallStrong, color: colors.primary },
+  toggle: { fontFamily: fonts.displayBold, fontSize: 13, color: colors.primaryDeep },
   message: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   error: { ...typography.small, color: colors.error, flex: 1 },
   hint: { ...typography.small, color: colors.textMuted },

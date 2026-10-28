@@ -4,15 +4,19 @@ import { useRouter } from 'expo-router';
 import { useQueries } from '@tanstack/react-query';
 import { catalogue } from '../../api/services';
 import { useStoreVertical } from '../../context/StoreVerticalContext';
-import { fonts, radius, spacing } from '../../theme';
-import { TILE_COLOURS } from '../../theme/stores';
+import { fonts, radius, shadow, spacing } from '../../theme';
 import { Appear } from '../motion/Appear';
 import { PressableScale } from '../motion/PressableScale';
 import { SectionHeader } from './SectionHeader';
 
 const CAPS = [99, 199, 499, 999];
 /** Warm, cool, warm, cool — so neighbouring tiles never share a colour. */
-const PALETTE = [TILE_COLOURS[0], TILE_COLOURS[2], TILE_COLOURS[3], TILE_COLOURS[1]];
+const PALETTE: { from: string; to: string }[] = [
+  { from: '#FB923C', to: '#EA580C' },
+  { from: '#60A5FA', to: '#1D4ED8' },
+  { from: '#F472B6', to: '#BE185D' },
+  { from: '#34D399', to: '#047857' },
+];
 const GAP = spacing.sm;
 
 /**
@@ -56,11 +60,21 @@ export function ShopByPrice() {
               }
               accessibilityRole="button"
               accessibilityLabel={`Under ${cap} rupees, ${total} products`}
-              style={[styles.tile, { width: tileWidth, backgroundColor: tone.bg }]}
+              style={[
+                styles.tile,
+                {
+                  width: tileWidth,
+                  experimental_backgroundImage: `linear-gradient(150deg, ${tone.from} 0%, ${tone.to} 100%)`,
+                },
+                shadow.glow(tone.to, 0.3),
+              ]}
             >
-              <View style={[styles.dot, { backgroundColor: tone.fg }]} />
-              <Text style={[styles.under, { color: tone.fg }]}>UNDER</Text>
-              <Text style={[styles.price, { color: tone.fg }]} numberOfLines={1} adjustsFontSizeToFit>
+              {/* A big faint rupee sign in the corner, for texture. */}
+              <Text style={styles.watermark} pointerEvents="none">
+                ₹
+              </Text>
+              <Text style={styles.under}>UNDER</Text>
+              <Text style={styles.price} numberOfLines={1} adjustsFontSizeToFit>
                 ₹{cap}
               </Text>
               <Text style={styles.count} numberOfLines={1}>
@@ -79,14 +93,21 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: GAP, paddingHorizontal: spacing.lg },
   tile: {
     borderRadius: radius.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
     paddingHorizontal: spacing.sm,
     alignItems: 'center',
     overflow: 'hidden',
   },
-  // A faint disc in the corner, so the tiles are not flat swatches.
-  dot: { position: 'absolute', width: 60, height: 60, borderRadius: 30, top: -26, right: -22, opacity: 0.12 },
-  under: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.2 },
-  price: { fontFamily: fonts.bold, fontSize: 22, marginTop: 2 },
-  count: { fontFamily: fonts.medium, fontSize: 11, color: '#57534E', marginTop: 2 },
+  watermark: {
+    position: 'absolute',
+    right: -8,
+    bottom: -34,
+    fontFamily: fonts.display,
+    fontSize: 70,
+    color: 'rgba(255,255,255,0.14)',
+    transform: [{ rotate: '-12deg' }],
+  },
+  under: { fontFamily: fonts.displayBold, fontSize: 10, letterSpacing: 1.4, color: 'rgba(255,255,255,0.85)' },
+  price: { fontFamily: fonts.display, fontSize: 23, letterSpacing: -0.6, marginTop: 1, color: '#FFFFFF' },
+  count: { fontFamily: fonts.semibold, fontSize: 11, color: 'rgba(255,255,255,0.9)', marginTop: 1 },
 });

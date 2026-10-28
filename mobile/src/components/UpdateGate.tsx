@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(28, 25, 23, 0.45)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
     paddingHorizontal: spacing.lg,
   },

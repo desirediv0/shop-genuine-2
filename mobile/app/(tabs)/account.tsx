@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import { auth as authApi } from '../../src/api/services';
@@ -16,7 +15,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { useToast } from '../../src/context/ToastContext';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
-import { storeTheme } from '../../src/theme/stores';
+import { DOT_GRID, storeMesh, storeTheme } from '../../src/theme/stores';
 import { buildLabel } from '../../src/utils/buildInfo';
 
 export default function AccountScreen() {
@@ -50,7 +49,7 @@ export default function AccountScreen() {
         <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
           <Appear index={0}>
             <View style={styles.hero}>
-              <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+              <View pointerEvents="none" style={[StyleSheet.absoluteFill, DOT_GRID, styles.dots]} />
               <View style={styles.heroMark} pointerEvents="none">
                 <Icon name="account" size={140} color="rgba(255,255,255,0.12)" filled />
               </View>
@@ -123,7 +122,7 @@ export default function AccountScreen() {
         {/* Profile */}
         <Appear index={0}>
           <View style={styles.profileCard}>
-            <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+            <View pointerEvents="none" style={[StyleSheet.absoluteFill, DOT_GRID, styles.dots]} />
             <View style={styles.avatar}>
               <Text style={[styles.avatarText, { color: BRAND.ink }]}>
                 {(user?.name?.trim() || user?.email || '?').charAt(0).toUpperCase()}
@@ -214,16 +213,24 @@ function Benefit({ icon, text }: { icon: IconName; text: string }) {
 
 /** "All stores" blue — the account belongs to every store, not one. */
 const BRAND = storeTheme(null);
+const BRAND_MESH = storeMesh(BRAND);
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
 
-  hero: { borderRadius: radius.xl, overflow: 'hidden', padding: spacing.xl, ...shadow.raised },
+  hero: {
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    padding: spacing.xl,
+    experimental_backgroundImage: BRAND_MESH,
+    ...shadow.glow(BRAND.gradient[1], 0.3),
+  },
+  dots: { opacity: 0.55 },
   heroMark: { position: 'absolute', right: -24, top: -20, transform: [{ rotate: '-10deg' }] },
-  heroOverline: { fontFamily: fonts.semibold, fontSize: 10, letterSpacing: 1.4, color: 'rgba(255,255,255,0.72)' },
-  heroTitle: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.5, color: colors.textInverse, marginTop: 2 },
+  heroOverline: { fontFamily: fonts.displayBold, fontSize: 10.5, letterSpacing: 1.6, color: 'rgba(255,255,255,0.72)' },
+  heroTitle: { fontFamily: fonts.display, fontSize: 26, lineHeight: 32, letterSpacing: -0.7, color: colors.textInverse, marginTop: 2 },
   heroText: { ...typography.small, color: 'rgba(255,255,255,0.88)', marginTop: spacing.xs },
   benefits: { gap: spacing.md, marginTop: spacing.xl },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
@@ -238,13 +245,13 @@ const styles = StyleSheet.create({
   benefitText: { ...typography.smallStrong, color: colors.textInverse, flex: 1 },
   heroBtn: {
     marginTop: spacing.xl,
-    height: 50,
-    borderRadius: radius.pill,
+    height: 52,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  heroBtnText: { fontFamily: fonts.bold, fontSize: 15 },
+  heroBtnText: { fontFamily: fonts.displayBold, fontSize: 15.5 },
   heroLink: { ...typography.small, color: 'rgba(255,255,255,0.86)', textAlign: 'center', marginTop: spacing.md },
   heroLinkStrong: { fontFamily: fonts.semibold, color: colors.textInverse },
 
@@ -255,7 +262,8 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     borderRadius: radius.xl,
     overflow: 'hidden',
-    ...shadow.raised,
+    experimental_backgroundImage: BRAND_MESH,
+    ...shadow.glow(BRAND.gradient[1], 0.3),
   },
   avatar: {
     width: 58,
@@ -265,9 +273,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontFamily: fonts.bold, fontSize: 24 },
+  avatarText: { fontFamily: fonts.display, fontSize: 24 },
   profileBody: { flex: 1, gap: 2 },
-  name: { fontFamily: fonts.bold, fontSize: 19, color: colors.textInverse },
+  name: { fontFamily: fonts.display, fontSize: 20, letterSpacing: -0.4, color: colors.textInverse },
   email: { ...typography.small, color: 'rgba(255,255,255,0.82)' },
 
   tiles: { flexDirection: 'row', gap: spacing.md },
@@ -281,14 +289,14 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   tileIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.pill,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tileLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text },
+  tileLabel: { fontFamily: fonts.displayBold, fontSize: 13.5, color: colors.text },
 
   group: { gap: spacing.md },
   deleteWrap: { alignItems: 'center', paddingVertical: spacing.md },

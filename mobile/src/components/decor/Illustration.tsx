@@ -140,6 +140,8 @@ export function Illustration({
             {
               width: bubble,
               height: bubble,
+              // Exact radius: a soft shadow on the 999 one draws square.
+              borderRadius: bubble / 2,
               left: size * SPOTS[i].left,
               top: size * SPOTS[i].top,
               backgroundColor: f.bg,

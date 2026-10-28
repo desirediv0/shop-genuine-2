@@ -9,13 +9,16 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Image } from 'expo-image';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { catalogue } from '../../src/api/services';
-import { StoreBand } from '../../src/components/home/StoreBand';
+import { bandText, StoreBand } from '../../src/components/home/StoreBand';
+import { PressableScale } from '../../src/components/motion/PressableScale';
 import { useStoreVertical } from '../../src/context/StoreVerticalContext';
+import { useCategoryArt } from '../../src/hooks/useCategoryArt';
 import { useProductLayout } from '../../src/hooks/useProductLayout';
+import { useScreenStatusBar } from '../../src/hooks/useScreenStatusBar';
 import { storeTheme } from '../../src/theme/stores';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
@@ -49,6 +52,9 @@ export default function SearchScreen() {
   const [category, setCategory] = useState<string | null>(null);
   const [sortIndex, setSortIndex] = useState(0);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
+
+  // The coloured header runs under the status bar.
+  useScreenStatusBar('light');
 
   useEffect(() => {
     const n = Number(params.under);
@@ -119,6 +125,8 @@ export default function SearchScreen() {
   const categories: Category[] = (categoriesQ.data?.categories ?? []).filter(
     (c) => (c._count?.products ?? c.productCount ?? 1) > 0,
   );
+  // A small product photo on each category chip — shared with Home's tiles.
+  const art = useCategoryArt(categories);
 
   const loadMore = useCallback(() => {
     if (query.hasNextPage && !query.isFetchingNextPage) {
@@ -127,10 +135,11 @@ export default function SearchScreen() {
   }, [query]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      {/* Same store panel as Home, with the real search field inside */}
-      <View style={styles.bandWrap}>
+    <View style={styles.safe}>
+      {/* The store's colour panel, as on Home, with the real search field inside */}
+      <View>
         <StoreBand>
+          <Text style={bandText.title}>Search</Text>
           <View style={styles.searchWrap}>
             <Icon name="search" size={19} color={theme.solid} />
             <TextInput
@@ -161,11 +170,12 @@ export default function SearchScreen() {
           style={styles.chipScroll}
           contentContainerStyle={styles.filterRow}
         >
-          <Filter label="All" active={category === null} accent={theme.solid} onPress={() => setCategory(null)} />
-          {categories.map((c) => (
+          <Filter label="All" icon="grid" active={category === null} accent={theme.solid} onPress={() => setCategory(null)} />
+          {categories.map((c, i) => (
             <Filter
               key={c.id}
               label={c.name}
+              image={art[i]}
               accent={theme.solid}
               active={category === c.slug}
               onPress={() => setCategory(category === c.slug ? null : c.slug)}
@@ -256,7 +266,7 @@ export default function SearchScreen() {
           }
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -265,41 +275,56 @@ function Filter({
   active,
   accent,
   icon,
+  image,
   onPress,
 }: {
   label: string;
   active: boolean;
   accent: string;
   icon?: IconName;
+  /** A product photo for the chip, in a small round frame. */
+  image?: string | null;
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
+      scaleTo={0.94}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
-      style={[styles.filter, active && { backgroundColor: accent, borderColor: accent }]}
+      style={[
+        styles.filter,
+        image ? styles.filterWithImage : null,
+        active && { backgroundColor: accent },
+        active && shadow.glow(accent, 0.3),
+      ]}
     >
-      {icon ? <Icon name={icon} size={14} color={active ? colors.textInverse : colors.textMuted} /> : null}
+      {image ? (
+        <View style={styles.thumb}>
+          <Image source={image} style={styles.thumbImage} contentFit="contain" />
+        </View>
+      ) : icon ? (
+        <Icon name={icon} size={15} color={active ? colors.textInverse : colors.textMuted} />
+      ) : null}
       <Text style={[styles.filterText, active && styles.filterTextActive]} numberOfLines={1}>
         {label}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  bandWrap: { paddingTop: spacing.sm },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    height: 50,
+    height: 52,
+    marginTop: spacing.md,
     paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
+    borderRadius: radius.md,
     backgroundColor: colors.surface,
-    ...shadow.card,
+    boxShadow: '0px 10px 24px rgba(2, 6, 23, 0.20)',
   },
   searchInput: { flex: 1, ...typography.body, color: colors.text, paddingVertical: 0 },
   // flexGrow/Shrink 0 stops the row being squeezed by the list below it, which
@@ -308,33 +333,45 @@ const styles = StyleSheet.create({
   filterRow: {
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
+    // Room for the chips' shadows, which a horizontal ScrollView clips.
+    paddingBottom: spacing.sm,
     alignItems: 'center',
   },
   sortRow: {
     paddingHorizontal: spacing.lg,
     gap: spacing.sm,
-    paddingTop: spacing.sm,
+    paddingTop: spacing.xs,
     paddingBottom: spacing.md,
     alignItems: 'center',
   },
   filter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.border,
+    gap: 6,
+    height: 40,
+    paddingHorizontal: 14,
+    // Half the height rather than 999: a soft shadow on a 999 radius draws square.
+    borderRadius: 20,
     backgroundColor: colors.surface,
-    maxWidth: 200,
+    maxWidth: 220,
+    ...shadow.card,
   },
-  filterText: { ...typography.small, color: colors.textSecondary },
-  filterTextActive: { color: colors.textInverse, fontFamily: fonts.medium },
+  filterWithImage: { paddingLeft: 5 },
+  thumb: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    padding: 3,
+    backgroundColor: '#F5F5F5',
+    overflow: 'hidden',
+  },
+  thumbImage: { width: '100%', height: '100%', filter: 'brightness(0.96)' },
+  filterText: { fontFamily: fonts.medium, fontSize: 13, color: colors.textSecondary },
+  filterTextActive: { color: colors.textInverse, fontFamily: fonts.semibold },
   list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   column: { gap: spacing.sm },
-  count: { ...typography.small, color: colors.textMuted, marginBottom: spacing.lg },
+  count: { fontFamily: fonts.displayBold, fontSize: 13, color: colors.textSecondary, marginBottom: spacing.md },
   center: { paddingVertical: spacing.xxxl, alignItems: 'center' },
   footer: { paddingVertical: spacing.lg, alignItems: 'center' },
 });

@@ -24,8 +24,8 @@ const SECTION_ICONS: [RegExp, CategoryGlyph][] = [
 ];
 
 /**
- * A section title with an optional "See all", the link drawn in the current
- * store's colour so each store's Home carries its identity below the hero too.
+ * A section title with an optional "See all" pill, both in the current store's
+ * colour so each store's Home carries its identity below the hero too.
  */
 export function SectionHeader({
   title,
@@ -53,9 +53,15 @@ export function SectionHeader({
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
       {onSeeAll ? (
-        <PressableScale onPress={onSeeAll} hitSlop={8} accessibilityRole="button" scaleTo={0.92} style={styles.seeAll}>
+        <PressableScale
+          onPress={onSeeAll}
+          hitSlop={8}
+          accessibilityRole="button"
+          scaleTo={0.92}
+          style={[styles.seeAll, { backgroundColor: theme.soft }]}
+        >
           <Text style={[styles.seeAllText, { color: accent }]}>See all</Text>
-          <Icon name="forward" size={14} color={accent} />
+          <Icon name="forward" size={13} color={accent} />
         </PressableScale>
       ) : null}
     </View>
@@ -71,10 +77,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.md,
   },
-  chip: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  chip: { width: 32, height: 32, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   titles: { flex: 1 },
-  title: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 24, letterSpacing: -0.3, color: colors.text },
+  title: { fontFamily: fonts.display, fontSize: 19, lineHeight: 25, letterSpacing: -0.5, color: colors.text },
   subtitle: { fontFamily: fonts.regular, fontSize: 12.5, color: colors.textMuted, marginTop: 1 },
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 2, paddingBottom: 2 },
-  seeAllText: { fontFamily: fonts.semibold, fontSize: 13 },
+  seeAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    height: 30,
+    paddingLeft: 12,
+    paddingRight: 8,
+    borderRadius: 999,
+  },
+  seeAllText: { fontFamily: fonts.displayBold, fontSize: 12.5 },
 });

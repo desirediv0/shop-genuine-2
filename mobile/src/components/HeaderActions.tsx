@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
-import { colors, fonts, radius } from '../theme';
+import { colors, fonts, radius, spacing } from '../theme';
 import { Icon, type IconName } from './Icon';
 
 /**
@@ -14,16 +14,17 @@ import { Icon, type IconName } from './Icon';
  * putting the whole tab bar on every page; two icons in the header, as
  * quick-commerce apps do, cover the two places people actually want to go.
  */
-export function HeaderActions() {
+export function HeaderActions({ floating = false }: { floating?: boolean }) {
   const router = useRouter();
   const { cart } = useCart();
   const count = cart.totalQuantity;
 
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, floating && styles.rowFloating]}>
       <HeaderIcon
         name="search"
         label="Search products"
+        floating={floating}
         // Back to the tabs' Search screen rather than stacking a second copy
         // of the tab navigator on top of this one.
         onPress={() => router.dismissTo('/search')}
@@ -32,9 +33,26 @@ export function HeaderActions() {
         name="cart"
         label={count > 0 ? `Cart, ${count} items` : 'Cart'}
         count={count}
+        floating={floating}
         onPress={() => router.push('/basket')}
       />
     </View>
+  );
+}
+
+/**
+ * Back, as a white disc — for pages whose header floats over a picture
+ * (the product page), where a bare arrow would sit on the photo.
+ */
+export function FloatingBack() {
+  const router = useRouter();
+  return (
+    <HeaderIcon
+      name="back"
+      label="Back"
+      floating
+      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+    />
   );
 }
 
@@ -42,11 +60,14 @@ function HeaderIcon({
   name,
   label,
   count = 0,
+  floating = false,
   onPress,
 }: {
   name: IconName;
   label: string;
   count?: number;
+  /** A white disc with a shadow, for headers laid over a picture. */
+  floating?: boolean;
   onPress: () => void;
 }) {
   return (
@@ -55,7 +76,7 @@ function HeaderIcon({
       hitSlop={6}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.btn, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.btn, floating && styles.btnFloating, pressed && styles.pressed]}
     >
       <Icon name={name} size={22} color={colors.text} />
       {count > 0 ? (
@@ -71,7 +92,18 @@ function HeaderIcon({
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  rowFloating: { gap: spacing.sm },
   btn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill },
+  // A hairline rather than a shadow: the native header clips anything drawn
+  // outside a button's box, which turned a soft shadow into a grey square.
+  btnFloating: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: 'rgba(15, 23, 42, 0.07)',
+  },
   pressed: { backgroundColor: colors.surfaceAlt },
   // Same badge as the tab bar's, so a count looks the same wherever it shows.
   badge: {
@@ -88,5 +120,5 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.background,
   },
-  badgeText: { fontFamily: fonts.bold, fontSize: 9, lineHeight: 12, color: colors.textInverse },
+  badgeText: { fontFamily: fonts.display, fontSize: 9, lineHeight: 12, color: colors.textInverse },
 });

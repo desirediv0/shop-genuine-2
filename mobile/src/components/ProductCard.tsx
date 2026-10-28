@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { colors, radius, shadow, spacing, typography } from '../theme';
+import { colors, fonts, radius, shadow, spacing, typography } from '../theme';
 import type { ProductSummary } from '../types';
 import { discountPercent, formatPrice, pickDefaultVariant, toNumber } from '../utils/format';
 import { AddToCartButton } from './AddToCartButton';
@@ -40,6 +40,8 @@ export function ProductCard({ product, width }: Props) {
     return { price: p, regular: r, off: discountPercent(r, p), outOfStock: !stock, image: art };
   }, [product]);
 
+  const saving = off > 0 ? regular - price : 0;
+
   return (
     <PressableScale
       scaleTo={0.97}
@@ -50,7 +52,7 @@ export function ProductCard({ product, width }: Props) {
       }${outOfStock ? ', out of stock' : ''}`}
       style={[styles.card, !!width && { width }]}
     >
-      <View style={styles.imageWrap}>
+      <View style={styles.well}>
         {image ? (
           <Image source={image} style={styles.image} contentFit="contain" transition={220} />
         ) : (
@@ -96,47 +98,56 @@ export function ProductCard({ product, width }: Props) {
           <Text style={styles.price}>{formatPrice(price)}</Text>
           {off > 0 ? <Text style={styles.strike}>{formatPrice(regular)}</Text> : null}
         </View>
+        {/* Always takes its line, so cards in a row keep one height. */}
+        <Text style={styles.save} numberOfLines={1}>
+          {saving > 0 ? `Save ${formatPrice(saving)}` : ' '}
+        </Text>
       </View>
     </PressableScale>
   );
 }
 
+/**
+ * Packshots are white-background JPEGs. Dimming them 4% turns that white into
+ * exactly the well's grey, so every product sits on the same soft stage
+ * instead of a hard white square. A brightness filter is drawn once into a
+ * cached layer on Android, so it costs nothing while a row scrolls — unlike
+ * mixBlendMode, which re-blends every frame.
+ */
+const WELL = '#F5F5F5';
+const DIM = 'brightness(0.96)';
+
 const styles = StyleSheet.create({
-  // Smaller cards read better with a tighter corner than the old 18dp.
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
-    overflow: 'hidden',
-    // A hairline keeps white packshots from melting into a white card edge.
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.border,
+    padding: 5,
     ...shadow.card,
   },
-  // Packaging shots are white-background JPEGs, so a tinted tile leaves a hard
-  // white square floating inside it. Matching the card keeps the product clean
-  // and lets the card shadow do the separating.
-  imageWrap: {
+  well: {
     aspectRatio: 1,
-    backgroundColor: colors.surface,
+    borderRadius: 12,
+    backgroundColor: WELL,
     padding: spacing.sm,
+    overflow: 'hidden',
   },
-  image: { width: '100%', height: '100%' },
+  image: { width: '100%', height: '100%', filter: DIM },
   noImage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  // A tag tucked into the corner, the way shelf stickers sit.
   badge: {
     position: 'absolute',
-    top: 6,
-    left: 6,
-    // Logo blue for deals, so orange always means "tap to act" (ADD).
+    top: 0,
+    left: 0,
     backgroundColor: colors.deal,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderBottomRightRadius: 10,
   },
-  badgeText: { fontFamily: typography.tiny.fontFamily, fontSize: 9, lineHeight: 12, color: colors.textInverse },
+  badgeText: { fontFamily: fonts.display, fontSize: 9.5, lineHeight: 12, letterSpacing: 0.2, color: colors.textInverse },
   soldOut: {
     position: 'absolute',
     inset: 0,
-    backgroundColor: 'rgba(250, 248, 245, 0.78)',
+    backgroundColor: 'rgba(245, 245, 245, 0.72)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -147,14 +158,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
   },
   soldOutText: { ...typography.tiny, fontSize: 10, color: colors.textInverse },
-  addSlot: { position: 'absolute', right: 6, bottom: 6 },
-  body: { paddingHorizontal: spacing.sm, paddingTop: 6, paddingBottom: 10, gap: 2 },
+  addSlot: { position: 'absolute', right: 5, bottom: 5 },
+  body: { paddingHorizontal: 4, paddingTop: 8, paddingBottom: 4, gap: 2 },
   brand: { ...typography.overline, fontSize: 9, color: colors.textMuted },
   // Two lines at 12sp: product names here run long ("Tata Sampann Coriander
   // Whole (Dhaniya)…"). The fixed height keeps prices aligned across a row.
-  name: { ...typography.smallStrong, fontSize: 12, lineHeight: 16, minHeight: 32, color: colors.text },
-  priceRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 5, marginTop: 2 },
-  price: { ...typography.price, fontSize: 14, lineHeight: 19, color: colors.text },
+  name: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 16, minHeight: 32, color: colors.text },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 5, marginTop: 3 },
+  price: { ...typography.price, fontSize: 15, lineHeight: 20, color: colors.text },
   strike: {
     ...typography.small,
     fontSize: 11,
@@ -162,4 +173,5 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textDecorationLine: 'line-through',
   },
+  save: { fontFamily: fonts.semibold, fontSize: 10.5, lineHeight: 14, color: colors.success },
 });

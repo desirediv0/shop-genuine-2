@@ -3,6 +3,7 @@ import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useCategoryArt } from '../../hooks/useCategoryArt';
 import { colors, fonts, radius, spacing } from '../../theme';
 import { categoryVisual } from '../../theme/stores';
 import type { Category } from '../../types';
@@ -17,9 +18,11 @@ const MAX_TILES = 8;
  * Categories as a four-column grid of tinted tiles — scannable at a glance,
  * where the old horizontal strip of circles showed four and hid the rest.
  *
- * Categories uploaded without artwork get an icon matched to their name on a
- * pastel tile. The old fallback was the first letter ("A", "B", "F"), which is
- * what every live category showed and made Home look unfinished.
+ * The admin has uploaded no category artwork, so each tile shows the newest
+ * product in that category (see useCategoryArt), blended into the pastel so
+ * its white packshot background takes on the tile's colour.
+ * Real products read as a shop; the matched icon only shows while the photo
+ * loads, or for a category with no photographed product.
  */
 export function CategoryGrid({
   categories,
@@ -35,11 +38,13 @@ export function CategoryGrid({
 
   const overflow = categories.length > MAX_TILES;
   const shown = overflow ? categories.slice(0, MAX_TILES - 1) : categories;
+  const art = useCategoryArt(shown);
 
   return (
     <View style={[styles.grid, { gap }]}>
       {shown.map((c, i) => {
         const visual = categoryVisual(c.name, i);
+        const photo = art[i];
         return (
           <Appear key={c.id} index={i}>
             <PressableScale
@@ -49,8 +54,8 @@ export function CategoryGrid({
               style={{ width: tile }}
             >
               <View style={[styles.tile, { width: tile, height: tile, backgroundColor: visual.bg }]}>
-                {c.image ? (
-                  <Image source={c.image} style={styles.image} contentFit="contain" transition={200} />
+                {photo ? (
+                  <Image source={photo} style={styles.image} contentFit="contain" transition={250} />
                 ) : (
                   <MaterialCommunityIcons name={visual.icon} size={Math.round(tile * 0.42)} color={visual.fg} />
                 )}
@@ -90,10 +95,20 @@ export function CategoryGrid({
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: spacing.lg, rowGap: spacing.lg },
-  tile: { borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  image: { width: '82%', height: '82%' },
+  tile: {
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    // A soft light from the top-left corner, so the tile has some depth.
+    experimental_backgroundImage:
+      'radial-gradient(circle at 25% 15%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 62%)',
+  },
+  // Multiply: the photo's white background takes on the tile colour (Android
+  // 10+ and iOS; older Android shows the photo on white, which still reads).
+  image: { width: '78%', height: '78%', mixBlendMode: 'multiply' },
   label: {
-    fontFamily: fonts.medium,
+    fontFamily: fonts.semibold,
     fontSize: 11.5,
     lineHeight: 15,
     color: colors.text,
@@ -101,5 +116,5 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   moreTile: { backgroundColor: colors.primarySoft, flexDirection: 'row', gap: 2 },
-  moreCount: { fontFamily: fonts.bold, fontSize: 18, color: colors.primary },
+  moreCount: { fontFamily: fonts.display, fontSize: 19, color: colors.primary },
 });
