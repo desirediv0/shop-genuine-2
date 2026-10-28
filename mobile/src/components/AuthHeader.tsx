@@ -1,33 +1,43 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, radius, shadow, spacing, typography } from '../theme';
+import { useStoreVertical } from '../context/StoreVerticalContext';
 import { storeTheme } from '../theme/stores';
 import { Icon } from './Icon';
 import { Logo } from './Logo';
 
-/** One bubble per sub-brand, in each store's own colour. */
-const STORES = ['Genuine Grocery', 'Genuine Nutrition', 'Genuine Pharmacy', 'Genuine Cosmetics'].map(
-  (name) => storeTheme(name),
-);
+/** "Grocery", "Grocery and Cosmetics", "Grocery, Nutrition and Cosmetics". */
+function listNames(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
 
 /**
  * Top of the sign-in and sign-up screens. The logo stays on the light page,
  * where both its colours read, and a card underneath says what the account is
- * for: one sign-in across all four Genuine stores.
+ * for: one sign-in across every Genuine store.
+ *
+ * The stores come from the server's active list, not a fixed four: Nutrition
+ * and Pharmacy were switched off in the admin, and the card went on promising
+ * them. Before the list has loaded it just says "every Genuine store".
  */
 export function AuthHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  const { verticals } = useStoreVertical();
+  const stores = verticals.map((v) => storeTheme(v.name));
+  const names = listNames(stores.map((s) => s.short));
+
   return (
     <View>
       <Logo height={56} style={styles.logo} />
 
       <View style={styles.card}>
         <View style={styles.bubbles}>
-          {STORES.map((s, i) => (
+          {(stores.length ? stores : [storeTheme(null)]).map((s, i, all) => (
             <View
-              key={s.key}
+              key={`${s.key}-${i}`}
               style={[
                 styles.bubble,
-                { backgroundColor: s.soft, marginLeft: i === 0 ? 0 : -8, zIndex: STORES.length - i },
+                { backgroundColor: s.soft, marginLeft: i === 0 ? 0 : -8, zIndex: all.length - i },
               ]}
             >
               <Icon name={s.icon} size={16} color={s.solid} />
@@ -36,7 +46,7 @@ export function AuthHeader({ title, subtitle }: { title: string; subtitle: strin
         </View>
         <Text style={styles.cardText}>
           One account for{' '}
-          <Text style={styles.cardStrong}>Grocery, Nutrition, Pharmacy and Cosmetics</Text>
+          <Text style={styles.cardStrong}>{names || 'every Genuine store'}</Text>
         </Text>
       </View>
 

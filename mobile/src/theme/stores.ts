@@ -164,6 +164,8 @@ const CATEGORY_ICONS: [RegExp, CategoryGlyph][] = [
   [/cream|lotion|moistur|body butter/i, 'lotion-outline'],
   [/face|serum|cleanser/i, 'face-woman-shimmer-outline'],
   [/perfume|deo|fragrance/i, 'spray-bottle'],
+  [/eye|liner|kajal|mascara/i, 'eye-outline'],
+  [/sun ?screen|spf|sun block/i, 'white-balance-sunny'],
   [/beauty|skin|cosmetic|makeup|hair/i, 'lipstick'],
   [/flower|puja|pooja/i, 'flower-outline'],
 ];
