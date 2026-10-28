@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -10,6 +9,7 @@ import {
 } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme';
 import { Icon, type IconName } from './Icon';
+import { PressableScale } from './motion/PressableScale';
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -44,23 +44,24 @@ export function Button({
   const tint = isDisabled ? DISABLED_LABEL : LABEL_COLOR[variant];
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       disabled={isDisabled}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       accessibilityLabel={label}
-      style={({ pressed }) => [
+      scaleTo={0.97}
+      style={[
         styles.base,
         SIZES[size],
         VARIANTS[variant],
         fullWidth && styles.fullWidth,
-        // A pressed state that darkens rather than fades reads as a real
-        // surface being pushed, not a glitch.
-        pressed && !isDisabled && PRESSED[variant],
         isDisabled && DISABLED[variant],
         style,
       ]}
+      // Darkens as well as springing down: it reads as a real surface being
+      // pushed, not a glitch.
+      pressedStyle={!isDisabled ? PRESSED[variant] : undefined}
     >
       {loading ? (
         <ActivityIndicator size="small" color={tint} />
@@ -82,7 +83,7 @@ export function Button({
           </Text>
         </View>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }
 

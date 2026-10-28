@@ -17,6 +17,7 @@ import { useStoreVertical } from '../../src/context/StoreVerticalContext';
 import { FloatingCartBar, FLOATING_CART_BAR_SPACE } from '../../src/components/FloatingCartBar';
 import { HeaderActions } from '../../src/components/HeaderActions';
 import { ProductCard } from '../../src/components/ProductCard';
+import { Appear } from '../../src/components/motion/Appear';
 import { useCart } from '../../src/context/CartContext';
 import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { EmptyState, ErrorState } from '../../src/components/States';
@@ -110,7 +111,12 @@ export default function CategoryScreen() {
         scrollEventThrottle={64}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
-        renderItem={({ item }) => <ProductCard product={item} width={cardWidth} />}
+        renderItem={({ item, index }) => (
+          // Ripples in on load, and again when a filter swaps the results.
+          <Appear index={index}>
+            <ProductCard product={item} width={cardWidth} />
+          </Appear>
+        )}
         ListHeaderComponent={
           query.isLoading ? null : (
             <CategoryHeader

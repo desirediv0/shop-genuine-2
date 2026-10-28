@@ -9,6 +9,7 @@ import { useProductLayout } from '../../hooks/useProductLayout';
 import { colors, fonts, radius, spacing } from '../../theme';
 import { discountPercent } from '../../utils/format';
 import { ProductCard } from '../ProductCard';
+import { Appear } from '../motion/Appear';
 
 /** Below this, a markdown is not worth headlining. */
 const MIN_DISCOUNT = 10;
@@ -77,7 +78,11 @@ export function TopDeals() {
         keyExtractor={(d) => d.p.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
-        renderItem={({ item }) => <ProductCard product={item.p} width={railCardWidth} />}
+        renderItem={({ item, index }) => (
+          <Appear index={index} from="right" limit={6}>
+            <ProductCard product={item.p} width={railCardWidth} />
+          </Appear>
+        )}
       />
     </View>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { useQueries } from '@tanstack/react-query';
@@ -8,6 +8,8 @@ import { useStoreVertical } from '../../context/StoreVerticalContext';
 import { colors, fonts, radius, shadow, spacing } from '../../theme';
 import { storeTheme } from '../../theme/stores';
 import { Icon } from '../Icon';
+import { Appear } from '../motion/Appear';
+import { PressableScale } from '../motion/PressableScale';
 import { SectionHeader } from './SectionHeader';
 
 const GAP = spacing.md;
@@ -43,44 +45,46 @@ export function ShopByStore({ onPick }: { onPick: (id: string) => void }) {
     <View style={styles.section}>
       <SectionHeader title="Shop by store" />
       <View style={styles.grid}>
-        {stocked.map(({ v, total }) => {
+        {stocked.map(({ v, total }, i) => {
           const t = storeTheme(v.name);
           return (
-            <Pressable
-              key={v.id}
-              onPress={() => {
-                Haptics.selectionAsync().catch(() => {});
-                onPick(v.id);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`${v.name}, ${total} products`}
-              style={({ pressed }) => [styles.card, { width: cardWidth }, pressed && styles.pressed]}
-            >
-              <LinearGradient
-                colors={t.gradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.mark} pointerEvents="none">
-                <Icon name={t.icon} size={96} color="rgba(255,255,255,0.16)" filled />
-              </View>
-              <View style={styles.bubble}>
-                <Icon name={t.icon} size={18} color={t.solid} filled />
-              </View>
-              <Text style={styles.name} numberOfLines={1}>
-                {t.short}
-              </Text>
-              <Text style={styles.tagline} numberOfLines={2}>
-                {t.tagline}
-              </Text>
-              <View style={styles.footer}>
-                <Text style={styles.count}>
-                  {total} {total === 1 ? 'product' : 'products'}
+            <Appear key={v.id} index={i} from="right">
+              <PressableScale
+                scaleTo={0.97}
+                onPress={() => {
+                  Haptics.selectionAsync().catch(() => {});
+                  onPick(v.id);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`${v.name}, ${total} products`}
+                style={[styles.card, { width: cardWidth }]}
+              >
+                <LinearGradient
+                  colors={t.gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={styles.mark} pointerEvents="none">
+                  <Icon name={t.icon} size={96} color="rgba(255,255,255,0.16)" filled />
+                </View>
+                <View style={styles.bubble}>
+                  <Icon name={t.icon} size={18} color={t.solid} filled />
+                </View>
+                <Text style={styles.name} numberOfLines={1}>
+                  {t.short}
                 </Text>
-                <Icon name="forward" size={14} color={colors.textInverse} />
-              </View>
-            </Pressable>
+                <Text style={styles.tagline} numberOfLines={2}>
+                  {t.tagline}
+                </Text>
+                <View style={styles.footer}>
+                  <Text style={styles.count}>
+                    {total} {total === 1 ? 'product' : 'products'}
+                  </Text>
+                  <Icon name="forward" size={14} color={colors.textInverse} />
+                </View>
+              </PressableScale>
+            </Appear>
           );
         })}
       </View>
@@ -98,7 +102,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...shadow.raised,
   },
-  pressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
   mark: { position: 'absolute', right: -14, bottom: -14 },
   bubble: {
     width: 36,

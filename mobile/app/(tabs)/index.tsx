@@ -20,6 +20,7 @@ import { SectionHeader } from '../../src/components/home/SectionHeader';
 import { ShopByPrice } from '../../src/components/home/ShopByPrice';
 import { ShopByStore } from '../../src/components/home/ShopByStore';
 import { StoreHero } from '../../src/components/home/StoreHero';
+import { Appear } from '../../src/components/motion/Appear';
 import { TopDeals } from '../../src/components/home/TopDeals';
 import { PromiseCard } from '../../src/components/PromiseCard';
 import { Logo } from '../../src/components/Logo';
@@ -197,7 +198,9 @@ export default function HomeScreen() {
         </View>
 
         {/* Which store, search, and every other store one tap away */}
-        <StoreHero />
+        <Appear index={1}>
+          <StoreHero />
+        </Appear>
 
         {bannersWithArt.length > 0 ? (
           <View style={styles.block}>
@@ -331,7 +334,11 @@ function ProductRail({
         keyExtractor={(p) => p.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.railContent}
-        renderItem={({ item }) => <ProductCard product={item} width={cardWidth} />}
+        renderItem={({ item, index }) => (
+          <Appear index={index} from="right" limit={6}>
+            <ProductCard product={item} width={cardWidth} />
+          </Appear>
+        )}
       />
     </View>
   );

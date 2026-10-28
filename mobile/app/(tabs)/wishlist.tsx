@@ -5,6 +5,8 @@ import { useRouter } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { wishlist as wishlistApi } from '../../src/api/services';
 import { Backdrop } from '../../src/components/decor/Backdrop';
+import { Appear } from '../../src/components/motion/Appear';
+import { PressableScale } from '../../src/components/motion/PressableScale';
 import { Icon } from '../../src/components/Icon';
 import { NewInStoreRail } from '../../src/components/NewInStoreRail';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/States';
@@ -97,7 +99,7 @@ export default function WishlistScreen() {
             {items.length} saved {items.length === 1 ? 'item' : 'items'}
           </Text>
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const price = item.price != null ? toNumber(item.price) : null;
           const regular = item.regularPrice != null ? toNumber(item.regularPrice) : null;
           const off = price != null && regular != null ? discountPercent(regular, price) : 0;
@@ -105,41 +107,44 @@ export default function WishlistScreen() {
             // Same card language as everywhere else. No ADD here: the saved-items
             // endpoint sends no stock levels, so a quick add could not tell what
             // is buyable — the product page can, and is one tap away.
-            <Pressable
-              style={({ pressed }) => [styles.card, { width: cardWidth }, pressed && styles.pressed]}
-              onPress={() => item.slug && router.push(`/product/${item.slug}`)}
-              accessibilityRole="button"
-              accessibilityLabel={`${item.name}${price != null ? `, ${formatPrice(price)}` : ''}`}
-            >
-              <View style={styles.imageWrap}>
-                <Image source={item.image ?? undefined} style={styles.image} contentFit="contain" transition={200} />
-                {off > 0 ? (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{off}% OFF</Text>
-                  </View>
-                ) : null}
-                <Pressable
-                  onPress={() => remove.mutate(item.id)}
-                  hitSlop={8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remove ${item.name} from saved items`}
-                  style={styles.heart}
-                >
-                  <Icon name="wishlist" size={16} color={colors.primary} filled />
-                </Pressable>
-              </View>
-              <View style={styles.body}>
-                <Text style={styles.name} numberOfLines={2}>
-                  {item.name}
-                </Text>
-                {price != null ? (
-                  <View style={styles.priceRow}>
-                    <Text style={styles.price}>{formatPrice(price)}</Text>
-                    {off > 0 && regular != null ? <Text style={styles.strike}>{formatPrice(regular)}</Text> : null}
-                  </View>
-                ) : null}
-              </View>
-            </Pressable>
+            <Appear index={index}>
+              <PressableScale
+                scaleTo={0.97}
+                style={[styles.card, { width: cardWidth }]}
+                onPress={() => item.slug && router.push(`/product/${item.slug}`)}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.name}${price != null ? `, ${formatPrice(price)}` : ''}`}
+              >
+                <View style={styles.imageWrap}>
+                  <Image source={item.image ?? undefined} style={styles.image} contentFit="contain" transition={200} />
+                  {off > 0 ? (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeText}>{off}% OFF</Text>
+                    </View>
+                  ) : null}
+                  <Pressable
+                    onPress={() => remove.mutate(item.id)}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${item.name} from saved items`}
+                    style={styles.heart}
+                  >
+                    <Icon name="wishlist" size={16} color={colors.primary} filled />
+                  </Pressable>
+                </View>
+                <View style={styles.body}>
+                  <Text style={styles.name} numberOfLines={2}>
+                    {item.name}
+                  </Text>
+                  {price != null ? (
+                    <View style={styles.priceRow}>
+                      <Text style={styles.price}>{formatPrice(price)}</Text>
+                      {off > 0 && regular != null ? <Text style={styles.strike}>{formatPrice(regular)}</Text> : null}
+                    </View>
+                  ) : null}
+                </View>
+              </PressableScale>
+            </Appear>
           );
         }}
       />
@@ -161,7 +166,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadow.card,
   },
-  pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   imageWrap: { aspectRatio: 1, padding: spacing.sm, backgroundColor: colors.surface },
   image: { width: '100%', height: '100%' },
   badge: {

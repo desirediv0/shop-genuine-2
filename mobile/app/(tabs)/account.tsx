@@ -6,6 +6,8 @@ import { useMutation } from '@tanstack/react-query';
 import { auth as authApi } from '../../src/api/services';
 import { Button } from '../../src/components/Button';
 import { Backdrop } from '../../src/components/decor/Backdrop';
+import { Appear } from '../../src/components/motion/Appear';
+import { PressableScale } from '../../src/components/motion/PressableScale';
 import { DeleteAccountSheet } from '../../src/components/DeleteAccountSheet';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { PromiseCard } from '../../src/components/PromiseCard';
@@ -46,38 +48,43 @@ export default function AccountScreen() {
       <View style={styles.screen}>
         <Backdrop tint={tint} />
         <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
-          <View style={styles.hero}>
-            <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-            <View style={styles.heroMark} pointerEvents="none">
-              <Icon name="account" size={140} color="rgba(255,255,255,0.12)" filled />
-            </View>
-            <Text style={styles.heroOverline}>WELCOME</Text>
-            <Text style={styles.heroTitle}>Your Genuine account</Text>
-            <Text style={styles.heroText}>
-              Sign in to track orders, check out faster and keep your favourites in one place.
-            </Text>
-
-            <View style={styles.benefits}>
-              <Benefit icon="orders" text="Track every order, step by step" />
-              <Benefit icon="address" text="Saved addresses for one-tap checkout" />
-              <Benefit icon="wishlist" text="Save products for later" />
-            </View>
-
-            <Pressable
-              onPress={() => router.push('/auth/login')}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.heroBtn, pressed && styles.pressed]}
-            >
-              <Text style={[styles.heroBtnText, { color: BRAND.ink }]}>Sign in</Text>
-            </Pressable>
-            <Pressable onPress={() => router.push('/auth/register')} hitSlop={8} accessibilityRole="button">
-              <Text style={styles.heroLink}>
-                New here? <Text style={styles.heroLinkStrong}>Create an account</Text>
+          <Appear index={0}>
+            <View style={styles.hero}>
+              <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+              <View style={styles.heroMark} pointerEvents="none">
+                <Icon name="account" size={140} color="rgba(255,255,255,0.12)" filled />
+              </View>
+              <Text style={styles.heroOverline}>WELCOME</Text>
+              <Text style={styles.heroTitle}>Your Genuine account</Text>
+              <Text style={styles.heroText}>
+                Sign in to track orders, check out faster and keep your favourites in one place.
               </Text>
-            </Pressable>
-          </View>
 
-          <PromiseCard />
+              <View style={styles.benefits}>
+                <Benefit icon="orders" text="Track every order, step by step" />
+                <Benefit icon="address" text="Saved addresses for one-tap checkout" />
+                <Benefit icon="wishlist" text="Save products for later" />
+              </View>
+
+              <PressableScale
+                onPress={() => router.push('/auth/login')}
+                accessibilityRole="button"
+                scaleTo={0.97}
+                style={styles.heroBtn}
+              >
+                <Text style={[styles.heroBtnText, { color: BRAND.ink }]}>Sign in</Text>
+              </PressableScale>
+              <Pressable onPress={() => router.push('/auth/register')} hitSlop={8} accessibilityRole="button">
+                <Text style={styles.heroLink}>
+                  New here? <Text style={styles.heroLinkStrong}>Create an account</Text>
+                </Text>
+              </Pressable>
+            </View>
+          </Appear>
+
+          <Appear index={1}>
+            <PromiseCard />
+          </Appear>
 
           {/* Minting a push token needs no account, so keep diagnostics reachable
               while signed out — only the test send requires auth. */}
@@ -114,29 +121,33 @@ export default function AccountScreen() {
       <Backdrop tint={tint} />
       <ScrollView style={styles.flex} contentContainerStyle={styles.content}>
         {/* Profile */}
-        <View style={styles.profileCard}>
-          <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-          <View style={styles.avatar}>
-            <Text style={[styles.avatarText, { color: BRAND.ink }]}>
-              {(user?.name?.trim() || user?.email || '?').charAt(0).toUpperCase()}
-            </Text>
+        <Appear index={0}>
+          <View style={styles.profileCard}>
+            <LinearGradient colors={BRAND.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+            <View style={styles.avatar}>
+              <Text style={[styles.avatarText, { color: BRAND.ink }]}>
+                {(user?.name?.trim() || user?.email || '?').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.profileBody}>
+              <Text style={styles.name} numberOfLines={1}>
+                {user?.name ?? 'Your account'}
+              </Text>
+              <Text style={styles.email} numberOfLines={1}>
+                {user?.email}
+              </Text>
+            </View>
           </View>
-          <View style={styles.profileBody}>
-            <Text style={styles.name} numberOfLines={1}>
-              {user?.name ?? 'Your account'}
-            </Text>
-            <Text style={styles.email} numberOfLines={1}>
-              {user?.email}
-            </Text>
-          </View>
-        </View>
+        </Appear>
 
         {/* The three places people go from here */}
-        <View style={styles.tiles}>
-          <Tile icon="orders" label="Orders" onPress={() => router.push('/orders')} />
-          <Tile icon="address" label="Addresses" onPress={() => router.push('/addresses')} />
-          <Tile icon="wishlist" label="Saved" onPress={() => router.navigate('/wishlist')} />
-        </View>
+        <Appear index={1}>
+          <View style={styles.tiles}>
+            <Tile icon="orders" label="Orders" onPress={() => router.push('/orders')} />
+            <Tile icon="address" label="Addresses" onPress={() => router.push('/addresses')} />
+            <Tile icon="wishlist" label="Saved" onPress={() => router.navigate('/wishlist')} />
+          </View>
+        </Appear>
 
         {__DEV__ ? <PushDebugPanel /> : null}
 
@@ -181,17 +192,12 @@ export default function AccountScreen() {
 
 function Tile({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
-    >
+    <PressableScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} style={styles.tile}>
       <View style={styles.tileIcon}>
         <Icon name={icon} size={21} color={colors.primary} />
       </View>
       <Text style={styles.tileLabel}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -213,7 +219,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.lg, paddingBottom: spacing.xxl },
-  pressed: { opacity: 0.85 },
 
   hero: { borderRadius: radius.xl, overflow: 'hidden', padding: spacing.xl, ...shadow.raised },
   heroMark: { position: 'absolute', right: -24, top: -20, transform: [{ rotate: '-10deg' }] },
@@ -284,7 +289,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tileLabel: { fontFamily: fonts.semibold, fontSize: 13, color: colors.text },
-
 
   group: { gap: spacing.md },
   deleteWrap: { alignItems: 'center', paddingVertical: spacing.md },

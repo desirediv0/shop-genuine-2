@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useStoreVertical } from '../../context/StoreVerticalContext';
@@ -7,6 +7,7 @@ import { colors, fonts, radius, shadow, spacing } from '../../theme';
 import { storeTheme } from '../../theme/stores';
 import { Icon } from '../Icon';
 import { bandText, StoreBand } from './StoreBand';
+import { PressableScale } from '../motion/PressableScale';
 
 /**
  * The top of Home: which Genuine store you are in, a search box, and one tap to
@@ -27,11 +28,12 @@ export function StoreHero() {
       </Animated.Text>
       <Text style={bandText.tagline}>{theme.tagline}</Text>
 
-      <Pressable
+      <PressableScale
+        scaleTo={0.98}
         onPress={() => router.navigate('/search')}
         accessibilityRole="search"
         accessibilityLabel="Search products"
-        style={({ pressed }) => [styles.search, pressed && styles.pressed]}
+        style={styles.search}
       >
         <Icon name="search" size={19} color={theme.solid} />
         <Text style={styles.searchLead}>Search for </Text>
@@ -46,7 +48,7 @@ export function StoreHero() {
             &lsquo;{hint}&rsquo;
           </Animated.Text>
         </View>
-      </Pressable>
+      </PressableScale>
     </StoreBand>
   );
 }
@@ -81,5 +83,4 @@ const styles = StyleSheet.create({
   searchLead: { fontFamily: fonts.regular, fontSize: 15, color: colors.textMuted, marginLeft: spacing.sm },
   hintBox: { flex: 1, height: 22, justifyContent: 'center' },
   hint: { fontFamily: fonts.semibold, fontSize: 15, color: colors.text },
-  pressed: { opacity: 0.85 },
 });

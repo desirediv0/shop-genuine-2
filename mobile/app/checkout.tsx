@@ -12,6 +12,7 @@ import {
 import { AddressForm, type AddressDraft } from '../src/components/AddressForm';
 import { Sheet } from '../src/components/Sheet';
 import { Button } from '../src/components/Button';
+import { Appear } from '../src/components/motion/Appear';
 import { Icon, type IconName } from '../src/components/Icon';
 import { Input } from '../src/components/Input';
 import { ErrorState, LoadingState } from '../src/components/States';
@@ -256,7 +257,7 @@ export default function CheckoutScreen() {
         automaticallyAdjustKeyboardInsets
       >
         {/* Address */}
-        <Section icon="address" title="Delivery address">
+        <Section index={0} icon="address" title="Delivery address">
           {addressList.length === 0 ? (
             <Text style={styles.muted}>No saved addresses yet.</Text>
           ) : (
@@ -290,7 +291,7 @@ export default function CheckoutScreen() {
         </Section>
 
         {/* Payment */}
-        <Section icon="card" title="Payment method">
+        <Section index={1} icon="card" title="Payment method">
           {settings?.cashEnabled ? (
             <Choice
               icon="cash"
@@ -323,7 +324,7 @@ export default function CheckoutScreen() {
         </Section>
 
         {/* Coupon */}
-        <Section icon="tag" title="Coupon">
+        <Section index={2} icon="tag" title="Coupon">
           {appliedCoupon ? (
             <View style={styles.couponApplied}>
               <View style={styles.optionBody}>
@@ -364,7 +365,7 @@ export default function CheckoutScreen() {
         </Section>
 
         {/* Summary */}
-        <Section icon="orders" title="Order summary">
+        <Section index={3} icon="orders" title="Order summary">
           <Row
             label={`Subtotal (${cart.totalQuantity} ${
               cart.totalQuantity === 1 ? 'item' : 'items'
@@ -415,22 +416,27 @@ export default function CheckoutScreen() {
 function Section({
   icon,
   title,
+  index = 0,
   children,
 }: {
   icon: IconName;
   title: string;
+  /** Position on the page, so the sections ripple in one after another. */
+  index?: number;
   children: React.ReactNode;
 }) {
   return (
-    <View style={styles.section}>
-      <View style={styles.sectionHead}>
-        <View style={styles.sectionIcon}>
-          <Icon name={icon} size={16} color={colors.primary} />
+    <Appear index={index}>
+      <View style={styles.section}>
+        <View style={styles.sectionHead}>
+          <View style={styles.sectionIcon}>
+            <Icon name={icon} size={16} color={colors.primary} />
+          </View>
+          <Text style={styles.sectionTitle}>{title}</Text>
         </View>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={styles.sectionBody}>{children}</View>
       </View>
-      <View style={styles.sectionBody}>{children}</View>
-    </View>
+    </Appear>
   );
 }
 

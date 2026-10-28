@@ -19,6 +19,7 @@ import { useProductLayout } from '../../src/hooks/useProductLayout';
 import { storeTheme } from '../../src/theme/stores';
 import { Icon, type IconName } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
+import { Appear } from '../../src/components/motion/Appear';
 import { EmptyState, ErrorState } from '../../src/components/States';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
 import type { Category } from '../../src/types';
@@ -223,7 +224,12 @@ export default function SearchScreen() {
               </Text>
             )
           }
-          renderItem={({ item }) => <ProductCard product={item} width={cardWidth} />}
+          renderItem={({ item, index }) => (
+            // Ripples in on load, and again when a filter swaps the results.
+            <Appear index={index}>
+              <ProductCard product={item} width={cardWidth} />
+            </Appear>
+          )}
           ListEmptyComponent={
             query.isLoading ? (
               <View style={styles.center}>

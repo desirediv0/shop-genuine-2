@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text } from 'react-native';
+import Animated, { LayoutAnimationConfig, ZoomIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useCart } from '../context/CartContext';
@@ -7,7 +8,15 @@ import { useToast } from '../context/ToastContext';
 import { colors, fonts, radius, shadow } from '../theme';
 import type { ProductSummary } from '../types';
 import { pickDefaultVariant } from '../utils/format';
+import { PressableScale } from './motion/PressableScale';
 import { QtyStepper } from './QtyStepper';
+
+/**
+ * The swap between ADD and the stepper zooms in, so an add feels like it
+ * landed. Timed, not sprung: a spring from scale 0 overshot so far the stepper
+ * spilled past the card before settling, which read as a glitch.
+ */
+const POP = ZoomIn.duration(220);
 
 /**
  * One-tap add for product cards, turning into a − qty + stepper once the item
@@ -53,42 +62,50 @@ export function AddToCartButton({ product }: { product: ProductSummary }) {
     }
   };
 
-  if (activeOptions > 1 || qty === 0) {
-    const opensPage = activeOptions > 1;
-    return (
-      <Pressable
-        onPress={() =>
-          opensPage
-            ? router.push(`/product/${product.slug}`)
-            : run(() => addItem(product, variant, 1))
-        }
-        hitSlop={6}
-        accessibilityRole="button"
-        accessibilityLabel={
-          opensPage ? `Choose an option for ${product.name}` : `Add ${product.name} to cart`
-        }
-        style={({ pressed }) => [styles.add, pressed && styles.pressed]}
-      >
-        {busy ? (
-          <ActivityIndicator size="small" color={colors.primary} />
-        ) : (
-          <Text style={styles.addText}>ADD</Text>
-        )}
-      </Pressable>
+  const opensPage = activeOptions > 1;
+  const content =
+    opensPage || qty === 0 ? (
+      <Animated.View key="add" entering={POP}>
+        <PressableScale
+          scaleTo={0.9}
+          onPress={() =>
+            opensPage
+              ? router.push(`/product/${product.slug}`)
+              : run(() => addItem(product, variant, 1))
+          }
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={
+            opensPage ? `Choose an option for ${product.name}` : `Add ${product.name} to cart`
+          }
+          style={styles.add}
+        >
+          {busy ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Text style={styles.addText}>ADD</Text>
+          )}
+        </PressableScale>
+      </Animated.View>
+    ) : (
+      <Animated.View key="stepper" entering={POP}>
+        <QtyStepper
+          qty={qty}
+          busy={busy}
+          plusDisabled={atStockLimit}
+          label={`${qty} of ${product.name} in cart`}
+          minusLabel={qty - 1 < floor ? `Remove ${product.name}` : 'Decrease quantity'}
+          onMinus={() =>
+            run(() => (qty - 1 < floor ? removeItem(line!) : updateItem(line!, qty - 1)))
+          }
+          onPlus={() => run(() => updateItem(line!, qty + 1))}
+        />
+      </Animated.View>
     );
-  }
 
-  return (
-    <QtyStepper
-      qty={qty}
-      busy={busy}
-      plusDisabled={atStockLimit}
-      label={`${qty} of ${product.name} in cart`}
-      minusLabel={qty - 1 < floor ? `Remove ${product.name}` : 'Decrease quantity'}
-      onMinus={() => run(() => (qty - 1 < floor ? removeItem(line!) : updateItem(line!, qty - 1)))}
-      onPlus={() => run(() => updateItem(line!, qty + 1))}
-    />
-  );
+  // skipEntering: cards that load already showing ADD (or a stepper) stay
+  // still; only a change made by the shopper springs.
+  return <LayoutAnimationConfig skipEntering>{content}</LayoutAnimationConfig>;
 }
 
 const HEIGHT = 30;
@@ -107,5 +124,4 @@ const styles = StyleSheet.create({
     ...shadow.card,
   },
   addText: { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 0.4, color: colors.primary },
-  pressed: { opacity: 0.85 },
 });

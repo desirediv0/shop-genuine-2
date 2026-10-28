@@ -22,6 +22,7 @@ import { CollapsibleCard, ProductDetailsCard } from '../../src/components/produc
 import { PromiseRow } from '../../src/components/product/PromiseRow';
 import { Icon } from '../../src/components/Icon';
 import { ProductCard } from '../../src/components/ProductCard';
+import { Appear } from '../../src/components/motion/Appear';
 import { ErrorState, LoadingState } from '../../src/components/States';
 import { useAuth } from '../../src/context/AuthContext';
 import { useCart } from '../../src/context/CartContext';
@@ -320,7 +321,11 @@ export default function ProductScreen() {
               keyExtractor={(p) => p.id}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.relatedRow}
-              renderItem={({ item }) => <ProductCard product={item} width={railCardWidth} />}
+              renderItem={({ item, index }) => (
+                <Appear index={index} from="right" limit={6}>
+                  <ProductCard product={item} width={railCardWidth} />
+                </Appear>
+              )}
             />
           </View>
         ) : null}

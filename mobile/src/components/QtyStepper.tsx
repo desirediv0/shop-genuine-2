@@ -1,7 +1,9 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import Animated, { LayoutAnimationConfig, ZoomIn } from 'react-native-reanimated';
 import { colors, fonts, radius, shadow } from '../theme';
 import { Icon } from './Icon';
+import { PressableScale } from './motion/PressableScale';
 
 /**
  * The orange − qty + control, shared by product cards, the product page bar
@@ -29,36 +31,44 @@ export function QtyStepper({
 }) {
   const lg = size === 'lg';
   return (
-    <View style={[styles.wrap, lg ? styles.lg : styles.sm]} accessibilityLabel={label}>
-      <Pressable
-        onPress={onMinus}
-        disabled={busy}
-        hitSlop={6}
-        accessibilityRole="button"
-        accessibilityLabel={minusLabel}
-        style={[styles.btn, { width: lg ? 44 : 26 }]}
-      >
-        <Icon name="minus" size={lg ? 18 : 15} color={colors.textInverse} />
-      </Pressable>
+    // skipEntering: the number only pops when it changes, not when the
+    // stepper itself first appears.
+    <LayoutAnimationConfig skipEntering>
+      <View style={[styles.wrap, lg ? styles.lg : styles.sm]} accessibilityLabel={label}>
+        <PressableScale
+          scaleTo={0.82}
+          onPress={onMinus}
+          disabled={busy}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel={minusLabel}
+          style={[styles.btn, { width: lg ? 44 : 26 }]}
+        >
+          <Icon name="minus" size={lg ? 18 : 15} color={colors.textInverse} />
+        </PressableScale>
 
-      {busy ? (
-        <ActivityIndicator size="small" color={colors.textInverse} />
-      ) : (
-        <Text style={[styles.qty, lg && styles.qtyLg]}>{qty}</Text>
-      )}
+        {busy ? (
+          <ActivityIndicator size="small" color={colors.textInverse} />
+        ) : (
+          <Animated.Text key={qty} entering={ZoomIn.duration(180)} style={[styles.qty, lg && styles.qtyLg]}>
+            {qty}
+          </Animated.Text>
+        )}
 
-      <Pressable
-        onPress={onPlus}
-        disabled={busy || plusDisabled}
-        hitSlop={6}
-        accessibilityRole="button"
-        accessibilityLabel="Increase quantity"
-        accessibilityState={{ disabled: busy || plusDisabled }}
-        style={[styles.btn, { width: lg ? 44 : 26 }, plusDisabled && styles.dim]}
-      >
-        <Icon name="plus" size={lg ? 18 : 15} color={colors.textInverse} />
-      </Pressable>
-    </View>
+        <PressableScale
+          scaleTo={0.82}
+          onPress={onPlus}
+          disabled={busy || plusDisabled}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="Increase quantity"
+          accessibilityState={{ disabled: busy || plusDisabled }}
+          style={[styles.btn, { width: lg ? 44 : 26 }, plusDisabled && styles.dim]}
+        >
+          <Icon name="plus" size={lg ? 18 : 15} color={colors.textInverse} />
+        </PressableScale>
+      </View>
+    </LayoutAnimationConfig>
   );
 }
 

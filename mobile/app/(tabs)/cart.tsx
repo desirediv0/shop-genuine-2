@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '../../src/components/Button';
 import { Backdrop } from '../../src/components/decor/Backdrop';
+import { Appear } from '../../src/components/motion/Appear';
 import { Icon } from '../../src/components/Icon';
 import { NewInStoreRail } from '../../src/components/NewInStoreRail';
 import { QtyStepper } from '../../src/components/QtyStepper';
@@ -73,15 +74,17 @@ export default function CartScreen() {
       <Backdrop tint={theme} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {savings > 0 ? (
-          <View style={styles.savings}>
-            <View style={styles.savingsIcon}>
-              <Icon name="tag" size={16} color={colors.success} filled />
+          <Appear index={0}>
+            <View style={styles.savings}>
+              <View style={styles.savingsIcon}>
+                <Icon name="tag" size={16} color={colors.success} filled />
+              </View>
+              <Text style={styles.savingsText}>
+                You&apos;re saving <Text style={styles.savingsAmount}>{formatPrice(savings)}</Text> on
+                this order
+              </Text>
             </View>
-            <Text style={styles.savingsText}>
-              You&apos;re saving <Text style={styles.savingsAmount}>{formatPrice(savings)}</Text> on
-              this order
-            </Text>
-          </View>
+          </Appear>
         ) : null}
 
         {isGuestCart ? (
@@ -99,32 +102,36 @@ export default function CartScreen() {
         ) : null}
 
         {/* All items in one card, the way a basket reads */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>
-            {cart.totalQuantity} {cart.totalQuantity === 1 ? 'item' : 'items'} in your cart
-          </Text>
-          {cart.items.map((item, i) => (
-            <CartRow
-              key={item.id}
-              item={item}
-              first={i === 0}
-              onChange={(q) => updateItem(item, q)}
-              onRemove={() => removeItem(item)}
-            />
-          ))}
-        </View>
+        <Appear index={1}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>
+              {cart.totalQuantity} {cart.totalQuantity === 1 ? 'item' : 'items'} in your cart
+            </Text>
+            {cart.items.map((item, i) => (
+              <CartRow
+                key={item.id}
+                item={item}
+                first={i === 0}
+                onChange={(q) => updateItem(item, q)}
+                onRemove={() => removeItem(item)}
+              />
+            ))}
+          </View>
+        </Appear>
 
         {/* Bill */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Bill details</Text>
-          <BillRow label="Item total" value={formatPrice(itemTotal)} />
-          {savings > 0 ? (
-            <BillRow label="Discount" value={`− ${formatPrice(savings)}`} tone="success" />
-          ) : null}
-          <View style={styles.billDivider} />
-          <BillRow label="Subtotal" value={formatPrice(cart.subtotal)} strong />
-          <Text style={styles.billNote}>Delivery and coupons are applied at checkout.</Text>
-        </View>
+        <Appear index={2}>
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Bill details</Text>
+            <BillRow label="Item total" value={formatPrice(itemTotal)} />
+            {savings > 0 ? (
+              <BillRow label="Discount" value={`− ${formatPrice(savings)}`} tone="success" />
+            ) : null}
+            <View style={styles.billDivider} />
+            <BillRow label="Subtotal" value={formatPrice(cart.subtotal)} strong />
+            <Text style={styles.billNote}>Delivery and coupons are applied at checkout.</Text>
+          </View>
+        </Appear>
       </ScrollView>
 
       {/* Checkout bar */}

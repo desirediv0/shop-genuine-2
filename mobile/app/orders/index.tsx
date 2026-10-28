@@ -1,10 +1,12 @@
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { payments } from '../../src/api/services';
 import { Icon } from '../../src/components/Icon';
+import { Appear } from '../../src/components/motion/Appear';
+import { PressableScale } from '../../src/components/motion/PressableScale';
 import { EmptyState, ErrorState, LoadingState } from '../../src/components/States';
 import { StatusPill } from '../../src/components/StatusPill';
 import { colors, fonts, radius, shadow, spacing, typography } from '../../src/theme';
@@ -58,33 +60,36 @@ export default function OrdersScreen() {
         contentContainerStyle={styles.list}
         refreshing={query.isRefetching}
         onRefresh={() => query.refetch()}
-        renderItem={({ item }) => (
-          <Pressable
-            style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-            onPress={() => router.push(`/orders/${item.id}`)}
-            accessibilityRole="button"
-            accessibilityLabel={`Order ${item.orderNumber}, ${item.status}`}
-          >
-            <View style={styles.cardHead}>
-              <Text style={styles.orderNumber}>{item.orderNumber}</Text>
-              <StatusPill status={item.status} />
-            </View>
-
-            <Text style={styles.meta}>
-              {formatDate(item.date ?? item.createdAt)} · {item.items?.length ?? 0} item
-              {(item.items?.length ?? 0) === 1 ? '' : 's'}
-            </Text>
-
-            <Thumbs items={item.items ?? []} />
-
-            <View style={styles.cardFoot}>
-              <Text style={styles.payment}>{orderPaymentLabel(item)}</Text>
-              <View style={styles.totalRow}>
-                <Text style={styles.total}>{formatPrice(item.total)}</Text>
-                <Icon name="forward" size={16} color={colors.textMuted} />
+        renderItem={({ item, index }) => (
+          <Appear index={index} limit={8}>
+            <PressableScale
+              scaleTo={0.98}
+              style={styles.card}
+              onPress={() => router.push(`/orders/${item.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Order ${item.orderNumber}, ${item.status}`}
+            >
+              <View style={styles.cardHead}>
+                <Text style={styles.orderNumber}>{item.orderNumber}</Text>
+                <StatusPill status={item.status} />
               </View>
-            </View>
-          </Pressable>
+
+              <Text style={styles.meta}>
+                {formatDate(item.date ?? item.createdAt)} · {item.items?.length ?? 0} item
+                {(item.items?.length ?? 0) === 1 ? '' : 's'}
+              </Text>
+
+              <Thumbs items={item.items ?? []} />
+
+              <View style={styles.cardFoot}>
+                <Text style={styles.payment}>{orderPaymentLabel(item)}</Text>
+                <View style={styles.totalRow}>
+                  <Text style={styles.total}>{formatPrice(item.total)}</Text>
+                  <Icon name="forward" size={16} color={colors.textMuted} />
+                </View>
+              </View>
+            </PressableScale>
+          </Appear>
         )}
       />
     </>
@@ -133,7 +138,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     ...shadow.card,
   },
-  pressed: { opacity: 0.9 },
   cardHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   orderNumber: { ...typography.smallStrong, color: colors.text },
   meta: { ...typography.small, color: colors.textMuted },

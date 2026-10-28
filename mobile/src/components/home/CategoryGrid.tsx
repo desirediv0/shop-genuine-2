@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Image } from 'expo-image';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -7,6 +7,8 @@ import { colors, fonts, radius, spacing } from '../../theme';
 import { categoryVisual } from '../../theme/stores';
 import type { Category } from '../../types';
 import { Icon } from '../Icon';
+import { Appear } from '../motion/Appear';
+import { PressableScale } from '../motion/PressableScale';
 
 const COLUMNS = 4;
 const MAX_TILES = 8;
@@ -39,45 +41,48 @@ export function CategoryGrid({
       {shown.map((c, i) => {
         const visual = categoryVisual(c.name, i);
         return (
-          <Pressable
-            key={c.id}
-            onPress={() => router.push(`/category/${c.slug}`)}
-            accessibilityRole="button"
-            accessibilityLabel={c.name}
-            style={({ pressed }) => [{ width: tile }, pressed && styles.pressed]}
-          >
-            <View style={[styles.tile, { width: tile, height: tile, backgroundColor: visual.bg }]}>
-              {c.image ? (
-                <Image source={c.image} style={styles.image} contentFit="contain" transition={200} />
-              ) : (
-                <MaterialCommunityIcons name={visual.icon} size={Math.round(tile * 0.42)} color={visual.fg} />
-              )}
-            </View>
-            {/* Tiles are ~78dp wide on a 360dp phone. With a large system
-                font, "Fruits & Vegetables" broke mid-word into "Fruits & V /
-                egetables", so the label stops growing at 115%. */}
-            <Text style={styles.label} numberOfLines={2} maxFontSizeMultiplier={1.15}>
-              {c.name}
-            </Text>
-          </Pressable>
+          <Appear key={c.id} index={i}>
+            <PressableScale
+              onPress={() => router.push(`/category/${c.slug}`)}
+              accessibilityRole="button"
+              accessibilityLabel={c.name}
+              style={{ width: tile }}
+            >
+              <View style={[styles.tile, { width: tile, height: tile, backgroundColor: visual.bg }]}>
+                {c.image ? (
+                  <Image source={c.image} style={styles.image} contentFit="contain" transition={200} />
+                ) : (
+                  <MaterialCommunityIcons name={visual.icon} size={Math.round(tile * 0.42)} color={visual.fg} />
+                )}
+              </View>
+              {/* Tiles are ~78dp wide on a 360dp phone. With a large system
+                  font, "Fruits & Vegetables" broke mid-word into "Fruits & V /
+                  egetables", so the label stops growing at 115%. */}
+              <Text style={styles.label} numberOfLines={2} maxFontSizeMultiplier={1.15}>
+                {c.name}
+              </Text>
+            </PressableScale>
+          </Appear>
         );
       })}
 
       {overflow ? (
-        <Pressable
-          onPress={onSeeAll}
-          accessibilityRole="button"
-          accessibilityLabel={`See all ${categories.length} categories`}
-          style={({ pressed }) => [{ width: tile }, pressed && styles.pressed]}
-        >
-          <View style={[styles.tile, styles.moreTile, { width: tile, height: tile }]}>
-            <Text style={styles.moreCount}>+{categories.length - shown.length}</Text>
-            <Icon name="forward" size={16} color={colors.primary} />
-          </View>
-          <Text style={styles.label} maxFontSizeMultiplier={1.15}>
-            See all
-          </Text>
-        </Pressable>
+        <Appear index={shown.length}>
+          <PressableScale
+            onPress={onSeeAll}
+            accessibilityRole="button"
+            accessibilityLabel={`See all ${categories.length} categories`}
+            style={{ width: tile }}
+          >
+            <View style={[styles.tile, styles.moreTile, { width: tile, height: tile }]}>
+              <Text style={styles.moreCount}>+{categories.length - shown.length}</Text>
+              <Icon name="forward" size={16} color={colors.primary} />
+            </View>
+            <Text style={styles.label} maxFontSizeMultiplier={1.15}>
+              See all
+            </Text>
+          </PressableScale>
+        </Appear>
       ) : null}
     </View>
   );
@@ -97,5 +102,4 @@ const styles = StyleSheet.create({
   },
   moreTile: { backgroundColor: colors.primarySoft, flexDirection: 'row', gap: 2 },
   moreCount: { fontFamily: fonts.bold, fontSize: 18, color: colors.primary },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.97 }] },
 });

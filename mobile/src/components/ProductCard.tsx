@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { colors, radius, shadow, spacing, typography } from '../theme';
@@ -7,6 +7,7 @@ import type { ProductSummary } from '../types';
 import { discountPercent, formatPrice, pickDefaultVariant, toNumber } from '../utils/format';
 import { AddToCartButton } from './AddToCartButton';
 import { Icon } from './Icon';
+import { PressableScale } from './motion/PressableScale';
 
 interface Props {
   product: ProductSummary;
@@ -40,13 +41,14 @@ export function ProductCard({ product, width }: Props) {
   }, [product]);
 
   return (
-    <Pressable
+    <PressableScale
+      scaleTo={0.97}
       onPress={() => router.push(`/product/${product.slug}`)}
       accessibilityRole="button"
       accessibilityLabel={`${product.name}, ${formatPrice(price)}${
         off > 0 ? `, ${off} percent off` : ''
       }${outOfStock ? ', out of stock' : ''}`}
-      style={({ pressed }) => [styles.card, !!width && { width }, pressed && styles.pressed]}
+      style={[styles.card, !!width && { width }]}
     >
       <View style={styles.imageWrap}>
         {image ? (
@@ -95,7 +97,7 @@ export function ProductCard({ product, width }: Props) {
           {off > 0 ? <Text style={styles.strike}>{formatPrice(regular)}</Text> : null}
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -110,7 +112,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     ...shadow.card,
   },
-  pressed: { opacity: 0.92, transform: [{ scale: 0.985 }] },
   // Packaging shots are white-background JPEGs, so a tinted tile leaves a hard
   // white square floating inside it. Matching the card keeps the product clean
   // and lets the card shadow do the separating.

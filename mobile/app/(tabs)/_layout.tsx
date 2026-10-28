@@ -1,5 +1,13 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import React, { useEffect, useRef } from 'react';
+import { Tabs, useRoute } from 'expo-router';
+import { PlatformPressable, useNavigationState } from 'expo-router/react-navigation';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { Platform, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '../../src/components/Icon';
@@ -23,11 +31,39 @@ function TabIcon({
   color: ColorValue;
   focused: boolean;
 }) {
+  // The pill grows in behind the icon and the icon gives a small hop when the
+  // tab is chosen, instead of both snapping into place.
+  //
+  // `focused` cannot drive this: the tab bar draws every icon twice — once with
+  // focused true, once false — and switches tabs by swapping which copy shows,
+  // so neither copy's prop ever changes. Both copies read the real selection
+  // from the tab navigator instead (a pushed screen does not change it), so
+  // whichever copy is showing animates.
+  const route = useRoute();
+  const active = useNavigationState((s) => s.routes[s.index]?.key === route.key);
+  const pill = useSharedValue(active ? 1 : 0);
+  const hop = useSharedValue(0);
+  useEffect(() => {
+    pill.value = withSpring(active ? 1 : 0, { damping: 15, stiffness: 220 });
+    if (active) {
+      hop.value = withSequence(withTiming(-3, { duration: 110 }), withSpring(0, { damping: 9, stiffness: 260 }));
+    }
+  }, [active, pill, hop]);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    opacity: pill.value,
+    transform: [{ scaleX: 0.55 + pill.value * 0.45 }],
+  }));
+  const iconStyle = useAnimatedStyle(() => ({ transform: [{ translateY: hop.value }] }));
+
   return (
     // A soft pill behind the active icon — where you are reads at a glance,
     // and the bar looks designed rather than default.
-    <View style={[styles.iconPill, focused && styles.iconPillActive]}>
-      <Icon name={name} size={22} color={String(color)} filled={focused} />
+    <View style={styles.iconPill}>
+      <Animated.View style={[StyleSheet.absoluteFill, styles.iconPillActive, pillStyle]} />
+      <Animated.View style={iconStyle}>
+        <Icon name={name} size={22} color={String(color)} filled={focused} />
+      </Animated.View>
     </View>
   );
 }
@@ -44,15 +80,27 @@ function CountTabIcon({
   color: ColorValue;
   focused: boolean;
 }) {
+  // The badge pops whenever the number changes, so adding to the cart (or
+  // saving) is seen to land even from another screen.
+  const pop = useSharedValue(1);
+  const previous = useRef(count);
+  useEffect(() => {
+    if (count !== previous.current && count > 0) {
+      pop.value = withSequence(withTiming(1.45, { duration: 120 }), withSpring(1, { damping: 8, stiffness: 240 }));
+    }
+    previous.current = count;
+  }, [count, pop]);
+  const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
+
   return (
     <View>
       <TabIcon name={name} color={color} focused={focused} />
       {count > 0 ? (
-        <View style={styles.badge}>
+        <Animated.View style={[styles.badge, badgeStyle]}>
           <Text style={styles.badgeText} numberOfLines={1}>
             {count > 9 ? '9+' : count}
           </Text>
-        </View>
+        </Animated.View>
       ) : null}
     </View>
   );
@@ -89,6 +137,9 @@ export default function TabsLayout() {
         tabBarStyle: [styles.tabBar, { height: 60 + bottomPad, paddingBottom: bottomPad }],
         tabBarItemStyle: styles.tabItem,
         tabBarLabelStyle: styles.tabLabel,
+        // No grey ripple on Android: it spread past the bar and muddied the
+        // pill, which is the press feedback now.
+        tabBarButton: (props) => <PlatformPressable {...props} pressColor="transparent" />,
         headerStyle: [styles.header, { backgroundColor: tint }],
         headerTintColor: colors.text,
         headerTitleStyle: { fontFamily: fonts.bold, fontSize: 20 },
@@ -154,7 +205,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconPillActive: { backgroundColor: colors.primarySoft },
+  iconPillActive: { backgroundColor: colors.primarySoft, borderRadius: radius.pill },
   header: { backgroundColor: colors.background },
   badge: {
     position: 'absolute',

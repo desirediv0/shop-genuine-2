@@ -7,6 +7,7 @@ import { useStoreVertical } from '../context/StoreVerticalContext';
 import { useProductLayout } from '../hooks/useProductLayout';
 import { spacing } from '../theme';
 import { ProductCard } from './ProductCard';
+import { Appear } from './motion/Appear';
 import { SectionHeader } from './home/SectionHeader';
 
 /**
@@ -37,7 +38,11 @@ export function NewInStoreRail() {
         keyExtractor={(p) => p.id}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.row}
-        renderItem={({ item }) => <ProductCard product={item} width={railCardWidth} />}
+        renderItem={({ item, index }) => (
+          <Appear index={index} from="right" limit={6}>
+            <ProductCard product={item} width={railCardWidth} />
+          </Appear>
+        )}
       />
     </View>
   );

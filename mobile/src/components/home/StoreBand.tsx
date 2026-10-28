@@ -1,12 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  FadeIn,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useStoreVertical } from '../../context/StoreVerticalContext';
 import { colors, fonts, radius, shadow, spacing } from '../../theme';
 import { storeTheme, type StoreTheme } from '../../theme/stores';
 import { Icon } from '../Icon';
+import { PressableScale } from '../motion/PressableScale';
+
+/**
+ * The faint store mark drifts and turns a few degrees, very slowly, so the
+ * biggest block on Home has a little life without pulling the eye.
+ */
+function DriftingMark({ icon }: { icon: StoreTheme['icon'] }) {
+  const reduceMotion = useReducedMotion();
+  const t = useSharedValue(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    t.value = withRepeat(withTiming(1, { duration: 5200, easing: Easing.inOut(Easing.sin) }), -1, true);
+  }, [t, reduceMotion]);
+  const animated = useAnimatedStyle(() => ({
+    transform: [{ translateY: t.value * 8 }, { rotate: `${-12 + t.value * 6}deg` }],
+  }));
+  return (
+    <Animated.View style={[styles.watermark, animated]} pointerEvents="none">
+      <Icon name={icon} size={150} color="rgba(255,255,255,0.13)" filled />
+    </Animated.View>
+  );
+}
 
 /**
  * The coloured store panel shared by Home and Search: the current store's
@@ -38,9 +68,7 @@ export function StoreBand({ children }: { children: React.ReactNode }) {
       <LinearGradient colors={under.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       <Animated.View key={`bg-${theme.key}-${theme.short}`} entering={FadeIn.duration(380)} style={StyleSheet.absoluteFill}>
         <LinearGradient colors={theme.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-        <View style={styles.watermark} pointerEvents="none">
-          <Icon name={theme.icon} size={150} color="rgba(255,255,255,0.13)" filled />
-        </View>
+        <DriftingMark icon={theme.icon} />
       </Animated.View>
 
       <View style={styles.content}>{children}</View>
@@ -83,22 +111,23 @@ function StoreChip({
   onPress: () => void;
 }) {
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
       accessibilityLabel={label === 'All' ? 'All Genuine stores' : `Genuine ${label}`}
-      style={({ pressed }) => [styles.chip, active && styles.chipActive, pressed && styles.pressed]}
+      scaleTo={0.92}
+      style={[styles.chip, active && styles.chipActive]}
     >
       <Icon name={icon} size={15} color={active ? theme.solid : colors.textInverse} filled={active} />
       <Text style={[styles.chipText, active && { color: theme.ink }]}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   band: { marginHorizontal: spacing.lg, borderRadius: radius.xl, overflow: 'hidden', ...shadow.raised },
-  watermark: { position: 'absolute', right: -26, top: -18, transform: [{ rotate: '-12deg' }] },
+  watermark: { position: 'absolute', right: -26, top: -18 },
   content: { paddingHorizontal: spacing.lg + 2, paddingTop: spacing.lg + 2 },
   chips: { gap: spacing.sm, paddingHorizontal: spacing.lg + 2, paddingTop: spacing.md, paddingBottom: spacing.lg },
   chipsSpacer: { height: spacing.lg },
@@ -115,7 +144,6 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: colors.surface, borderColor: colors.surface },
   chipText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textInverse },
-  pressed: { opacity: 0.85 },
 });
 
 /** Shared text styles for whatever sits inside the band. */

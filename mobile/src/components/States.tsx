@@ -1,5 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { colors, radius, spacing, typography } from '../theme';
 import type { CategoryGlyph } from '../theme/stores';
 import { Button } from './Button';
@@ -92,7 +100,10 @@ export function EmptyState({
   );
 }
 
-/** Grey block used while real content loads. */
+/**
+ * Grey block used while real content loads. It breathes (a slow fade in and
+ * out) so a loading screen reads as working, not frozen.
+ */
 export function Skeleton({
   width,
   height,
@@ -102,8 +113,16 @@ export function Skeleton({
   height: number;
   style?: object;
 }) {
+  const reduceMotion = useReducedMotion();
+  const fade = useSharedValue(1);
+  useEffect(() => {
+    if (reduceMotion) return;
+    fade.value = withRepeat(withTiming(0.45, { duration: 800, easing: Easing.inOut(Easing.quad) }), -1, true);
+  }, [fade, reduceMotion]);
+  const animated = useAnimatedStyle(() => ({ opacity: fade.value }));
+
   return (
-    <View
+    <Animated.View
       style={[
         {
           width: width ?? '100%',
@@ -112,6 +131,7 @@ export function Skeleton({
           borderRadius: radius.md,
         },
         style,
+        animated,
       ]}
     />
   );
