@@ -22,8 +22,10 @@ nc === 0 ? note('no categories', '(home category strip will be hidden)') : ok(`$
 const v = await get('/public/store-verticals');
 ok('store-verticals endpoint responds', v.status === 200);
 const nv = v.json?.data?.storeVerticals?.length ?? 0;
-nv === 4 ? ok('4 sub-brands seeded', true)
-         : note(`${nv} sub-brands seeded`, '(switcher hides itself below 1; expected 4)');
+// Stores without products are switched off in the admin on purpose (Nutrition
+// and Pharmacy, 2026-10), so any number of active stores is fine — only none is
+// a problem, since the app then has no store to show.
+ok(`${nv} active ${nv === 1 ? 'store' : 'stores'}`, nv >= 1, 'no active stores');
 
 const ps = await get('/payment/settings');
 ok('payment settings respond', ps.status === 200);
