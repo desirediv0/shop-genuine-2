@@ -112,6 +112,8 @@ function RootLayout() {
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     <Stack.Screen name="product/[slug]" options={{ title: '' }} />
                     <Stack.Screen name="category/[slug]" options={{ title: 'Category' }} />
+                    {/* Draws its own coloured header, with a back button in it. */}
+                    <Stack.Screen name="categories" options={{ headerShown: false }} />
                     <Stack.Screen name="basket" options={{ title: 'Cart' }} />
                     <Stack.Screen name="checkout" options={{ title: 'Checkout' }} />
                     <Stack.Screen name="orders/[id]" options={{ title: 'Order' }} />

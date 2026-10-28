@@ -241,8 +241,8 @@ export default function HomeScreen() {
 
           {categories.length > 0 ? (
             <View style={styles.section}>
-              <SectionHeader title="Shop by category" onSeeAll={() => router.navigate('/search')} />
-              <CategoryGrid categories={categories} onSeeAll={() => router.navigate('/search')} />
+              <SectionHeader title="Shop by category" onSeeAll={() => router.push('/categories')} />
+              <CategoryGrid categories={categories} onSeeAll={() => router.push('/categories')} />
             </View>
           ) : null}
 
