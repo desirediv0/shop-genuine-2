@@ -172,6 +172,7 @@ export const getProducts = asyncHandler(async (req, res, next) => {
     page = 1,
     limit = 10,
     search = "",
+    searchAll = "false",
     category = "",
     sort = "createdAt",
     order = "desc",
@@ -182,6 +183,7 @@ export const getProducts = asyncHandler(async (req, res, next) => {
   } = req.query;
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
+  const fetchAllSearchResults = searchAll === "true" && Boolean(search);
 
   // Build filter conditions
   const filterConditions = {
@@ -247,8 +249,10 @@ export const getProducts = asyncHandler(async (req, res, next) => {
       },
     },
     orderBy: [{ ourProduct: "desc" }, { [sort]: order }],
-    skip,
-    take: parseInt(limit),
+    ...(!fetchAllSearchResults && {
+      skip,
+      take: parseInt(limit),
+    }),
   });
 
   // Format the response data
@@ -303,8 +307,10 @@ export const getProducts = asyncHandler(async (req, res, next) => {
         pagination: {
           total: totalProducts,
           page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(totalProducts / parseInt(limit)),
+          limit: fetchAllSearchResults ? totalProducts : parseInt(limit),
+          pages: fetchAllSearchResults
+            ? 1
+            : Math.ceil(totalProducts / parseInt(limit)),
         },
       },
       "Products fetched successfully"

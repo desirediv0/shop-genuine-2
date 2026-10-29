@@ -59,6 +59,8 @@ import {
 
 import { useLanguage } from "@/context/LanguageContext";
 
+const PRODUCTS_PAGE_SIZE = 10;
+
 // Top-level reusable section rich text editor (avoids remount on every render)
 function SectionEditor({
   label,
@@ -3128,6 +3130,8 @@ function ProductsList() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const isSearchPending =
+    searchQuery.trim() !== debouncedSearchQuery.trim();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -3135,11 +3139,6 @@ function ProductsList() {
   const [visibilityFilter, setVisibilityFilter] = useState("");
   const [storeVerticalFilter, setStoreVerticalFilter] = useState("");
   const [storeVerticalsFilterList, setStoreVerticalsFilterList] = useState<any[]>([]);
-
-  // Reset to page 1 whenever debounced search query or filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedSearchQuery, selectedCategory, visibilityFilter, storeVerticalFilter]);
 
   // States for delete dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -3149,19 +3148,29 @@ function ProductsList() {
 
   // Fetch products
   useEffect(() => {
+    if (isSearchPending) return;
+
+    let isCurrentRequest = true;
+
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
+        setError(null);
         const params = {
           page: currentPage,
-          limit: 10,
-          ...(debouncedSearchQuery && { search: debouncedSearchQuery }),
+          limit: PRODUCTS_PAGE_SIZE,
+          ...(debouncedSearchQuery.trim() && {
+            search: debouncedSearchQuery.trim(),
+            searchAll: true,
+          }),
           ...(selectedCategory && { category: selectedCategory }),
           ...(visibilityFilter && { visibility: visibilityFilter }),
           ...(storeVerticalFilter && { storeVerticalId: storeVerticalFilter }),
         };
 
         const response = await products.getProducts(params);
+
+        if (!isCurrentRequest) return;
 
         if (response.data.success) {
           const products = response.data.data?.products || [];
@@ -3172,15 +3181,28 @@ function ProductsList() {
           setError(response.data.message || "Failed to fetch products");
         }
       } catch (error: any) {
+        if (!isCurrentRequest) return;
+
         console.error("Error fetching products:", error);
         setError("Failed to load products. Please try again.");
       } finally {
-        setIsLoading(false);
+        if (isCurrentRequest) setIsLoading(false);
       }
     };
 
     fetchProducts();
-  }, [currentPage, debouncedSearchQuery, selectedCategory, visibilityFilter, storeVerticalFilter]);
+
+    return () => {
+      isCurrentRequest = false;
+    };
+  }, [
+    currentPage,
+    debouncedSearchQuery,
+    isSearchPending,
+    selectedCategory,
+    visibilityFilter,
+    storeVerticalFilter,
+  ]);
 
   // Fetch store verticals for filter dropdown
   useEffect(() => {
@@ -3531,7 +3553,10 @@ function ProductsList() {
                 placeholder={t("products.list.search_placeholder")}
                 className="pl-9 pr-8 rounded-full border-[#E5E7EB] bg-[#FFFFFF] focus:border-primary w-full"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
               />
               {searchQuery && (
                 <button

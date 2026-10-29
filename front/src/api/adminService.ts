@@ -20,6 +20,7 @@ interface ProductQueryParams {
   page?: number;
   limit?: number;
   search?: string;
+  searchAll?: boolean;
   category?: string;
   sortBy?: string;
   order?: "asc" | "desc";
