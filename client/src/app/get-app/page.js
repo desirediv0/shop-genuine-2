@@ -8,9 +8,7 @@ export const metadata = {
   robots: { index: false },
 };
 
-// TODO: replace with the real store listing URLs once the apps are published
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.shopgenuine.app";
-const APP_STORE_URL = "https://apps.apple.com/app/shop-genuine/id0000000000";
+// TODO: turn these buttons into links once the Play Store / App Store URLs are available
 
 const svgProps = {
   viewBox: "0 0 24 24",
@@ -54,18 +52,18 @@ const PERKS = [
   },
 ];
 
-function StoreButton({ href, icon, small, big }) {
+function StoreButton({ icon, small, big }) {
   return (
-    <a
-      href={href}
-      className="sg-glow flex items-center gap-3 rounded-lg bg-gray-900 px-4 py-2.5 text-left text-white ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:bg-black sm:min-w-[200px]"
+    <button
+      type="button"
+      className="cursor-default sg-glow flex items-center gap-3 rounded-lg bg-gray-900 px-4 py-2.5 text-left text-white ring-1 ring-white/10 transition hover:-translate-y-0.5 hover:bg-black sm:min-w-[200px]"
     >
       <img src={icon} alt="" width={32} height={32} className="h-8 w-8 shrink-0" />
       <span className="leading-tight">
         <span className="block text-[10px] uppercase tracking-wider text-white/70">{small}</span>
         <span className="block text-base font-semibold">{big}</span>
       </span>
-    </a>
+    </button>
   );
 }
 
@@ -135,8 +133,8 @@ export default function GetAppPage() {
             </p>
 
             <div className="mt-6 flex flex-col items-center justify-center gap-3 min-[420px]:flex-row sm:mt-8 lg:justify-start">
-              <StoreButton href={PLAY_STORE_URL} icon="/playstore-icon.png" small="Get it on" big="Google Play" />
-              <StoreButton href={APP_STORE_URL} icon="/appstore-icon.png" small="Download on the" big="App Store" />
+              <StoreButton icon="/playstore-icon.png" small="Get it on" big="Google Play" />
+              <StoreButton icon="/appstore-icon.png" small="Download on the" big="App Store" />
             </div>
 
             <ul className="mt-5 flex flex-wrap justify-center gap-2 sm:mt-7 lg:justify-start">
