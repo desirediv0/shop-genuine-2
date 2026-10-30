@@ -13,8 +13,18 @@ const authRoutes = [
     "/reset-password",
 ];
 
+// Web access is blocked on these routes; users see the app download page instead
+const appOnlyRoutes = ["/products", "/wishlist", "/account", "/profile"];
+
 export function middleware(request) {
     const { pathname } = request.nextUrl;
+
+    const isAppOnly =
+        pathname === "/" ||
+        appOnlyRoutes.some((r) => pathname === r || pathname.startsWith(r + "/"));
+    if (isAppOnly) {
+        return NextResponse.rewrite(new URL("/get-app", request.url));
+    }
 
     // Get the authentication cookie
     const isAuthenticated =
