@@ -76,6 +76,7 @@ const PAYMENTS = [
 ];
 
 const css = `
+html, body { overflow: hidden !important; height: 100%; }
 @keyframes sg-float { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(20px,-30px,0) scale(1.1); } }
 @keyframes sg-pulse { 0%,100% { opacity: .55; transform: scale(1); } 50% { opacity: .95; transform: scale(1.08); } }
 @keyframes sg-glow { 0%,100% { box-shadow: 0 0 14px rgba(249,115,22,.35), 0 8px 20px rgba(17,24,39,.25); } 50% { box-shadow: 0 0 28px rgba(236,72,153,.6), 0 8px 20px rgba(17,24,39,.25); } }
@@ -87,11 +88,11 @@ const css = `
 
 export default function GetAppPage() {
   return (
-    <div className="fixed inset-0 z-[100000] overflow-hidden bg-gradient-to-br from-[#fff1e6] via-[#ffe4ef] to-[#efe4ff]">
+    <div className="fixed inset-0 z-[100000] overflow-y-auto overflow-x-hidden overscroll-contain bg-gradient-to-br from-[#fff1e6] via-[#ffe4ef] to-[#efe4ff]">
       <style>{css}</style>
 
       {/* background: soft dot grid + glowing orbs */}
-      <div className="pointer-events-none absolute inset-0">
+      <div className="pointer-events-none fixed inset-0">
         <div
           className="absolute inset-0 opacity-40"
           style={{
@@ -106,19 +107,19 @@ export default function GetAppPage() {
         <div className="sg-orb absolute -bottom-32 left-1/4 h-96 w-96 rounded-full bg-purple-400/40 blur-3xl [animation-delay:-6s]" />
       </div>
 
-      <div className="relative mx-auto flex h-full max-w-6xl flex-col px-5 py-4 sm:px-6 sm:py-5">
+      <div className="relative mx-auto flex min-h-full max-w-6xl flex-col px-5 py-4 sm:px-8 sm:py-6">
         <header className="flex shrink-0 items-center">
           <span className="rounded-xl bg-white/90 px-3 py-1.5 shadow-md shadow-pink-500/10 ring-1 ring-black/5">
             <img src="/logo.png" alt="Shop Genuine" className="h-8 w-auto sm:h-10" />
           </span>
         </header>
 
-        <main className="grid min-h-0 flex-1 items-center gap-3 lg:grid-cols-2 lg:gap-12">
+        <main className="grid flex-1 items-center gap-8 py-6 lg:grid-cols-2 lg:gap-12">
           <section className="text-center lg:text-left">
             <span className="inline-block rounded-md bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-orange-700 ring-1 ring-orange-200 backdrop-blur">
               Now on mobile
             </span>
-            <h1 className="mt-3 text-3xl font-bold leading-tight text-gray-900 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-3 text-3xl font-bold leading-tight text-gray-900 min-[400px]:text-4xl sm:text-5xl xl:text-6xl">
               Shop Genuine,
               <br />
               <span
@@ -128,14 +129,12 @@ export default function GetAppPage() {
                 only on the app.
               </span>
             </h1>
-            <p className="mx-auto mt-3 max-w-lg text-sm text-gray-600 sm:mt-5 sm:text-lg lg:mx-0">
-              Our website is no longer available for shopping. To browse and order
-              authentic nutrition, grocery, pharmacy and cosmetics products,
-              please download the Shop Genuine app from the Google Play Store or
-              the Apple App Store.
+            <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-gray-600 sm:mt-5 sm:text-base lg:mx-0 xl:text-lg">
+              Shopping is now available only on our mobile app. Download it from
+              the Play Store or App Store.
             </p>
 
-            <div className="mt-5 flex flex-row items-center justify-center gap-2 sm:mt-8 sm:gap-3 lg:justify-start">
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 min-[420px]:flex-row sm:mt-8 lg:justify-start">
               <StoreButton href={PLAY_STORE_URL} icon="/playstore-icon.png" small="Get it on" big="Google Play" />
               <StoreButton href={APP_STORE_URL} icon="/appstore-icon.png" small="Download on the" big="App Store" />
             </div>
@@ -165,8 +164,8 @@ export default function GetAppPage() {
           </section>
 
           {/* phone mockups */}
-          <section className="flex h-full max-h-[620px] min-h-0 items-center justify-center py-2">
-            <div className="relative flex h-full items-center justify-center">
+          <section className="flex h-[clamp(360px,62vh,520px)] items-center justify-center">
+            <div className="relative flex h-full w-full items-center justify-center">
               <div className="sg-halo absolute inset-x-0 inset-y-6 rounded-full bg-gradient-to-br from-orange-400/60 via-pink-400/60 to-purple-400/60 blur-3xl" />
               <PhoneShowcase />
             </div>

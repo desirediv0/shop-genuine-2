@@ -33,10 +33,10 @@ export default function PhoneShowcase() {
   }, []);
 
   return (
-    <div className="relative flex h-[90%] items-center">
-      <Phone offset={1} tick={tick} className="-mr-10 hidden h-[88%] -rotate-6 sm:block" />
+    <div className="relative flex h-full items-center">
+      <Phone offset={1} tick={tick} className="-mr-12 hidden h-[84%] -rotate-6 md:block lg:hidden xl:block" />
       <Phone offset={0} tick={tick} className="z-10" />
-      <Phone offset={2} tick={tick} className="-ml-10 hidden h-[88%] rotate-6 sm:block" />
+      <Phone offset={2} tick={tick} className="-ml-12 hidden h-[84%] rotate-6 md:block lg:hidden xl:block" />
     </div>
   );
 }
