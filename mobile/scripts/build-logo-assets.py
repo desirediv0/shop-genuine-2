@@ -3,8 +3,10 @@ Rebuilds every logo-derived asset from the supplied `mobile/logo.png`.
 
 The source is a 1437x710 RGBA lockup: the "Shop genuine" wordmark inside a
 rounded frame, with a blue shopping-cart roundel in the frame's bottom-right
-gap. The roundel is the brand's compact mark, so it becomes the app icon; the
-full lockup is what the Logo component and the splash screen show.
+gap. The client asked for the full lockup as the app icon (2026-11-03), so it
+is the launcher icon, the Play listing icon, the splash and the Logo
+component. The cart glyph alone survives only where a wordmark cannot be
+read: the 24dp status-bar notification icon.
 
 Usage, from mobile/:  python3 <this file> <scratch dir for previews>
 """
@@ -80,25 +82,70 @@ glyph = trimmed(glyph, threshold=6)
 glyph_big = sharpen(glyph.resize((1024, 1024), Image.LANCZOS), 70)
 print(f'cart glyph                    {glyph.size[0]}x{glyph.size[1]} in source')
 
-# ---- 4. iOS / fallback icon -------------------------------------------
-# iOS applies no safe-zone padding and renders no transparency, so the disc is
-# inset slightly and sits on the white the lockup itself uses.
-square(disc, 1024, bg=(255, 255, 255, 255), inset=0.055).convert('RGB').save('assets/icon.png')
-print('assets/icon.png               1024x1024  disc on white, inset 5.5%')
+# ---- 4. Where the lockup can safely go --------------------------------
+def max_radius(img, threshold=32):
+    """Furthest visible pixel from the centre, in pixels of `img`. Measured on
+    the real outline rather than the bounding box: the frame's corners are
+    rounded, so the lockup can sit a little larger than its box suggests."""
+    small = img.getchannel('A').resize((img.width // 4, img.height // 4), Image.BILINEAR)
+    cx, cy = small.width / 2, small.height / 2
+    px = small.load()
+    far = 0.0
+    for y in range(small.height):
+        for x in range(small.width):
+            if px[x, y] > threshold:
+                far = max(far, math.hypot(x + 0.5 - cx, y + 0.5 - cy))
+    return far * 4
 
-# ---- 5. Android adaptive icon -----------------------------------------
-# Android masks to a circle or squircle and crops roughly 25% away, so a
-# disc inside that mask would read as a target. The cart glyph goes on the
-# foreground and the brand blue becomes the background instead.
-# 0.26 leaves the glyph filling about 67% of the visible circle once Android
-# has cropped the outer quarter away — at 0.235 the cart handle crowded the mask.
-square(glyph_big, 1024, inset=0.26).save('assets/android-icon-foreground.png')
-Image.new('RGB', (1024, 1024), BRAND_BLUE).save('assets/android-icon-background.png')
-# A themed icon is tinted by the launcher, so only alpha survives.
-square(glyph_big, 1024, inset=0.26).save('assets/android-icon-monochrome.png')
-print(f'assets/android-icon-*.png     1024x1024  cart on #{"%02X%02X%02X" % BRAND_BLUE}')
 
-# ---- 6. Notification icon ---------------------------------------------
+def placed(fg, size, width):
+    """`fg` scaled to `width` and centred on a transparent square."""
+    height = round(fg.height * width / fg.width)
+    canvas = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    canvas.alpha_composite(sharpen(fg.resize((width, height), Image.LANCZOS), 60),
+                           ((size - width) // 2, (size - height) // 2))
+    return canvas
+
+
+reach = max_radius(lockup)  # in lockup pixels
+
+# ---- 5. iOS / legacy / Play listing icon ------------------------------
+# A square on white (the frame's inside is transparent, and the blue
+# "genuine" needs white behind it). iOS rounds the corners by ~22% and the
+# Play listing by ~20%; at 86% wide the lockup's rounded corners stay clear.
+WHITE = (255, 255, 255, 255)
+icon = Image.new('RGBA', (1024, 1024), WHITE)
+icon.alpha_composite(placed(lockup, 1024, round(1024 * 0.86)))
+icon.convert('RGB').save('assets/icon.png')
+icon.resize((512, 512), Image.LANCZOS).save('store-assets/play-icon-512.png')
+print('assets/icon.png               1024x1024  full lockup on white, 86% wide')
+print('store-assets/play-icon-512.png 512x512')
+
+# ---- 6. Android adaptive icon -----------------------------------------
+# The foreground is a 108dp square, of which launchers show the middle 72dp
+# through their own mask (circle, squircle, rounded square). Only a circle
+# 66dp across is guaranteed to show on every launcher, so the lockup is
+# sized until its furthest visible pixel sits just inside that circle.
+SAFE_R = 1024 * 33 / 108 * 0.97
+fg_width = math.floor(lockup.width * SAFE_R / reach)
+foreground = placed(lockup, 1024, fg_width)
+foreground.save('assets/android-icon-foreground.png')
+Image.new('RGB', (1024, 1024), (255, 255, 255)).save('assets/android-icon-background.png')
+print(f'assets/android-icon-*.png     1024x1024  lockup {fg_width}px wide on white '
+      f'({fg_width / (1024 * 72 / 108):.0%} of the visible icon)')
+
+# A themed (Android 13+) icon is tinted by the launcher, so only alpha
+# survives. Keep the coloured parts — letters, frame, the cart disc — and let
+# the white ones (the cart glyph, the disc's ring) fall through, so the cart
+# still reads as a cart instead of a filled blob.
+fr, fgc, fb, fa = foreground.split()
+light = ImageChops.darker(ImageChops.darker(fr, fgc), fb)
+inked = light.point(lambda v: 255 if v <= 150 else (0 if v >= 220 else round((220 - v) * 255 / 70)))
+mono_alpha = ImageChops.multiply(fa, inked)
+mono = Image.merge('RGBA', (*Image.new('RGB', (1024, 1024), (255, 255, 255)).split(), mono_alpha))
+mono.save('assets/android-icon-monochrome.png')
+
+# ---- 7. Notification icon ---------------------------------------------
 # Android discards colour here and tints by the plugin's `color`, so only the
 # silhouette matters. Alpha must reach 255 or the icon renders translucent,
 # and the glyph is inset because some launchers crop it to a circle.
@@ -111,30 +158,49 @@ notif.putalpha(na)
 notif.save('assets/notification-icon.png')
 print(f'assets/notification-icon.png  96x96  alpha reaches {na.getextrema()[1]}')
 
-# ---- 7. Favicon -------------------------------------------------------
+# ---- 8. Favicon -------------------------------------------------------
 square(disc, 48, bg=(255, 255, 255, 255)).convert('RGB').save('assets/favicon.png')
 print('assets/favicon.png            48x48')
 
 # ---- Previews ---------------------------------------------------------
-sheet = Image.new('RGB', (260 * 4 + 48, 260), (255, 255, 255))
-ad = Image.open('assets/android-icon-background.png').convert('RGBA')
-ad.alpha_composite(Image.open('assets/android-icon-foreground.png').convert('RGBA'))
-mask = Image.new('L', (1024, 1024), 0)
-ImageDraw.Draw(mask).ellipse((0, 0, 1023, 1023), fill=255)
-circ = Image.new('RGBA', (1024, 1024), (250, 248, 245, 255))
-circ.paste(ad, (0, 0), mask)
-tinted = Image.new('RGBA', (1024, 1024), (60, 60, 60, 255))
-nb = Image.new('RGBA', (1024, 1024), (249, 115, 22, 0))
-big_notif = Image.open('assets/notification-icon.png').convert('RGBA').resize((1024, 1024), Image.NEAREST)
-solid = Image.new('RGBA', (1024, 1024), (249, 115, 22, 255))
-solid.putalpha(big_notif.getchannel('A'))
-tinted.alpha_composite(solid)
-for i, cell in enumerate([Image.open('assets/icon.png').convert('RGBA'), ad, circ, tinted]):
-    pad = Image.new('RGBA', (1024, 1024), (255, 255, 255, 255))
-    pad.alpha_composite(cell)
-    sheet.paste(pad.convert('RGB').resize((260, 260), Image.LANCZOS), (i * 276, 0))
+# icon | adaptive in a circle mask | in a squircle | themed (tinted) |
+# notification. Each mask shows the middle 72dp of the 108dp canvas.
+def masked(kind):
+    full = Image.open('assets/android-icon-background.png').convert('RGBA')
+    full.alpha_composite(Image.open('assets/android-icon-foreground.png').convert('RGBA'))
+    shown = full.crop((171, 171, 853, 853)).resize((1024, 1024), Image.LANCZOS)
+    m = Image.new('L', (1024, 1024), 0)
+    d = ImageDraw.Draw(m)
+    if kind == 'circle':
+        d.ellipse((0, 0, 1023, 1023), fill=255)
+    else:
+        d.rounded_rectangle((0, 0, 1023, 1023), radius=300, fill=255)
+    out = Image.new('RGBA', (1024, 1024), (40, 44, 52, 255))
+    out.paste(shown, (0, 0), m)
+    return out
+
+
+themed = Image.new('RGBA', (1024, 1024), (40, 44, 52, 255))
+disc_bg = Image.new('L', (1024, 1024), 0)
+ImageDraw.Draw(disc_bg).ellipse((0, 0, 1023, 1023), fill=255)
+themed.paste(Image.new('RGBA', (1024, 1024), (219, 228, 255, 255)), (0, 0), disc_bg)
+ink = Image.new('RGBA', (1024, 1024), (30, 58, 138, 255))
+mono_shown = Image.open('assets/android-icon-monochrome.png').convert('RGBA').crop((171, 171, 853, 853)).resize((1024, 1024), Image.LANCZOS)
+ink.putalpha(ImageChops.multiply(mono_shown.getchannel('A'), disc_bg))
+themed.alpha_composite(ink)
+
+notif_big = Image.open('assets/notification-icon.png').convert('RGBA').resize((1024, 1024), Image.NEAREST)
+tinted = Image.new('RGBA', (1024, 1024), (40, 44, 52, 255))
+orange = Image.new('RGBA', (1024, 1024), (249, 115, 22, 255))
+orange.putalpha(notif_big.getchannel('A'))
+tinted.alpha_composite(orange)
+
+cells = [Image.open('assets/icon.png').convert('RGBA'), masked('circle'), masked('squircle'), themed, tinted]
+sheet = Image.new('RGB', (276 * len(cells) + 16, 292), (40, 44, 52))
+for i, cell in enumerate(cells):
+    sheet.paste(cell.convert('RGB').resize((260, 260), Image.LANCZOS), (16 + i * 276, 16))
 sheet.save(f'{SCRATCH}/icons-sheet.png')
-print('preview: icon | adaptive | adaptive circle-masked | notification tinted')
+print('preview: icon | circle mask | squircle mask | themed | notification')
 
 # ---- A note on the splash screen --------------------------------------
 # `imageWidth` in app.json's expo-splash-screen config is capped by Android,
