@@ -2,7 +2,8 @@
   "1.0.0": {
     "hash": "d9dee659bc746b3ee7b7488341e0f6999279613b",
     "builds": {
-      "preview": "2026-11-03T10:08:50.555Z"
+      "preview": "2026-11-03T10:08:50.555Z",
+      "production": "2026-11-05T06:37:01.888Z"
     },
     "fingerprint": {
       "sources": [
