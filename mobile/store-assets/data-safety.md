@@ -63,6 +63,12 @@ enables it goes out. Reports contain the error, stack trace, app version, update
 and device model / OS version. `sendDefaultPii` is off, so they carry no IP
 address, email or name.
 
+## Privacy policy URL
+
+Use **https://api.shopgenuine.online/privacy-policy** (Play Console → Policy → App
+content → Privacy policy, and in the store listing). The app also links to it from
+Account and the sign-up screen. See `privacy-policy.md`.
+
 ## Account deletion URL
 
 Use **https://api.shopgenuine.online/delete-account**.

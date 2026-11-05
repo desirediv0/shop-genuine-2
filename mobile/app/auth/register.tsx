@@ -11,6 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
+import { openPrivacyPolicy } from '../../src/components/PrivacyPolicyLink';
 import { AuthHeader } from '../../src/components/AuthHeader';
 import { useAuth } from '../../src/context/AuthContext';
 import { useToast } from '../../src/context/ToastContext';
@@ -128,6 +129,13 @@ export default function RegisterScreen() {
           />
 
           <Button label="Create account" fullWidth loading={submitting} onPress={onSubmit} />
+          <Text style={styles.consent}>
+            By creating an account you agree to our{' '}
+            <Text style={styles.consentLink} onPress={openPrivacyPolicy} accessibilityRole="link">
+              Privacy policy
+            </Text>
+            .
+          </Text>
         </View>
 
         <View style={styles.footer}>
@@ -147,6 +155,8 @@ const styles = StyleSheet.create({
   form: { gap: spacing.lg, marginTop: spacing.lg },
   link: { ...typography.small, color: colors.primary, fontFamily: fonts.semibold },
   muted: { ...typography.small, color: colors.textMuted },
+  consent: { ...typography.tiny, color: colors.textMuted, textAlign: 'center', marginTop: -spacing.sm },
+  consentLink: { fontFamily: fonts.semibold, color: colors.textSecondary, textDecorationLine: 'underline' },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',

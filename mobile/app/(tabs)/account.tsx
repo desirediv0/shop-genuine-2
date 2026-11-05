@@ -9,6 +9,7 @@ import { Appear } from '../../src/components/motion/Appear';
 import { PressableScale } from '../../src/components/motion/PressableScale';
 import { DeleteAccountSheet } from '../../src/components/DeleteAccountSheet';
 import { Icon, type IconName } from '../../src/components/Icon';
+import { PrivacyPolicyLink } from '../../src/components/PrivacyPolicyLink';
 import { PromiseCard } from '../../src/components/PromiseCard';
 import { PushDebugPanel } from '../../src/components/PushDebugPanel';
 import { useAuth } from '../../src/context/AuthContext';
@@ -88,6 +89,7 @@ export default function AccountScreen() {
           {/* Minting a push token needs no account, so keep diagnostics reachable
               while signed out — only the test send requires auth. */}
           {__DEV__ ? <PushDebugPanel /> : null}
+          <PrivacyPolicyLink />
           <Text style={styles.build}>{buildLabel()}</Text>
         </ScrollView>
       </View>
@@ -181,6 +183,7 @@ export default function AccountScreen() {
           }}
           onClose={() => setShowDelete(false)}
         />
+        <PrivacyPolicyLink />
         {/* Which version and over-the-air update this phone runs — the first
             thing to ask when a shopper reports a problem. */}
         <Text style={styles.build}>{buildLabel()}</Text>

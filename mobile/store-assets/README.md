@@ -9,7 +9,7 @@ Everything Google Play asks for, except the things only you can supply.
 | `screenshots/01-06*.png` | Phone screenshots | 1080×1920, min 2, max 8 | ready (6, live data, new design) |
 | `play-listing.md` | Name, short + full description | 30 / 80 / 4000 chars | ready (Grocery + Cosmetics, COD) |
 | `data-safety.md` | Data safety form | — | drafted from the code |
-| `privacy-policy.md` | Privacy policy URL | must be a live URL | **needs hosting + your details** |
+| `privacy-policy.md` | Privacy policy URL | must be a live URL | ready — https://api.shopgenuine.online/privacy-policy (after the server update) |
 
 ## Regenerating the screenshots
 
