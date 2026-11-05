@@ -21,9 +21,9 @@ If you want keywords in it, `Shop Genuine: Grocery & More` is [28].
 ## Short description — limit 80
 
 ```
-100% authentic nutrition, grocery, pharmacy and cosmetics, delivered in India.
+100% authentic grocery and cosmetics, delivered across India.
 ```
-[77]
+[61]
 
 This is the line shown under the icon in search results. Google advises against
 repeating it in the feature graphic and screenshots, since the three can appear
@@ -38,26 +38,24 @@ Shop Genuine is an Indian marketplace for products you can trust. Every item is
 sourced through authorised distributors and checked before it reaches you, so
 what arrives is the real thing — not a lookalike, not expired stock.
 
-FOUR STORES, ONE APP
+TWO STORES, ONE APP
 
-Switch between our four Genuine stores and the whole app follows you — the
-categories, the brands and the products all change with it:
+Switch between our Genuine stores and the whole app follows you — the
+categories and the products all change with it:
 
 • Genuine Grocery — everyday staples, atta, rice, oils, dals, dairy, snacks
-• Genuine Nutrition — supplements and sports nutrition
-• Genuine Pharmacy — everyday health and wellness
-• Genuine Cosmetics — skincare and beauty
+• Genuine Cosmetics — skincare, fragrances and beauty
 
 WHY SHOP GENUINE
 
 • Authentic stock only, from authorised distributors
 • Honest pricing, with the discount shown on every product
 • Delivery across India
-• Cash on Delivery, or pay securely by card, UPI or netbanking
+• Pay with Cash on Delivery
 
 BUILT TO BE QUICK
 
-• Search across the whole catalogue, or browse by category
+• Search across the whole catalogue, or browse every category
 • Add to your cart before you sign in — it carries over when you do
 • Save anything to your wishlist for later
 • Track every order from placed to delivered, with notifications at each step
@@ -79,9 +77,15 @@ Email us any time and we will come back to you.
 ```
 [~1,560]
 
-Trim the Pharmacy and Cosmetics lines until those stores actually have stock —
-describing a store that shows "not stocked yet" reads badly and Google treats
-material inaccuracy as grounds for rejection.
+Keep this matching what the live app does — Google treats material inaccuracy
+as grounds for rejection:
+- **Stores:** only Grocery and Cosmetics are switched on (Nutrition and Pharmacy
+  were turned off in the admin, 2026-10). Add a line back only when a store goes
+  live with stock.
+- **Payment:** live checkout is Cash on Delivery only (Razorpay is off on the
+  server, 2026-11-05). Once online payment is switched on with live keys, change
+  the line to "Cash on Delivery, or pay securely by card, UPI or netbanking" —
+  a listing edit, no app update needed.
 
 ---
 
