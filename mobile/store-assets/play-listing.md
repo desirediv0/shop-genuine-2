@@ -64,7 +64,7 @@ BUILT TO BE QUICK
 
 YOUR ACCOUNT, YOUR CONTROL
 
-Sign up with your email and a one-time code. You can change your password,
+Sign up with your email and a one-time code. You can reset your password,
 manage your saved addresses, and delete your account from inside the app at any
 time — no email to support required.
 
