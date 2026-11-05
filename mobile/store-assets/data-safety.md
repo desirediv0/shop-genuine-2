@@ -65,7 +65,7 @@ address, email or name.
 
 ## Privacy policy URL
 
-Use **https://api.shopgenuine.online/privacy-policy** (Play Console → Policy → App
+Use **https://shopgenuine.online/privacy-policy** (Play Console → Policy → App
 content → Privacy policy, and in the store listing). The app also links to it from
 Account and the sign-up screen. See `privacy-policy.md`.
 

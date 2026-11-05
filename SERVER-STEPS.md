@@ -1,8 +1,14 @@
-# Server steps — put the privacy policy page live (2026-11-05)
+# Server steps — put the new privacy policy live (2026-11-05)
 
-Adds one new page, https://api.shopgenuine.online/privacy-policy. Nothing else on
-the server changes: no database change, no settings change. It takes about two
-minutes.
+Two things change, both on the Hostinger VPS:
+
+- **The website** gets the new privacy policy at https://shopgenuine.online/privacy-policy
+  (Arvi Consumer Private Limited, Grievance Officer, and what the website and app
+  collect). This needs the website rebuilt, which takes a few minutes.
+- **The API** sends https://api.shopgenuine.online/privacy-policy on to that page,
+  because the app's first Play Store build links there.
+
+No database change and no settings change.
 
 ## Steps
 
@@ -12,7 +18,7 @@ Open the Hostinger web terminal for the VPS, then type each line and press Enter
 
        cd /root/shop-genuine-2
 
-2. Note where you are now (in case you ever need to go back):
+2. Note where you are now, in case you ever need to go back:
 
        git log --oneline -1
 
@@ -22,29 +28,39 @@ Open the Hostinger web terminal for the VPS, then type each line and press Enter
 
        git pull
 
-   You should see `server/controllers/pages.controller.js` in the list of changed files.
+   You should see `client/src/app/privacy-policy/page.js` and
+   `server/controllers/pages.controller.js` in the list of changed files.
    If it says `error` or `conflict`, stop and send me a screenshot.
 
-4. Restart the API so it uses the new code:
+4. Restart the API:
 
        pm2 restart shop-genuine-server
 
-   You should see a table with `shop-genuine-server` and status **online**.
+   You should see `shop-genuine-server` with status **online**.
 
-5. Check it worked. Open this in your phone or computer browser:
+5. Rebuild the website and restart it (one line; it only restarts if the build worked):
 
-   https://api.shopgenuine.online/privacy-policy
+       cd client && npm run build && pm2 restart shop-genuine-client; cd ..
 
-   You should see **"Privacy policy"** with **Arvi Consumer Private Limited** in the
-   first paragraph. Also check https://api.shopgenuine.online/delete-account still
-   opens.
+   The build takes a few minutes and ends with a list of pages, then a table with
+   `shop-genuine-client` **online**. If it ends with `Failed to compile` or `Error`,
+   send me a screenshot of the last lines.
+
+6. Check it worked. Open these in your phone or computer browser:
+
+   - https://shopgenuine.online/privacy-policy — shows **Privacy Policy** with
+     **Arvi Consumer Private Limited** in the first paragraph and **Rajat Gulia** as
+     Grievance Officer at the bottom.
+   - https://api.shopgenuine.online/privacy-policy — lands on the same page.
+   - https://api.shopgenuine.online/delete-account — still opens.
 
 ## If something goes wrong
 
-If step 4 shows the status as **errored**, or the shop stops working, go back to the
-code from step 2:
+Go back to the code from step 2 and rebuild:
 
-    git checkout <the code you wrote down> -- server
+    cd /root/shop-genuine-2
+    git checkout <the code you wrote down> -- server client
     pm2 restart shop-genuine-server
+    cd client && npm run build && pm2 restart shop-genuine-client; cd ..
 
 Then send me a screenshot.

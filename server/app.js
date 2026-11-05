@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import Razorpay from "razorpay";
 import { logger } from "./utils/logger.js";
-import { getDeleteAccountPage, getPrivacyPolicyPage } from "./controllers/pages.controller.js";
+import { getDeleteAccountPage, redirectToPrivacyPolicy } from "./controllers/pages.controller.js";
 import { generalRateLimiter } from "./middlewares/rateLimiter.js";
 
 // Routes
@@ -220,7 +220,7 @@ app.use("/api/webhooks/shiprocket", adminShiprocketRoutes);
 // Google Play's required "Delete account URL", served here so it does not
 // depend on the website. Not under /api, so the rate limiter does not apply.
 app.get("/delete-account", getDeleteAccountPage);
-app.get("/privacy-policy", getPrivacyPolicyPage);
+app.get("/privacy-policy", redirectToPrivacyPolicy);
 
 /* -------------------- HEALTH CHECK -------------------- */
 

@@ -3,10 +3,12 @@ import { Linking, Pressable, StyleSheet, Text } from 'react-native';
 import { colors, fonts } from '../theme';
 
 /**
- * The live policy, whichever server this build talks to: it is the same page
- * the Play listing points at. Served by the API (server/controllers/pages.controller.js).
+ * The live policy on the website, whichever server this build talks to: it is
+ * the same page the Play listing points at (client/src/app/privacy-policy).
+ * The first store build linked to api.shopgenuine.online/privacy-policy, which
+ * redirects here.
  */
-export const PRIVACY_POLICY_URL = 'https://api.shopgenuine.online/privacy-policy';
+export const PRIVACY_POLICY_URL = 'https://shopgenuine.online/privacy-policy';
 
 export function openPrivacyPolicy() {
   Linking.openURL(PRIVACY_POLICY_URL).catch(() => {});
