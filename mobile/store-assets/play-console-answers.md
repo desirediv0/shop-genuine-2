@@ -3,7 +3,7 @@
 App: **Shop Genuine**, `com.shopgenuine.app`, created 2026-11-05.
 Dashboard: https://play.google.com/console/u/0/developers/8035388496617662284/app/4972662767290883480/app-dashboard
 
-Done in Play Console (2026-11-05/06, all saved): privacy policy, sign-in details, ads, content rating (Everyone / PEGI 3), target audience 18+, data safety, government/financial/health. Also done earlier: app created; privacy policy URL; store listing
+Done in Play Console (2026-11-05/06, all saved): privacy policy, sign-in details, ads, content rating (Everyone / PEGI 3), target audience 18+, data safety, government/financial/health, Production countries (India only). Also done earlier: app created; privacy policy URL; store listing
 (name, short and full description, icon, feature graphic, 6 screenshots — saved as a
 draft); category **Shopping**; contact email `connect.genuinenutrition@gmail.com`
 and website `https://shopgenuine.online`; sign-in details name, email and reviewer
@@ -75,8 +75,9 @@ Photos, Contacts, Crash logs or Diagnostics (crash reporting is off).
 ## 8. Release (Production)
 Test and release → **Production** → Create new release.
 - Play App Signing: keep **Google-generated key** (the default).
-- Upload: drag `mobile/ShopGenuine-1.0.0-play.aab` (84 MB, version 1.0.0, versionCode 3) into the box.
-  (Claude cannot upload it: its browser upload limit is 10 MB.)
+- Upload: drag `mobile/ShopGenuine-1.0.0-play.aab` (about 84 MB, version 1.0.0, versionCode 4) into the box.
+  (Claude cannot upload it: its browser upload limit is 10 MB.) Do not upload versionCode 3:
+  its privacy link points at the API subdomain, which no longer serves pages.
 - Release name: `1.0.0`. Release notes: `First release of Shop Genuine.`
 - Countries / regions: **India** only — delivery is India only.
 - Save → Next → fix anything Play lists → **Send for review** (Publishing overview).
