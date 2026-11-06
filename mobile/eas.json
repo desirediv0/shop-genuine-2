@@ -12,6 +12,16 @@
       },
       "channel": "development"
     },
+    "simulator": {
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Debug"
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
+      },
+      "channel": "development"
+    },
     "preview": {
       "distribution": "internal",
       "android": {
