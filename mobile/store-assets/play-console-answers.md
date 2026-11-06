@@ -3,7 +3,7 @@
 App: **Shop Genuine**, `com.shopgenuine.app`, created 2026-11-05.
 Dashboard: https://play.google.com/console/u/0/developers/8035388496617662284/app/4972662767290883480/app-dashboard
 
-Done in Play Console (2026-11-05/06, all saved): privacy policy, sign-in details, ads, content rating (Everyone / PEGI 3), target audience 18+, data safety, government/financial/health, Production countries (India only). Also done earlier: app created; privacy policy URL; store listing
+Done in Play Console (2026-11-05/06, all saved): privacy policy, sign-in details, ads, content rating (Everyone / PEGI 3), target audience 18+, data safety, government/financial/health, advertising ID (No), Production countries (India only), and the production release 1.0.0 (versionCode 4, saved, waiting for "Submit changes for review"). Also done earlier: app created; privacy policy URL; store listing
 (name, short and full description, icon, feature graphic, 6 screenshots — saved as a
 draft); category **Shopping**; contact email `connect.genuinenutrition@gmail.com`
 and website `https://shopgenuine.online`; sign-in details name, email and reviewer
