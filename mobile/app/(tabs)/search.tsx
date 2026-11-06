@@ -150,7 +150,9 @@ export default function SearchScreen() {
               style={styles.searchInput}
               returnKeyType="search"
               autoCorrect={false}
-              clearButtonMode="while-editing"
+              autoCapitalize="none"
+              // No clearButtonMode: on iOS it drew a second clear button beside
+              // our own × (below), which works the same on both platforms.
               accessibilityLabel="Search products"
             />
             {term.length > 0 ? (
@@ -227,6 +229,9 @@ export default function SearchScreen() {
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
           keyboardShouldPersistTaps="handled"
+          // Scrolling the results hides the keyboard. iPhones have no back
+          // button to close it, so otherwise it covered half the results.
+          keyboardDismissMode="on-drag"
           ListHeaderComponent={
             query.isLoading ? null : (
               <Text style={styles.count}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '../../src/components/Button';
 import { Input } from '../../src/components/Input';
@@ -49,11 +49,14 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <View style={styles.flex}>
+      {/* iOS: the scroll view makes room for the keyboard and scrolls the focused
+          field into view (see login.tsx). Android resizes the window instead. */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <Logo height={64} style={styles.logo} />
         <Text style={styles.title}>Reset your password</Text>
         <Text style={styles.subtitle}>
@@ -74,7 +77,7 @@ export default function ForgotPasswordScreen() {
           <Button label="Send reset link" fullWidth loading={submitting} onPress={onSubmit} />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -57,11 +55,17 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <View style={styles.flex}>
+      {/* iOS: the scroll view makes room for the keyboard itself and scrolls the
+          focused field into view. KeyboardAvoidingView can't do this inside a
+          page sheet, because it measures its own position relative to the sheet,
+          not the screen, so it left the password field under the keyboard.
+          Android resizes the window for the keyboard (adjustResize). */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <AuthHeader title="Welcome back" subtitle="Sign in to your Shop Genuine account." />
 
         <View style={styles.form}>
@@ -105,7 +109,7 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

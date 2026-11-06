@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -29,6 +27,16 @@ function passwordProblem(pw: string): string | null {
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(pw)) return 'Include a special character (e.g. @ or !)';
   return null;
 }
+
+/**
+ * The same rules in Apple's password-rules syntax, so the iPhone's "Use Strong
+ * Password" suggestion passes them. Without this iOS suggests passwords like
+ * "kexwuv-6wofDo-nedrah", whose only special character, the hyphen, the server
+ * doesn't accept. (The double quote is left out of the set to keep the rule
+ * simple; any one of the others satisfies the server.)
+ */
+const IOS_PASSWORD_RULES =
+  'minlength: 8; required: lower; required: upper; required: digit; required: [!@#$%^&*(),.?:{}|<>];';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -76,11 +84,14 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <View style={styles.flex}>
+      {/* iOS: the scroll view makes room for the keyboard and scrolls the focused
+          field into view (see login.tsx). Android resizes the window instead. */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <AuthHeader
           title="Create your account"
           subtitle="We'll email you a 6-digit code to confirm it's you."
@@ -125,6 +136,7 @@ export default function RegisterScreen() {
             secure
             autoCapitalize="none"
             textContentType="newPassword"
+            passwordRules={IOS_PASSWORD_RULES}
             placeholder="Create a password"
           />
 
@@ -145,7 +157,7 @@ export default function RegisterScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

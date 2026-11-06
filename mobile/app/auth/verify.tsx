@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -70,11 +68,14 @@ export default function VerifyScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.flex}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <View style={styles.flex}>
+      {/* iOS: the scroll view makes room for the keyboard and scrolls the focused
+          field into view (see login.tsx). Android resizes the window instead. */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+      >
         <Logo height={64} style={styles.logo} />
         <Text style={styles.title}>Check your email</Text>
         <Text style={styles.subtitle}>
@@ -109,7 +110,7 @@ export default function VerifyScreen() {
           </View>
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

@@ -52,7 +52,13 @@ export function AddressForm({
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
+    // automaticallyAdjustKeyboardInsets: on iOS the keyboard room comes from
+    // here, not from Sheet (see Sheet.tsx).
+    <ScrollView
+      contentContainerStyle={styles.form}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
+    >
       <Input
         label="Full name"
         value={draft.name}

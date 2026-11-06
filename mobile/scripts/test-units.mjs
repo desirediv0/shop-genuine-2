@@ -2,7 +2,8 @@
  * Unit checks for small pure helpers where a mistake is costly and silent:
  * the version comparison behind the "Update required" screen (a bug there
  * locks shoppers out, or never prompts them), and the price formatter (which
- * once showed ₹28 for a ₹27.90 charge).
+ * once showed ₹28 for a ₹27.90 charge), and how a Razorpay rejection is read
+ * (a cancel shown as a red error on iPhone).
  *
  *   npm run test:units
  */
@@ -12,13 +13,15 @@ import ts from 'typescript';
 
 const require = createRequire(import.meta.url);
 
-function load(relPath) {
+// `stubs` stands in for modules that only exist in the app, e.g. react-native.
+function load(relPath, stubs = {}) {
   const source = fs.readFileSync(new URL(relPath, import.meta.url), 'utf8');
   const { outputText } = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
   });
   const mod = { exports: {} };
-  new Function('module', 'exports', 'require', outputText)(mod, mod.exports, require);
+  const req = (name) => (name in stubs ? stubs[name] : require(name));
+  new Function('module', 'exports', 'require', outputText)(mod, mod.exports, req);
   return mod.exports;
 }
 
@@ -70,6 +73,48 @@ check('string from Prisma Decimal', formatPrice('3.10'), '₹3.10');
 check('Indian grouping', formatPrice(100000), '₹1,00,000');
 check('sub-paisa noise rounds away', formatPrice(244.004), '₹244');
 check('null is zero', formatPrice(null), '₹0');
+
+// Razorpay rejections. A cancel must read as a cancel on both platforms; the
+// shapes are what each native module actually sent.
+const rzp = (os) => load('../src/utils/razorpay.ts', { 'react-native': { Platform: { OS: os } } });
+const ios = rzp('ios');
+const android = rzp('android');
+const isCancel = (err) => err.name === 'PaymentCancelledError';
+check(
+  'iOS cancel (code 0, reason in details) is a cancel',
+  isCancel(ios.toPaymentError({
+    code: 0,
+    description: 'Payment processing cancelled by user',
+    details: { error: { reason: 'payment_cancelled', code: 'BAD_REQUEST_ERROR' } },
+  })),
+  true,
+);
+check('iOS documented cancel code 2 is a cancel', isCancel(ios.toPaymentError({ code: 2, description: 'x' })), true);
+check(
+  'iOS code 0 without a cancel reason is not a cancel',
+  isCancel(ios.toPaymentError({ code: 0, description: 'Network error' })),
+  false,
+);
+check('iOS plain-text failure is shown as written', ios.toPaymentError({ code: 1, description: 'Card declined' }).message, 'Card declined');
+check('Android cancel code 0 is a cancel', isCancel(android.toPaymentError({ code: 0, description: '{}' })), true);
+check(
+  'Android cancel reason in the JSON description is a cancel',
+  isCancel(android.toPaymentError({
+    code: 4,
+    description: JSON.stringify({ error: { reason: 'payment_cancelled', description: 'undefined' } }),
+  })),
+  true,
+);
+check(
+  'Android code 2 is a network error, not a cancel',
+  android.toPaymentError({ code: 2, description: 'x' }).message,
+  'Could not reach the payment service. Check your internet and try again.',
+);
+check(
+  'JSON gibberish is never shown',
+  android.toPaymentError({ code: 4, description: JSON.stringify({ error: { description: 'undefined' } }) }).message,
+  'Payment failed. No order was placed — please try again.',
+);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

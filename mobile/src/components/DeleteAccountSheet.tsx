@@ -43,7 +43,12 @@ export function DeleteAccountSheet({
     // title under the Android status bar, and the keyboard could cover the
     // password field on iOS.
     <Sheet visible={visible} title="Delete your account" onClose={close}>
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+        // On iOS the keyboard room comes from here, not from Sheet (see Sheet.tsx).
+        automaticallyAdjustKeyboardInsets
+      >
         <View style={styles.warning}>
           <Text style={styles.warningTitle}>This cannot be undone</Text>
           <Text style={styles.warningText}>

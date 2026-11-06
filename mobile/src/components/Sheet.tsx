@@ -15,7 +15,12 @@ import { colors, spacing, typography } from '../theme';
  *   the top inset.
  * - Both need the bottom inset to keep buttons clear of the gesture bar.
  * - Both need room for the keyboard, so the fields being typed in are not
- *   hidden — iOS does not resize the screen for the keyboard on its own.
+ *   hidden. Android: KeyboardAvoidingView below. iOS: the sheet's own scroll
+ *   view must set `automaticallyAdjustKeyboardInsets` (AddressForm and
+ *   DeleteAccountSheet do). KeyboardAvoidingView can't be used on iOS here: it
+ *   measures its position within the page sheet rather than on screen, so it
+ *   under-counts the keyboard by the sheet's offset — on the sign-in sheet that
+ *   left the password field under the keyboard.
  */
 export function Sheet({
   visible,
@@ -44,7 +49,7 @@ export function Sheet({
     >
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'android' ? 'height' : undefined}
       >
         <View style={[styles.sheet, { paddingTop: top, paddingBottom: insets.bottom + spacing.md }]}>
           <Text style={styles.title}>{title}</Text>

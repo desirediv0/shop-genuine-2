@@ -59,8 +59,15 @@ export class PaymentCancelledError extends Error {
 
 /**
  * Razorpay's error codes differ by platform: Android's `Checkout.PAYMENT_CANCELED`
- * is 0 (read from the SDK's constants), while the iOS SDK uses 2 — and 2 means
- * NETWORK_ERROR on Android.
+ * is 0 (read from the SDK's constants), while the iOS SDK documents 2 — and 2
+ * means NETWORK_ERROR on Android.
+ *
+ * In practice the iOS module reports a shopper's cancel as code 0 with a
+ * plain-text description, and the reason sits in `details.error.reason`
+ * (checked on the iOS simulator, 2026-11-06):
+ *   { code: 0, description: "Payment processing cancelled by user",
+ *     details: { error: { reason: "payment_cancelled", ... } } }
+ * So the reason is what identifies a cancel; the codes are a fallback.
  */
 const CANCELLED_CODE = Platform.OS === 'ios' ? 2 : 0;
 const ANDROID_NETWORK_ERROR = 2;
@@ -70,8 +77,12 @@ const ANDROID_NETWORK_ERROR = 2;
  * is often a JSON string — `{"error":{"code":"BAD_REQUEST_ERROR","description":
  * "undefined",...}}` — which used to be shown verbatim in the toast.
  */
-function toPaymentError(e: unknown): Error {
-  const err = (e ?? {}) as { code?: number | string; description?: unknown };
+export function toPaymentError(e: unknown): Error {
+  const err = (e ?? {}) as {
+    code?: number | string;
+    description?: unknown;
+    details?: { error?: { reason?: string } };
+  };
   const code = Number(err.code);
 
   let inner: { description?: string; reason?: string } | undefined;
@@ -83,7 +94,9 @@ function toPaymentError(e: unknown): Error {
     }
   }
 
-  if (code === CANCELLED_CODE || inner?.reason === 'payment_cancelled') {
+  // Android puts the reason in the JSON description, iOS in details.error.
+  const reason = inner?.reason ?? err.details?.error?.reason;
+  if (code === CANCELLED_CODE || reason === 'payment_cancelled') {
     return new PaymentCancelledError();
   }
   if (Platform.OS === 'android' && code === ANDROID_NETWORK_ERROR) {

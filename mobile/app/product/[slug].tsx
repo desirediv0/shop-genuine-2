@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
   FlatList,
   Pressable,
   ScrollView,
@@ -49,6 +50,7 @@ export default function ProductScreen() {
   const { railCardWidth } = useProductLayout();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+  const scrollY = useRef(new Animated.Value(0)).current;
   const router = useRouter();
   const { cart, addItem, updateItem, removeItem } = useCart();
   const [cartBusy, setCartBusy] = useState(false);
@@ -191,10 +193,14 @@ export default function ProductScreen() {
         }}
       />
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.screen}
         contentContainerStyle={{ paddingBottom: 190 }}
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+          useNativeDriver: true,
+        })}
+        scrollEventThrottle={16}
       >
         {/* Gallery on a soft studio backdrop. Each photo is multiplied into its
             page, so a white packshot background takes on the backdrop's glow
@@ -359,7 +365,25 @@ export default function ProductScreen() {
             />
           </View>
         ) : null}
-      </ScrollView>
+      </Animated.ScrollView>
+
+      {/* Behind the floating back/search/cart buttons. Clear over the photo, it
+          fades in as the name scrolls up to them, so the text never runs under
+          the clock and the buttons. */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.headerScrim,
+          {
+            height: headerHeight,
+            opacity: scrollY.interpolate({
+              inputRange: [width * 0.8 - 48, width * 0.8],
+              outputRange: [0, 1],
+              extrapolate: 'clamp',
+            }),
+          },
+        ]}
+      />
 
       {/* Sticky action bar */}
       <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.md }]}>
@@ -419,6 +443,15 @@ const STAGE_GLOW = 'radial-gradient(circle closest-side at 50% 50%, #FFFFFF 0%, 
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  headerScrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
   muted: { ...typography.small, color: colors.textMuted },
   stage: { backgroundColor: STAGE, paddingBottom: spacing.xxl + spacing.sm },
   page: {
