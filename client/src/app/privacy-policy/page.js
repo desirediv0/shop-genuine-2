@@ -16,8 +16,7 @@ export const metadata = {
 
 /*
  * This page is also the app's privacy policy: Google Play and the app link to
- * https://shopgenuine.online/privacy-policy (api.shopgenuine.online/privacy-policy
- * redirects here). Keep it true to what the website, the app and the server
+ * https://shopgenuine.online/privacy-policy. Keep it true to what the website, the app and the server
  * actually do, and update it before anything new ships — a new courier, email
  * provider or host, or crash reporting (Sentry) being switched on in the app.
  */
@@ -223,7 +222,7 @@ export default function PrivacyPolicyPage() {
                   <strong className="text-noir">Delete your account in the app:</strong> Account → Delete my account. Your name,
                   email and phone are removed straight away. If you never placed an order, nothing is kept; if you did, the order
                   records are kept without your personal details, as described on our{" "}
-                  <a href="https://api.shopgenuine.online/delete-account" className="text-pink font-semibold underline">account deletion page</a>.
+                  <Link href="/delete-account" className="text-pink font-semibold underline">account deletion page</Link>.
                 </li>
                 <li>Edit or remove saved addresses, reset your password and turn notifications off yourself.</li>
                 <li>To see, correct or delete anything else we hold about you, or to delete your account without the app, email {mail}.</li>

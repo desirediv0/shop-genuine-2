@@ -71,11 +71,11 @@ Account and the sign-up screen. See `privacy-policy.md`.
 
 ## Account deletion URL
 
-Use **https://api.shopgenuine.online/delete-account**.
+Use **https://shopgenuine.online/delete-account**.
 
 Google requires a **web** link for deletion requests even though the app has its own
-Delete button. The page is served by the API server (`server/controllers/pages.controller.js`),
-not the website, so it doesn't depend on the website. It covers what Google checks:
+Delete button. The page is part of the website (`client/src/app/delete-account/page.js`);
+public pages never live on the API subdomain. It covers what Google checks:
 
 - The app name, as on the listing.
 - The steps: in the app (Account → Delete my account), or by email for someone who
@@ -88,5 +88,5 @@ not the website, so it doesn't depend on the website. It covers what Google chec
   invoices to be kept and orders in transit still have to arrive. Other saved
   addresses are deleted.
 
-The email address comes from the server setting `SUPPORT_EMAIL`. It defaults to
-`connect.genuinenutrition@gmail.com`, the address on the website's privacy policy.
+Keep its lists in step with `server/helper/deleteUserAccount.js`. The support email on it
+is `connect.genuinenutrition@gmail.com`.

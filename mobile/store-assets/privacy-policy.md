@@ -4,10 +4,9 @@
 (App content → Privacy policy) and in the store listing.
 
 The text is the website's page, `client/src/app/privacy-policy/page.js`, and covers
-the website and the app. That file is the only copy: edit it there.
-`https://api.shopgenuine.online/privacy-policy` redirects to it, because the first
-store build of the app links to that address; the app now links to the website
-directly (`src/components/PrivacyPolicyLink.tsx`, from Account and sign-up).
+the website and the app. That file is the only copy: edit it there. The app links to it from Account and
+sign-up (`src/components/PrivacyPolicyLink.tsx`). Public pages live on the main
+domain only — nothing on the API subdomain.
 
 - Operator: Arvi Consumer Private Limited, GSTIN 06ABCCA6498E1ZK,
   89/2 Sector 39, Gurugram, Haryana (the address from the website's contact page).

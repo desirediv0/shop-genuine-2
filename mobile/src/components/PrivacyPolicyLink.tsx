@@ -5,8 +5,7 @@ import { colors, fonts } from '../theme';
 /**
  * The live policy on the website, whichever server this build talks to: it is
  * the same page the Play listing points at (client/src/app/privacy-policy).
- * The first store build linked to api.shopgenuine.online/privacy-policy, which
- * redirects here.
+ * Public pages live on the main domain only — never on the API subdomain.
  */
 export const PRIVACY_POLICY_URL = 'https://shopgenuine.online/privacy-policy';
 

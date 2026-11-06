@@ -45,9 +45,9 @@ Store listings → Default store listing → **Next** (Review step).
 **Overview**
 - Collects or shares required user data: **Yes**
 - All user data encrypted in transit: **Yes**
-- Account creation: **Username and password** (email + password, verified by a one-time email code)
-- Delete account URL: **https://api.shopgenuine.online/delete-account**
-- Way to delete some data without deleting the account: **Yes** (saved addresses in the app; anything else by email)
+- Account creation: **Username, password, and other authentication** (email + password, plus a one-time email code at sign-up)
+- Delete account URL: **https://shopgenuine.online/delete-account**
+- Way to delete some data without deleting the account: optional — left unanswered (a Yes needs its own web page)
 
 **Data types** — every one: Collected **Yes**, Shared **No**, Processed ephemerally **No**, **Required**
 

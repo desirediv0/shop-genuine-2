@@ -1,14 +1,15 @@
-# Server steps — put the new privacy policy live (2026-11-05)
+# Server steps — public pages move to the main website (2026-11-05)
 
-Two things change, both on the Hostinger VPS:
+What changes, all on the Hostinger VPS:
 
-- **The website** gets the new privacy policy at https://shopgenuine.online/privacy-policy
-  (Arvi Consumer Private Limited, Grievance Officer, and what the website and app
-  collect). This needs the website rebuilt, which takes a few minutes.
-- **The API** sends https://api.shopgenuine.online/privacy-policy on to that page,
-  because the app's first Play Store build links there.
+- **The website** gets a new page, https://shopgenuine.online/delete-account (how to
+  delete a Shop Genuine account — Google Play requires it), and the privacy policy now
+  links to it.
+- **The API** no longer serves any web pages: `api.shopgenuine.online/delete-account`
+  and `api.shopgenuine.online/privacy-policy` are removed. The API keeps only the app's
+  API (and its `/health` status check).
 
-No database change and no settings change.
+No database change and no settings change. About five minutes.
 
 ## Steps
 
@@ -28,8 +29,7 @@ Open the Hostinger web terminal for the VPS, then type each line and press Enter
 
        git pull
 
-   You should see `client/src/app/privacy-policy/page.js` and
-   `server/controllers/pages.controller.js` in the list of changed files.
+   You should see `client/src/app/delete-account/page.js` and `server/app.js` in the list.
    If it says `error` or `conflict`, stop and send me a screenshot.
 
 4. Restart the API:
@@ -46,13 +46,12 @@ Open the Hostinger web terminal for the VPS, then type each line and press Enter
    `shop-genuine-client` **online**. If it ends with `Failed to compile` or `Error`,
    send me a screenshot of the last lines.
 
-6. Check it worked. Open these in your phone or computer browser:
+6. Tell me it's done — I check these myself:
 
-   - https://shopgenuine.online/privacy-policy — shows **Privacy Policy** with
-     **Arvi Consumer Private Limited** in the first paragraph and **Rajat Gulia** as
-     Grievance Officer at the bottom.
-   - https://api.shopgenuine.online/privacy-policy — lands on the same page.
-   - https://api.shopgenuine.online/delete-account — still opens.
+   - https://shopgenuine.online/delete-account shows "Delete your Shop Genuine account"
+   - https://shopgenuine.online/privacy-policy still opens, and links to the page above
+   - https://api.shopgenuine.online/delete-account no longer shows a page
+   - the app still loads products (the API is unaffected)
 
 ## If something goes wrong
 
