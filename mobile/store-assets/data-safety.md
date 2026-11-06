@@ -27,6 +27,7 @@ traffic, and a mismatch gets the app suspended.
 | Payment info | **No** | No | — | See the note below |
 | App interactions | Yes | No | Required | App functionality (cart, wishlist) |
 | Device or other IDs | Yes | No | Required | App functionality (app updates, push notifications) |
+| In-app search history | Yes, ephemeral | No | Required | App functionality (search words go to the API to find products; the server stores and logs none) |
 | Crash logs | Yes, once Sentry is on | No | Required | App functionality, Analytics |
 | Diagnostics | Yes, once Sentry is on | No | Required | App functionality, Analytics |
 

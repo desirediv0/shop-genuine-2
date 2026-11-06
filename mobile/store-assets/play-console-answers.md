@@ -3,7 +3,7 @@
 App: **Shop Genuine**, `com.shopgenuine.app`, created 2026-11-05.
 Dashboard: https://play.google.com/console/u/0/developers/8035388496617662284/app/4972662767290883480/app-dashboard
 
-Already done (by Claude, 2026-11-05): app created; privacy policy URL; store listing
+Done in Play Console (2026-11-05/06, all saved): privacy policy, sign-in details, ads, content rating (Everyone / PEGI 3), target audience 18+, data safety, government/financial/health. Also done earlier: app created; privacy policy URL; store listing
 (name, short and full description, icon, feature graphic, 6 screenshots — saved as a
 draft); category **Shopping**; contact email `connect.genuinenutrition@gmail.com`
 and website `https://shopgenuine.online`; sign-in details name, email and reviewer
@@ -60,6 +60,7 @@ Store listings → Default store listing → **Next** (Review step).
 | Financial info | Purchase history | App functionality |
 | App activity | App interactions | App functionality (cart, saved items) |
 | Device or other IDs | Device or other IDs | App functionality (notifications, app updates) |
+| App activity | In-app search history | App functionality — **processed ephemerally: Yes** (search words are sent to find products and never stored; not shown on the listing) |
 
 Do **not** tick Payment info (Razorpay handles card/UPI; the app never sees it), Location,
 Photos, Contacts, Crash logs or Diagnostics (crash reporting is off).
