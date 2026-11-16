@@ -1,7 +1,23 @@
-# Play Console — answers for Shop Genuine (Desire Div account)
+# Play Console — answers for Shop Genuine
 
-App: **Shop Genuine**, `com.shopgenuine.app`, created 2026-11-05.
-Dashboard: https://play.google.com/console/u/0/developers/8035388496617662284/app/4972662767290883480/app-dashboard
+App: **Shop Genuine**, `com.shopgenuine.app`, created 2026-11-05 in the Desire Div account
+(8035388496617662284) and **live on Google Play since 2026-11-07**.
+
+## Owner: moving to the client's account (2026-11-16)
+The app is being transferred to the client's Play account **"genuine revolution(p)"**
+(personal account, ID 6375082674629564543, owner Rajat Gulia, founder.arvigroup@gmail.com), so
+the store shows the client as the developer instead of Desire Div.
+- 2026-11-16: Desire Div sent the transfer request, and the client accepted it. Google completes it
+  within 2 business days and notifies both accounts.
+- Installs, reviews, the store listing and every App content answer below move with the app.
+  Test groups and Desire Div's reports don't.
+- After the transfer, manage the app from the client's account. Desire Div loses access.
+- The client's account is a personal account created 2026-11-09. Google requires new personal
+  accounts to run a closed test (12 testers, 14 days) before production releases, and doesn't say
+  whether a transferred live app is exempt. If Play blocks a new store upload, run that test.
+  Over-the-air updates are unaffected.
+- The upload key (held by EAS) and Google's app-signing key both stay the same, so later builds
+  upload as before.
 
 Done in Play Console (2026-11-05/06, all saved): privacy policy, sign-in details, ads, content rating (Everyone / PEGI 3), target audience 18+, data safety, government/financial/health, advertising ID (No), Production countries (India only), and the production release 1.0.0 (versionCode 4). **Sent for review on 2026-11-06** (10 changes, full rollout, India; managed publishing off, so it goes live on approval). Also done earlier: app created; privacy policy URL; store listing
 (name, short and full description, icon, feature graphic, 6 screenshots — saved as a
@@ -85,6 +101,6 @@ Test and release → **Production** → Create new release.
 **Before sending for review:** the Namecheap DNS fix must be done, so the privacy
 policy at shopgenuine.online opens for Google's reviewers.
 
-## Account-level, not urgent
-"Declare your trader status" (banner at the top) is due by **February 2027** for the
-whole Desire Div account. As a business selling to consumers, Desire Div is a trader.
+## Account-level
+"Declare your trader status": the client's account has already declared itself a trader.
+(Desire Div's own declaration, due February 2027, concerns its other apps only.)
