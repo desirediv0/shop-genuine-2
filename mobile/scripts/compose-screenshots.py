@@ -1,5 +1,5 @@
 """
-Turns raw emulator captures into Play-ready phone screenshots.
+Turns raw emulator/simulator captures into store-ready phone screenshots.
 
 Each is a 1080x1920 (9:16) image: a short caption at the top in the app's
 headline font, and the real capture below it with rounded corners and a soft
@@ -15,20 +15,39 @@ Usage, from mobile/:
     python3 scripts/compose-screenshots.py <raw-dir> store-assets/screenshots \\
         "sc-home=Every Genuine store in one app" "sc-product=Genuine products, honest prices" ...
 Each argument is <capture name>=<caption>; the order is the order on Play.
+
+App Store (iPhone 6.9", 1320x2868, from an iPhone 17 Pro Max simulator capture):
+    python3 scripts/compose-screenshots.py --apple <raw-dir> store-assets/app-store-screenshots \\
+        "home=Every Genuine store in one app" ...
+Apple accepts tall images (no 2:1 limit), so the capture keeps its shape.
 """
 import sys
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-OUT_W, OUT_H = 1080, 1920
-STATUS_BAR = 118   # px at this device's scale
-GESTURE_BAR = 64
-SHOT_H = 1540      # the capture's height on the canvas
-TOP = 330          # where the capture starts; the caption sits above it
-RADIUS = 46
 FONT = 'node_modules/@expo-google-fonts/plus-jakarta-sans/800ExtraBold/PlusJakartaSans_800ExtraBold.ttf'
 
-src_dir, out_dir = sys.argv[1], sys.argv[2]
-pairs = [arg.split('=', 1) for arg in sys.argv[3:]]
+args = sys.argv[1:]
+APPLE = args[:1] == ['--apple']
+if APPLE:
+    args = args[1:]
+    OUT_W, OUT_H = 1320, 2868   # App Store 6.9" iPhone
+    STATUS_BAR = 186            # iPhone 17 Pro Max at 3x
+    GESTURE_BAR = 102
+    SHOT_H = 2290
+    TOP = 470
+    RADIUS = 64
+    FONT_SIZE, LINE_H, SHADOW = 92, 112, (30, 44)
+else:
+    OUT_W, OUT_H = 1080, 1920   # Play phone screenshot
+    STATUS_BAR = 118            # px at the Pixel 8 Pro's scale
+    GESTURE_BAR = 64
+    SHOT_H = 1540               # the capture's height on the canvas
+    TOP = 330                   # where the capture starts; the caption sits above it
+    RADIUS = 46
+    FONT_SIZE, LINE_H, SHADOW = 68, 82, (24, 36)
+
+src_dir, out_dir = args[0], args[1]
+pairs = [arg.split('=', 1) for arg in args[2:]]
 
 
 def mesh(w, h):
@@ -66,7 +85,7 @@ def wrap(text, font, width, draw):
 
 
 background = mesh(OUT_W, OUT_H)
-font = ImageFont.truetype(FONT, 68)
+font = ImageFont.truetype(FONT, FONT_SIZE)
 
 for i, (name, caption) in enumerate(pairs, start=1):
     shot = Image.open(f'{src_dir}/{name}.png').convert('RGB')
@@ -80,8 +99,8 @@ for i, (name, caption) in enumerate(pairs, start=1):
     # Soft shadow, then the capture with rounded corners.
     shadow = Image.new('RGBA', (OUT_W, OUT_H), (0, 0, 0, 0))
     ImageDraw.Draw(shadow).rounded_rectangle(
-        (left, TOP + 24, left + w, TOP + SHOT_H + 24), radius=RADIUS, fill=(2, 6, 23, 120))
-    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(36)))
+        (left, TOP + SHADOW[0], left + w, TOP + SHOT_H + SHADOW[0]), radius=RADIUS, fill=(2, 6, 23, 120))
+    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(SHADOW[1])))
     mask = Image.new('L', (w, SHOT_H), 0)
     ImageDraw.Draw(mask).rounded_rectangle((0, 0, w - 1, SHOT_H - 1), radius=RADIUS, fill=255)
     canvas.paste(shot, (left, TOP), mask)
@@ -89,7 +108,7 @@ for i, (name, caption) in enumerate(pairs, start=1):
     # Caption, centred in the space above the capture.
     draw = ImageDraw.Draw(canvas)
     lines = wrap(caption, font, OUT_W - 160, draw)
-    line_h = 82
+    line_h = LINE_H
     y = (TOP - line_h * len(lines)) // 2 + 6
     for line in lines:
         draw.text((OUT_W / 2, y), line, font=font, fill=(255, 255, 255), anchor='ma')
@@ -98,4 +117,5 @@ for i, (name, caption) in enumerate(pairs, start=1):
     out = f'{out_dir}/{i:02d}-{name.replace("sc-", "")}.png'
     canvas.convert('RGB').save(out)
     ratio = max(OUT_W, OUT_H) / min(OUT_W, OUT_H)
-    print(f'{out.split("/")[-1]:24s} {OUT_W}x{OUT_H}  ratio {ratio:.2f} (limit 2.00)  "{caption}"')
+    limit = '' if APPLE else ' (limit 2.00)'
+    print(f'{out.split("/")[-1]:24s} {OUT_W}x{OUT_H}  ratio {ratio:.2f}{limit}  "{caption}"')

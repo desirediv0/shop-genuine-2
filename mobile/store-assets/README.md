@@ -27,6 +27,21 @@ refuses any image whose longest side is more than twice the shortest, and this
 phone is 1344×2992 (2.23). The script trims the status and gesture bars and
 places each capture, scaled and rounded, below its caption on 1080×1920.
 
+## App Store (iOS)
+
+| File | App Store Connect field | Spec | Status |
+|---|---|---|---|
+| `app-store-screenshots/01-06*.png` | iPhone 6.9" screenshots | 1320×2868, no alpha, max 10 | ready (6, live data, 2026-11-17) |
+| `app-store-listing.md` | Every App Store Connect field, age rating, App Privacy | — | ready; waiting on the Apple Developer account |
+
+Regenerate from iPhone 17 Pro Max simulator captures (1320×2868, status bar set with
+`xcrun simctl status_bar … override --time 9:41`):
+
+    python3 scripts/compose-screenshots.py --apple <raw-dir> store-assets/app-store-screenshots \
+      "home=Every Genuine store in one app" "product=Genuine products, honest prices" \
+      "category=Groceries delivered across India" "categories=Browse every category" \
+      "cart=See what you save on every order" "search=Search the whole catalogue"
+
 ## Still outstanding — only you can do these
 
 1. **Host the privacy policy** and fill in every `[PLACEHOLDER]`, including the
