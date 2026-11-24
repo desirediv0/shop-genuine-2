@@ -28,6 +28,7 @@
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "Shop Genuine doesn't use your photo library. Every image in the app comes from our store.",
         "LSApplicationQueriesSchemes": [
           "tez",
           "phonepe",

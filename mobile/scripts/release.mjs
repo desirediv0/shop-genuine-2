@@ -64,9 +64,32 @@ function writeRecords(records) {
   fs.writeFileSync(RECORD_FILE, `${JSON.stringify(records, null, 2)}\n`);
 }
 
+/**
+ * iOS permission texts (Info.plist `*UsageDescription` keys) are words shown in a
+ * permission prompt, not native code: an update runs the same with or without
+ * them. Apple can demand one for an API that only a bundled library references
+ * (ITMS-90683 asked for NSPhotoLibraryUsageDescription because expo-image,
+ * expo-file-system and Razorpay link Photos), so adding one must not force a
+ * new app version. They are left out of the fingerprint.
+ */
+function withoutPermissionTexts(source, chunk) {
+  if (source.type !== 'contents' || source.id !== 'expoConfig' || typeof chunk !== 'string') {
+    return chunk;
+  }
+  const config = JSON.parse(chunk);
+  const plist = config.ios?.infoPlist;
+  const keys = Object.keys(plist ?? {}).filter((key) => key.endsWith('UsageDescription'));
+  if (keys.length === 0) return chunk;
+  for (const key of keys) delete plist[key];
+  // The same serialiser the fingerprint uses, so a config without such keys
+  // hashes exactly as before.
+  const { stringifyJsonSorted } = require('@expo/fingerprint/build/sourcer/Utils');
+  return stringifyJsonSorted(config);
+}
+
 async function fingerprint() {
   const { createFingerprintAsync } = require('@expo/fingerprint');
-  return createFingerprintAsync(ROOT);
+  return createFingerprintAsync(ROOT, { fileHookTransform: withoutPermissionTexts });
 }
 
 function describeChanges(before, after) {
