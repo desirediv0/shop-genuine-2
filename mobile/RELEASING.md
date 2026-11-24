@@ -100,6 +100,15 @@ Two safety nets come for free:
      the build on the version page in App Store Connect and press Add for Review. The
      first upload asks to log in to Apple and create an App Store Connect API key,
      which EAS keeps.
+   - If the build never shows up in TestFlight, Apple rejected it by email to the
+     account holder. Build 3 was rejected for a missing
+     `NSPhotoLibraryUsageDescription` (ITMS-90683): a bundled library references an
+     API that needs a permission text, even if the app never calls it. Add the key under
+     `ios.infoPlist` in `app.json` and build again. Permission texts are left out of the
+     native fingerprint (`release.mjs`), so this needs no new version.
+   - **From April 2027, Apple only accepts builds made with the iOS 27 SDK (Xcode 27).**
+     Builds up to 1.0.0 (4) used the iOS 26.5 SDK. Before then, upgrade to an Expo SDK
+     whose EAS build image uses Xcode 27.
 4. Once it is live, set `APP_LATEST_VERSION_ANDROID` on the server (see below) so
    older versions are invited to update. Raise `APP_MIN_VERSION_ANDROID` only when old
    versions must stop working.
