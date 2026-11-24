@@ -9,8 +9,11 @@ The text matches the Play listing (`play-listing.md`) so both stores say the sam
 **Status (2026-11-24).** The app exists in App Store Connect: Apple ID **6838684428**,
 account Rajat Gulia (team D524D3RR9K, Individual). Done on the 1.0.0 version page:
 screenshots, promotional text, description, keywords, support and marketing URLs,
-copyright, reviewer user name, notes and contact. The reviewer **password** is typed in
-App Store Connect by hand. The first store build (1.0.0, build 3, EAS bec24d3a) was checked:
+copyright, reviewer user name, notes and contact. Also done: subtitle, categories, content
+rights, age rating (4+), privacy policy URL, the App Privacy answers below, price (Free),
+availability (India only), and Mac / Vision Pro availability **off** (the app is only built
+and tested for iPhone). Done by hand in App Store Connect: the reviewer **password**, and
+**Publish** on App Privacy, which agrees that the answers are accurate. The first store build (1.0.0, build 3, EAS bec24d3a) was checked:
 channel `production`, live API, push entitlement `production`, iPhone only.
 
 ---
@@ -191,6 +194,7 @@ Data collected. Every type: **linked to the user**, **not used for tracking**, p
 | Contact Info | Phone Number | Delivery contact |
 | Contact Info | Physical Address | Delivery addresses |
 | Purchases | Purchase History | Orders |
+| Identifiers | User ID | The account's server ID, which orders and addresses hang off |
 | Identifiers | Device ID | Push notification token, update install id |
 | Usage Data | Product Interaction | Saved cart and wishlist |
 
