@@ -3,7 +3,8 @@
  *
  *   npm run release:check                    what can be shipped, and how
  *   npm run build:apk                        test APK on the preview lane
- *   npm run build:store                      store build (EAS) on the production lane
+ *   npm run build:store -- ios               store build (EAS) on the production lane
+ *   npm run submit:store -- ios              upload the latest store build (Play / TestFlight)
  *   npm run update:preview -- "message"      over-the-air update to test phones
  *   npm run update:production -- "message"   over-the-air update to customers
  *   npm run rollback:production              undo the latest update (see below)
@@ -192,7 +193,16 @@ async function buildStore() {
   // which EAS then keeps. eas.json's production profile sets the channel and env.
   run('npx', [...EAS, 'build', '--profile', 'production', '--platform', platform]);
   recordBuild('production', state);
-  console.log('\nNext: npx eas-cli@latest submit --platform android --latest  (see RELEASING.md)');
+  console.log(`\nNext: npm run submit:store -- ${platform}  (see RELEASING.md)`);
+}
+
+function submitStore() {
+  const platform = process.argv[3] ?? 'android';
+  // Uploads the newest production build: Android to the Play internal track as a
+  // draft, iOS to App Store Connect / TestFlight (eas.json → submit). Interactive on
+  // purpose: the first iOS upload asks to log in to Apple and create an App Store
+  // Connect API key, which EAS then keeps for later uploads.
+  run('npx', [...EAS, 'submit', '--profile', 'production', '--platform', platform, '--latest']);
 }
 
 async function update() {
@@ -298,7 +308,7 @@ async function rollback() {
 
 /* --------------------------------- main ---------------------------------- */
 
-const commands = { check, apk: buildApk, store: buildStore, update, rollback };
+const commands = { check, apk: buildApk, store: buildStore, submit: submitStore, update, rollback };
 const command = commands[process.argv[2]];
 if (!command) die(`Usage: node scripts/release.mjs <${Object.keys(commands).join('|')}>`);
 await command();

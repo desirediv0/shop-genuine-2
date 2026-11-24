@@ -92,9 +92,14 @@ Two safety nets come for free:
 2. `npm run build:store` — EAS production build (Android by default; pass `ios` or
    `all` once iOS is set up). The first build asks EAS to create the signing key; EAS
    keeps it.
-3. `npx eas-cli@latest submit --platform android --latest` — uploads to the Play
-   **internal** track as a draft (`eas.json` → `submit`). Promote it in the Play Console,
-   preferably as a staged rollout (10% → 50% → 100%).
+3. `npm run submit:store -- android` (or `ios`) — uploads the newest production build.
+   - **Android** goes to the Play **internal** track as a draft (`eas.json` → `submit`).
+     Promote it in the Play Console, preferably as a staged rollout (10% → 50% → 100%).
+   - **iOS** goes to App Store Connect (app ID `6838684428`, team `D524D3RR9K`) and
+     appears in TestFlight after Apple processes it (about 10–30 minutes). Then pick
+     the build on the version page in App Store Connect and press Add for Review. The
+     first upload asks to log in to Apple and create an App Store Connect API key,
+     which EAS keeps.
 4. Once it is live, set `APP_LATEST_VERSION_ANDROID` on the server (see below) so
    older versions are invited to update. Raise `APP_MIN_VERSION_ANDROID` only when old
    versions must stop working.

@@ -6,6 +6,13 @@ Apple rejects listings that describe features the app doesn't have.
 
 The text matches the Play listing (`play-listing.md`) so both stores say the same thing.
 
+**Status (2026-11-24).** The app exists in App Store Connect: Apple ID **6838684428**,
+account Rajat Gulia (team D524D3RR9K, Individual). Done on the 1.0.0 version page:
+screenshots, promotional text, description, keywords, support and marketing URLs,
+copyright, reviewer user name, notes and contact. The reviewer **password** is typed in
+App Store Connect by hand. The first store build (1.0.0, build 3, EAS bec24d3a) was checked:
+channel `production`, live API, push entitlement `production`, iPhone only.
+
 ---
 
 ## 1. New app (App Store Connect → Apps → + → New App)
@@ -37,8 +44,12 @@ The text matches the Play listing (`play-listing.md`) so both stores say the sam
 
 ## 4. Version 1.0 page
 
-**Screenshots** — iPhone 6.9" display, upload all six from
-`store-assets/app-store-screenshots/` in this order (1320×2868, no transparency):
+**Screenshots.** App Store Connect now requires the **6.3"** size ("iPhone with Dynamic
+Island (medium display)", 1206×2622) and uses it for every iPhone. Upload all six from
+`store-assets/app-store-screenshots-6.3/` in this order. They are the 6.9" set
+(`app-store-screenshots/`, 1320×2868, made by `scripts/compose-screenshots.py --apple`)
+scaled down with Lanczos, with one edge column trimmed. The 6.9" set fits the optional
+"large display" slot, but isn't uploaded, so there is only one set to keep current:
 
 1. `01-home.png` — Every Genuine store in one app
 2. `02-product.png` — Genuine products, honest prices
@@ -47,7 +58,7 @@ The text matches the Play listing (`play-listing.md`) so both stores say the sam
 5. `05-cart.png` — See what you save on every order
 6. `06-search.png` — Search the whole catalogue
 
-Apple scales the 6.9" set down for smaller iPhones, so no other sizes are needed. The app
+Apple scales this set for other iPhones, so no other sizes are needed. The app
 is iPhone-only (`supportsTablet: false`), so no iPad screenshots are needed either.
 They were taken on 2026-11-17 against the live shop, on an iPhone 17 Pro Max simulator.
 
@@ -127,7 +138,7 @@ grocery,cosmetics,atta,rice,oil,dal,snacks,skincare,perfume,beauty,delivery,auth
 | Sign-in required | Yes |
 | User name | `demo1@shopgenuine.test` (the same reviewer account as Google Play) |
 | Password | *(Akash has it; never commit it here)* |
-| Contact | the account holder's name, phone and email (the client's) |
+| Contact | Rajat Gulia, +91 80532 10008 (the number on the website), founder.genuinenutrition@gmail.com |
 
 **Notes**
 

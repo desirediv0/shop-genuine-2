@@ -52,6 +52,7 @@
     "release:check": "node scripts/release.mjs check",
     "build:apk": "node scripts/release.mjs apk",
     "build:store": "node scripts/release.mjs store",
+    "submit:store": "node scripts/release.mjs submit",
     "update:preview": "node scripts/release.mjs update preview",
     "update:production": "node scripts/release.mjs update production",
     "rollback:preview": "node scripts/release.mjs rollback preview",
