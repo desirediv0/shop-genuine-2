@@ -13,7 +13,13 @@ copyright, reviewer user name, notes and contact. Also done: subtitle, categorie
 rights, age rating (4+), privacy policy URL, the App Privacy answers below, price (Free),
 availability (India only), and Mac / Vision Pro availability **off** (the app is only built
 and tested for iPhone). Done by hand in App Store Connect: the reviewer **password**, and
-**Publish** on App Privacy, which agrees that the answers are accurate. The first store build (1.0.0, build 3, EAS bec24d3a) was checked:
+**Publish** on App Privacy, which agrees that the answers are accurate.
+
+**Submitted for review on 2026-11-24 at 5:43 PM IST** with build 1.0.0 (4) and **Manually
+release this version** selected: after approval, the app goes live only when someone presses
+**Release this version** in App Store Connect. Build 3 was rejected at upload (ITMS-90683, missing
+NSPhotoLibraryUsageDescription), and build 4 fixes that. Rajat is the TestFlight tester (internal
+group "Team (Expo)"). The first store build (1.0.0, build 3, EAS bec24d3a) was checked:
 channel `production`, live API, push entitlement `production`, iPhone only.
 
 ---
