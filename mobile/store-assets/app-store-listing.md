@@ -149,21 +149,41 @@ grocery,cosmetics,atta,rice,oil,dal,snacks,skincare,perfume,beauty,delivery,auth
 | Password | *(Akash has it; never commit it here)* |
 | Contact | Rajat Gulia, +91 80532 10008 (the number on the website), founder.genuinenutrition@gmail.com |
 
-**Notes**
+**Notes.** Rewritten on 2026-11-25 after Apple's Guideline 2.1 "Information Needed" reply on build 4.
+That reply asked for a screen recording on a real iPhone (launch, sign-up, sign-in, account deletion),
+the app's purpose and audience, how to use it, the external services, regional differences and any
+licences. Attach the recording under "Attachment" on the version page.
 
 ```
-Browsing, search, categories and the cart work without an account.
-Checkout, orders, saved addresses and account deletion need sign-in:
-open the Account tab, tap Sign in, and use the credentials above.
+ABOUT THE APP
+Shop Genuine is the shopping app of Arvi Consumer Private Limited, a retailer in India (https://shopgenuine.online). Customers browse and order packaged groceries and cosmetics, sourced through authorised distributors, and we deliver them to their address. Target audience: adult shoppers in India. The problem it solves: fake and expired products are common when buying online in India. Everything sold here comes from authorised distributors, at honest prices.
 
-Payment is Cash on Delivery only, so no card is needed. Test orders
-placed with this account are cancelled and never delivered. The app
-sells physical goods only and has no digital content or in-app purchases.
+HOW TO USE THE APP
+No setup or sample files are needed.
+- Browsing, search, the cart and the two stores (Grocery and Cosmetics, switched with the chips at the top of Home) work without an account.
+- Sign in: Account tab > Sign in, with the demo account above.
+- Sign up: Account tab > Sign in > Create an account. A 6-digit code is emailed to verify the address.
+- Checkout: Cart > Checkout > choose a delivery address > Cash on Delivery > Place order. No card is needed. Orders placed with the demo account are cancelled and never delivered.
+- Orders: Account tab > Orders. An order can be cancelled while it is still being prepared.
+- Account deletion: Account tab > Delete my account > enter the password > type DELETE > Delete forever.
+The app sells physical goods only. It has no digital content, subscriptions or in-app purchases.
 
-Account deletion: Account tab > Delete my account (confirm with the password).
+SCREEN RECORDING
+Attached to this submission. Recorded on an iPhone running the latest iOS, starting from launching the app: browsing, search, cart, sign-up, sign-in, checkout and account deletion.
 
-The app has two stores, Grocery and Cosmetics; switch between them
-with the chips at the top of Home.
+EXTERNAL SERVICES
+- Our own server (api.shopgenuine.online): catalogue, accounts, carts and orders
+- DigitalOcean Spaces: product images
+- Brevo: verification codes and order emails
+- Expo (expo.dev): order-status push notifications through Apple Push Notification service, and app updates
+- Razorpay (payment gateway): built in but currently switched off, so Cash on Delivery is the only payment method
+No AI services, analytics, advertising or tracking SDKs.
+
+REGIONS
+The app is available in India only and works the same everywhere in India. Prices are in Indian rupees and delivery is within India.
+
+REGULATED INDUSTRY AND THIRD-PARTY MATERIAL
+Shop Genuine is an online retail store for packaged groceries and cosmetics. It has no medical, financial, gambling, alcohol or tobacco features. Product names and images belong to their brands and are shown by us as a retailer of those products.
 ```
 
 **Keep the reviewer account working.** Apple signs in on every update too. If a
